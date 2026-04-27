@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASCATE — Dashboards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --surface:            #00180d;
+  --surface-low:        #001f10;
+  --surface-mid:        #052e18;
+  --surface-high:       #0a3d20;
+  --surface-highest:    #0f4a28;
+  --primary:            #f6be39;
+  --on-primary:         #3d2c00;
+  --primary-container:  #52390a;
+  --primary-dim:        rgba(246,190,57,0.12);
+  --secondary:          #95d4b3;
+  --secondary-container:#0d3d28;
+  --secondary-dim:      rgba(149,212,179,0.1);
+  --tertiary:           #d2bbff;
+  --tertiary-container: #2a1f4a;
+  --tertiary-dim:       rgba(210,187,255,0.1);
+  --error:              #e85d3a;
+  --error-container:    #2a1208;
+  --error-dim:          rgba(232,93,58,0.1);
+  --on-bg:              #c1ecd4;
+  --on-bg-muted:        #5f9e78;
+  --on-surface:         #e8f5ec;
+  --outline-variant:    rgba(149,212,179,0.12);
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: var(--surface);
+  color: var(--on-bg);
+  overflow: hidden;
+}
+
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8 C28 20 16 26 18 40 C20 54 34 57 40 72 C46 57 60 54 62 40 C64 26 52 20 40 8Z' fill='%2395d4b3' opacity='0.02'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+/* ═══ DEMO BAR ═══ */
+.demo-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(0,24,13,0.95); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--outline-variant);
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 1rem; overflow-x: auto;
+}
+.demo-bar-label {
+  font-size: 0.62rem; color: var(--on-bg-muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  white-space: nowrap; margin-right: 0.5rem; opacity: 0.6;
+}
+.demo-btn {
+  border: 1px solid var(--outline-variant); background: transparent;
+  color: var(--on-bg-muted); font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.72rem; font-weight: 500;
+  padding: 0.3rem 0.85rem; border-radius: 999px;
+  cursor: pointer; white-space: nowrap; transition: all 0.18s;
+}
+.demo-btn:hover { background: var(--secondary-dim); color: var(--secondary); border-color: rgba(149,212,179,0.3); }
+.demo-btn.active {
+  background: var(--primary); border-color: var(--primary);
+  color: var(--on-primary); font-weight: 700;
+  box-shadow: 0 4px 12px rgba(246,190,57,0.25);
+}
+
+/* ═══ SCREENS ═══ */
+.screen { display: none; height: 100vh; padding-top: 40px; }
+.screen.active { display: flex; }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+  width: 240px; min-width: 240px;
+  background: var(--surface-low);
+  display: flex; flex-direction: column;
+  padding: 1.5rem 1rem;
+  height: 100%; overflow-y: auto;
+  position: relative; z-index: 1;
+  border-right: 1px solid var(--outline-variant);
+}
+.sb-brand { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; margin-bottom: 2rem; }
+.sb-logo {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1.5px dashed rgba(149,212,179,0.25);
+  background: var(--secondary-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.sb-name { font-family: 'Epilogue', sans-serif; font-size: 1rem; font-weight: 900; color: var(--primary); letter-spacing: -0.02em; }
+.sb-role-tag { font-size: 0.58rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.1rem; opacity: 0.7; }
+.sb-section {
+  font-size: 0.58rem; color: var(--on-bg-muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 0 0.75rem; margin: 1rem 0 0.4rem; opacity: 0.5;
+}
+.sb-item {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);
+  color: var(--on-bg-muted); font-size: 0.84rem;
+  cursor: pointer; transition: all 0.15s;
+  text-decoration: none; font-weight: 400;
+}
+.sb-item:hover { background: var(--secondary-dim); color: var(--secondary); }
+.sb-item.active {
+  background: var(--primary-dim); color: var(--primary); font-weight: 600;
+  border-left: 2px solid var(--primary); padding-left: calc(0.75rem - 2px);
+}
+.sb-item .ic { font-size: 1rem; flex-shrink: 0; }
+.sb-spacer { flex: 1; }
+.sb-user {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.85rem 0.75rem;
+  border-top: 1px solid var(--outline-variant); margin-top: 1rem;
+}
+.sb-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--primary-dim); border: 1px solid rgba(246,190,57,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 700; color: var(--primary); flex-shrink: 0;
+}
+.sb-uname { font-size: 0.8rem; color: var(--on-surface); font-weight: 500; }
+.sb-uemail { font-size: 0.66rem; color: var(--on-bg-muted); }
+
+/* ═══ MAIN ═══ */
+.main { flex: 1; overflow-y: auto; background: var(--surface); position: relative; z-index: 1; }
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(0,24,13,0.88); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--outline-variant);
+  padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-title { font-family: 'Epilogue', sans-serif; font-size: 1rem; font-weight: 700; color: var(--on-surface); }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+.notif-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: var(--surface-mid); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; position: relative;
+  border: 1px solid var(--outline-variant); transition: background 0.15s;
+}
+.notif-btn:hover { background: var(--surface-high); }
+.notif-dot {
+  position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--error); box-shadow: 0 0 6px rgba(232,93,58,0.5);
+}
+
+.content { padding: 2rem; }
+
+/* ═══ PAGE HEADER ═══ */
+.page-header { margin-bottom: 1.8rem; }
+.page-header h1 { font-family: 'Epilogue', sans-serif; font-size: 1.5rem; font-weight: 900; color: var(--on-surface); letter-spacing: -0.02em; }
+.page-header p { color: var(--on-bg-muted); font-size: 0.88rem; margin-top: 0.3rem; }
+
+/* ═══ STAT CARDS ═══ */
+.stats-row { display: grid; gap: 1rem; margin-bottom: 1.8rem; }
+.stats-row.cols-4 { grid-template-columns: repeat(4,1fr); }
+.stats-row.cols-3 { grid-template-columns: repeat(3,1fr); }
+.stats-row.cols-2 { grid-template-columns: repeat(2,1fr); }
+
+.stat-card {
+  background: var(--surface-mid); border-radius: var(--radius-md); padding: 1.2rem 1.4rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  animation: fadeUp 0.4s ease both; transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-dim), transparent);
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+.stat-card:nth-child(2) { animation-delay: 0.05s; }
+.stat-card:nth-child(3) { animation-delay: 0.10s; }
+.stat-card:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.stat-icon { width: 38px; height: 38px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.stat-icon.green  { background: var(--secondary-dim); }
+.stat-icon.mustard{ background: var(--primary-dim); }
+.stat-icon.rust   { background: var(--error-dim); }
+.stat-icon.blue   { background: var(--tertiary-dim); }
+.stat-icon.purple { background: var(--tertiary-dim); }
+
+.stat-val { font-family: 'Epilogue', sans-serif; font-size: 1.8rem; font-weight: 900; line-height: 1; color: var(--primary); }
+.stat-label { font-size: 0.77rem; color: var(--on-bg-muted); }
+.stat-delta { font-size: 0.71rem; color: var(--secondary); font-weight: 600; }
+
+/* ═══ GRIDS ═══ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.span-2 { grid-column: span 2; }
+
+/* ═══ PANELS ═══ */
+.panel {
+  background: rgba(5,46,24,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-md); padding: 1.4rem;
+  animation: fadeUp 0.4s ease both;
+  border: 1px solid var(--outline-variant); box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+.panel-title { font-family: 'Epilogue', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--on-surface); }
+.panel-action { font-size: 0.74rem; color: var(--secondary); font-weight: 600; cursor: pointer; background: none; border: none; font-family: 'Be Vietnam Pro', sans-serif; transition: color 0.15s; }
+.panel-action:hover { color: var(--primary); }
+
+/* ═══ TAGS ═══ */
+.tag { display: inline-flex; align-items: center; font-size: 0.67rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em; }
+.tag.green  { background: var(--secondary-dim); color: var(--secondary); }
+.tag.mustard{ background: var(--primary-dim);   color: var(--primary); }
+.tag.rust   { background: var(--error-dim);     color: var(--error); }
+.tag.blue   { background: var(--tertiary-dim);  color: var(--tertiary); }
+.tag.purple { background: var(--tertiary-dim);  color: var(--tertiary); }
+.tag.gray   { background: rgba(149,212,179,0.06); color: var(--on-bg-muted); }
+
+/* ═══ LIST ROWS ═══ */
+.list-row { display: flex; align-items: center; gap: 0.85rem; padding: 0.72rem 0; border-bottom: 1px solid var(--outline-variant); }
+.list-row:last-child { border-bottom: none; padding-bottom: 0; }
+.list-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--secondary-dim); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; color: var(--secondary); flex-shrink: 0; }
+.list-avatar.mustard { background: var(--primary-dim); color: var(--primary); }
+.list-avatar.rust    { background: var(--error-dim);   color: var(--error); }
+.list-avatar.blue    { background: var(--tertiary-dim);color: var(--tertiary); }
+.list-avatar.purple  { background: var(--tertiary-dim);color: var(--tertiary); }
+.list-info { flex: 1; min-width: 0; }
+.list-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--on-surface); }
+.list-sub  { font-size: 0.71rem; color: var(--on-bg-muted); }
+.list-end  { flex-shrink: 0; text-align: right; }
+
+/* ═══ BUTTONS ═══ */
+.btn { border: none; border-radius: var(--radius-xl); cursor: pointer; font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; transition: all 0.18s; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-sm  { font-size: 0.77rem; padding: 0.42rem 1rem; }
+.btn-md  { font-size: 0.85rem; padding: 0.6rem 1.2rem; }
+.btn-green, .btn-mustard {
+  background: linear-gradient(135deg, var(--primary) 0%, #e8a820 100%);
+  color: var(--on-primary); font-weight: 700;
+  box-shadow: 0 4px 16px rgba(246,190,57,0.25);
+}
+.btn-green:hover, .btn-mustard:hover { box-shadow: 0 6px 24px rgba(246,190,57,0.4); transform: scale(1.02); }
+.btn-outline { background: transparent; border: 1px solid var(--outline-variant); color: var(--on-bg-muted); }
+.btn-outline:hover { border-color: rgba(149,212,179,0.4); color: var(--secondary); }
+
+/* ═══ ACTIVITY CARDS ═══ */
+.act-card { background: var(--surface-mid); border-radius: var(--radius-md); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: box-shadow 0.2s, transform 0.2s, background 0.2s; cursor: pointer; border: 1px solid transparent; }
+.act-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.25); transform: translateY(-3px); background: var(--surface-high); border-color: var(--outline-variant); }
+.act-card-emoji { font-size: 1.6rem; }
+.act-card-name  { font-size: 0.88rem; font-weight: 600; color: var(--on-surface); }
+.act-card-org   { font-size: 0.71rem; color: var(--on-bg-muted); }
+.act-card-meta  { display: flex; align-items: center; justify-content: space-between; margin-top: 0.3rem; }
+
+/* ═══ SEARCH ═══ */
+.search-bar { display: flex; align-items: center; gap: 0.5rem; background: var(--surface-mid); border-radius: var(--radius-xl); padding: 0.6rem 1.1rem; margin-bottom: 1.2rem; border: 1px solid var(--outline-variant); transition: border-color 0.2s, box-shadow 0.2s; }
+.search-bar:focus-within { border-color: rgba(149,212,179,0.35); box-shadow: 0 0 0 3px rgba(149,212,179,0.06); }
+.search-bar input { border: none; background: transparent; outline: none; font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.88rem; color: var(--on-surface); flex: 1; }
+.search-bar input::placeholder { color: var(--on-bg-muted); }
+.filter-row { display: flex; gap: 0.45rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.chip { background: var(--surface-mid); color: var(--on-bg-muted); font-size: 0.74rem; font-weight: 500; padding: 0.28rem 0.85rem; border-radius: 999px; cursor: pointer; transition: all 0.15s; font-family: 'Be Vietnam Pro', sans-serif; border: 1px solid transparent; }
+.chip:hover { border-color: var(--outline-variant); color: var(--secondary); }
+.chip.active { background: var(--primary-dim); color: var(--primary); font-weight: 600; border-color: rgba(246,190,57,0.3); }
+
+/* map placeholder */
+.map-placeholder { background: linear-gradient(135deg, var(--surface-high) 0%, var(--surface-mid) 100%); border-radius: var(--radius-md); height: 180px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.5rem; border: 1px solid var(--outline-variant); margin-bottom: 1rem; position: relative; overflow: hidden; }
+.map-placeholder::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%2395d4b3' opacity='0.15'/%3E%3C/svg%3E"); background-size: 40px 40px; }
+.map-pin   { font-size: 2rem; position: relative; z-index: 1; }
+.map-label { font-size: 0.75rem; color: var(--secondary); font-weight: 600; position: relative; z-index: 1; }
+
+/* form mini fields */
+.form-section { margin-bottom: 1.5rem; }
+.form-section-title { font-family: 'Epilogue', sans-serif; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.8rem; color: var(--on-surface); display: flex; align-items: center; gap: 0.5rem; }
+.form-section-title::after { content: ''; flex:1; height:1px; background: var(--outline-variant); }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+.frow.full { grid-template-columns: 1fr; }
+.field-mini label { display: block; font-size: 0.68rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.25rem; opacity: 0.7; }
+.field-mini input, .field-mini select, .field-mini textarea { width: 100%; background: var(--surface-high); border: none; border-bottom: 2px solid rgba(149,212,179,0.15); border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 0.5rem 0.85rem; font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.84rem; color: var(--on-surface); outline: none; transition: border-color 0.2s; }
+.field-mini input:focus, .field-mini select:focus, .field-mini textarea:focus { border-bottom-color: var(--primary); background: var(--surface-highest); }
+.field-mini select option { background: var(--surface-mid); }
+.field-mini textarea { resize: vertical; min-height: 60px; }
+
+/* chart bars */
+.chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; padding-top: 8px; }
+.bar { flex: 1; background: rgba(149,212,179,0.1); border-radius: 4px 4px 0 0; position: relative; min-height: 8px; transition: background 0.2s; }
+.bar:hover { background: rgba(149,212,179,0.3); }
+.bar.active { background: var(--primary); opacity: 0.9; box-shadow: 0 0 12px rgba(246,190,57,0.3); }
+.chart-labels { display: flex; gap: 6px; margin-top: 6px; }
+.chart-labels span { flex: 1; font-size: 0.6rem; color: var(--on-bg-muted); text-align: center; }
+
+/* donut */
+.donut-wrap { display: flex; align-items: center; gap: 1.2rem; }
+.donut-legend { display: flex; flex-direction: column; gap: 0.5rem; }
+.legend-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.75rem; color: var(--on-bg); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* device detail */
+.detail-hero { background: linear-gradient(135deg, var(--surface-high) 0%, var(--surface-highest) 100%); border-radius: var(--radius-md); padding: 1.4rem; color: var(--on-surface); margin-bottom: 1rem; position: relative; overflow: hidden; border: 1px solid var(--outline-variant); }
+.detail-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+.detail-hero::after  { content: '🌿'; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 4rem; opacity: 0.1; }
+.detail-hero h2 { font-family: 'Epilogue', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+.detail-hero p  { font-size: 0.82rem; opacity: 0.7; margin-top: 0.3rem; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.detail-tag { background: rgba(149,212,179,0.1); color: var(--secondary); font-size: 0.68rem; padding: 0.2rem 0.65rem; border-radius: 999px; font-weight: 500; }
+
+/* contact cards */
+.contact-card { display: flex; align-items: center; gap: 1rem; background: var(--surface-mid); border-radius: var(--radius-md); padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; transition: background 0.15s; }
+.contact-card:hover { background: var(--surface-high); }
+.contact-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.contact-val { font-size: 0.88rem; font-weight: 600; color: var(--on-surface); }
+.contact-lbl { font-size: 0.71rem; color: var(--on-bg-muted); }
+
+/* seed progress bar */
+.seed-track { background: var(--secondary-container); border-radius: 999px; height: 10px; overflow: hidden; margin-top: 0.4rem; }
+.seed-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), #e8a820); box-shadow: 0 0 8px rgba(246,190,57,0.4); }
+
+/* table */
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+thead tr { border-bottom: 1px solid var(--outline-variant); }
+th { text-align:left; padding:0.5rem 0.6rem; color: var(--on-bg-muted); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; }
+tbody tr { border-bottom: 1px solid var(--outline-variant); transition: background 0.15s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(149,212,179,0.04); }
+td { padding: 0.65rem 0.6rem; color: var(--on-bg); }
+td:first-child { font-weight: 600; color: var(--on-surface); }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 900px) {
+  .sidebar { width: 200px; min-width: 200px; }
+  .stats-row.cols-4 { grid-template-columns: repeat(2,1fr); }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .span-2 { grid-column: auto; }
+  .frow { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .content { padding: 1rem; }
+  .topbar  { padding: 0.75rem 1rem; }
+  .stats-row.cols-4, .stats-row.cols-3 { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ DEMO SWITCHER ══ -->
+<div class="demo-bar">
+  <span class="demo-bar-label">Vista de rol →</span>
+  <button class="demo-btn active" onclick="showScreen('dispositivo')">🏘️ Dispositivo</button>
+  <button class="demo-btn" onclick="showScreen('prescriptor')">🎯 Prescriptxr</button>
+  <button class="demo-btn" onclick="showScreen('beneficiario')">🌱 Beneficiarix</button>
+  <button class="demo-btn" onclick="showScreen('admin')">🔐 Admin</button>
+</div>
+
+
+<!-- ═══════════ SCREEN 1 — DISPOSITIVO ═══════════ -->
+<div class="screen active" id="screen-dispositivo">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🏘️</div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Dispositivo CBC</div></div>
+    </div>
+    <span class="sb-section">Principal</span>
+    <a class="sb-item active"><span class="ic">📊</span> Panel general</a>
+    <a class="sb-item"><span class="ic">👤</span> Mi perfil</a>
+    <a class="sb-item"><span class="ic">📋</span> Actividades</a>
+    <a class="sb-item"><span class="ic">👥</span> Beneficiarixs</a>
+    <a class="sb-item"><span class="ic">🤝</span> Hoja de primer contacto</a>
+    <span class="sb-section">Reportes</span>
+    <a class="sb-item"><span class="ic">📈</span> Estadísticas</a>
+    <a class="sb-item"><span class="ic">📄</span> Reportar info</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar">AV</div>
+      <div><div class="sb-uname">Arte Vivo</div><div class="sb-uemail">artevivo@mascate.org</div></div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Panel general</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-green">+ Registrar actividad</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header"><h1>Bienvenidx, Arte Vivo 👋</h1><p>Resumen de tu dispositivo esta semana</p></div>
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">34</div><div class="stat-label">Beneficiarixs activos</div><div class="stat-delta">↑ +3 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📋</div><div class="stat-val">12</div><div class="stat-label">Actividades realizadas</div><div class="stat-delta">↑ +2 esta semana</div></div>
+        <div class="stat-card"><div class="stat-icon rust">⭐</div><div class="stat-val">4.8</div><div class="stat-label">Valoración promedio</div></div>
+        <div class="stat-card"><div class="stat-icon blue">📍</div><div class="stat-val">2</div><div class="stat-label">Seguimientos esta semana</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Asistencia semanal</span><button class="panel-action">Ver todo</button></div>
+          <div class="chart-bars">
+            <div class="bar" style="height:40%"></div><div class="bar" style="height:60%"></div>
+            <div class="bar active" style="height:85%"></div><div class="bar" style="height:55%"></div>
+            <div class="bar" style="height:70%"></div><div class="bar" style="height:90%"></div>
+            <div class="bar" style="height:65%"></div>
+          </div>
+          <div class="chart-labels"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Tipo de actividad</span></div>
+          <div class="donut-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="88 88" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="44 132" stroke-dashoffset="-88" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#e85d3a" stroke-width="14" stroke-dasharray="22 154" stroke-dashoffset="-132" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#f6be39"></div>Artístico (50%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#95d4b3"></div>Deportivo (25%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#e85d3a"></div>Cultural (13%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#d2bbff"></div>Otro (12%)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Beneficiarixs recientes</span><button class="panel-action">Ver todos →</button></div>
+          <div class="list-row"><div class="list-avatar">SG</div><div class="list-info"><div class="list-name">Sofía G.</div><div class="list-sub">Desde ene 2025</div></div><span class="tag green">Activo</span></div>
+          <div class="list-row"><div class="list-avatar mustard">JM</div><div class="list-info"><div class="list-name">Julián M.</div><div class="list-sub">Desde feb 2025</div></div><span class="tag green">Activo</span></div>
+          <div class="list-row"><div class="list-avatar rust">LR</div><div class="list-info"><div class="list-name">Laura R.</div><div class="list-sub">Desde mar 2025</div></div><span class="tag gray">Inactivo</span></div>
+          <div class="list-row"><div class="list-avatar blue">DT</div><div class="list-info"><div class="list-name">Diego T.</div><div class="list-sub">Desde abr 2025</div></div><span class="tag green">Activo</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Próximas actividades</span><button class="panel-action">+ Nueva</button></div>
+          <div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">🎨</div><div class="list-info"><div class="list-name">Taller de grafiti</div><div class="list-sub">Lun 28 · 3:00 pm · Parque</div></div><span class="tag mustard">Hoy</span></div>
+          <div class="list-row"><div class="list-avatar" style="background:var(--error-dim);font-size:1.1rem">⚽</div><div class="list-info"><div class="list-name">Fútbol comunitario</div><div class="list-sub">Mié 30 · 4:00 pm · Cancha</div></div><span class="tag gray">3 días</span></div>
+          <div class="list-row"><div class="list-avatar" style="background:var(--tertiary-dim);font-size:1.1rem">🎵</div><div class="list-info"><div class="list-name">Círculo musical</div><div class="list-sub">Vie 2 · 5:00 pm · Salón</div></div><span class="tag gray">5 días</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ SCREEN 2 — PRESCRIPTXR ═══════════ -->
+<div class="screen" id="screen-prescriptor">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🎯</div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Prescriptxr</div></div>
+    </div>
+    <span class="sb-section">Principal</span>
+    <a class="sb-item active"><span class="ic">🏠</span> Inicio</a>
+    <a class="sb-item"><span class="ic">👤</span> Mi perfil</a>
+    <a class="sb-item"><span class="ic">📋</span> Mis seguimientos</a>
+    <a class="sb-item"><span class="ic">👥</span> Asignados a mí</a>
+    <span class="sb-section">Gestión</span>
+    <a class="sb-item"><span class="ic">📝</span> Ingresar información</a>
+    <a class="sb-item"><span class="ic">🔔</span> Notificaciones</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--primary-dim);color:var(--primary)">MP</div>
+      <div><div class="sb-uname">María P.</div><div class="sb-uemail">maria@mascate.org</div></div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Inicio</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔</div>
+        <button class="btn btn-sm btn-green">+ Ingresar info</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header"><h1>Hola, María 🎯</h1><p>Facilitadxra · Arte Vivo Techotiva</p></div>
+      <div class="stats-row cols-3">
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">18</div><div class="stat-label">Personas a mi cargo</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📝</div><div class="stat-val">7</div><div class="stat-label">Registros este mes</div></div>
+        <div class="stat-card"><div class="stat-icon rust">⏳</div><div class="stat-val">3</div><div class="stat-label">Seguimientos pendientes</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel span-2">
+          <div class="panel-head"><span class="panel-title">Personas asignadas</span><button class="panel-action">Ver todas →</button></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem">
+            <div>
+              <div class="list-row"><div class="list-avatar">AN</div><div class="list-info"><div class="list-name">Andrés N.</div><div class="list-sub">Última sesión: hace 2 días</div></div><span class="tag green">Al día</span></div>
+              <div class="list-row"><div class="list-avatar mustard">CM</div><div class="list-info"><div class="list-name">Camila M.</div><div class="list-sub">Última sesión: hace 5 días</div></div><span class="tag mustard">Revisar</span></div>
+              <div class="list-row"><div class="list-avatar rust">FR</div><div class="list-info"><div class="list-name">Felipe R.</div><div class="list-sub">Última sesión: hace 10 días</div></div><span class="tag rust">Urgente</span></div>
+            </div>
+            <div>
+              <div class="list-row"><div class="list-avatar blue">VL</div><div class="list-info"><div class="list-name">Valentina L.</div><div class="list-sub">Última sesión: ayer</div></div><span class="tag green">Al día</span></div>
+              <div class="list-row"><div class="list-avatar purple">OM</div><div class="list-info"><div class="list-name">Omar M.</div><div class="list-sub">Última sesión: hace 3 días</div></div><span class="tag green">Al día</span></div>
+              <div class="list-row"><div class="list-avatar">PT</div><div class="list-info"><div class="list-name">Paula T.</div><div class="list-sub">Última sesión: hace 7 días</div></div><span class="tag mustard">Revisar</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Ingresar nueva información</span></div>
+        <div class="frow">
+          <div class="field-mini"><label>Persona</label><select><option>Andrés N.</option><option>Camila M.</option><option>Felipe R.</option></select></div>
+          <div class="field-mini"><label>Tipo de registro</label><select><option>Sesión grupal</option><option>Seguimiento individual</option><option>Actividad especial</option></select></div>
+        </div>
+        <div class="frow full">
+          <div class="field-mini"><label>Observaciones</label><textarea placeholder="Escribe aquí las novedades..."></textarea></div>
+        </div>
+        <button class="btn btn-sm btn-green">Guardar registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ SCREEN 3 — BENEFICIARIX ═══════════ -->
+<div class="screen" id="screen-beneficiario">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🌱</div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Beneficiarix</div></div>
+    </div>
+    <span class="sb-section">Explorar</span>
+    <a class="sb-item active"><span class="ic">🔍</span> Buscar actividades</a>
+    <a class="sb-item"><span class="ic">🗺️</span> Mapa de dispositivos</a>
+    <span class="sb-section">Mi espacio</span>
+    <a class="sb-item"><span class="ic">📌</span> Mis actividades</a>
+    <a class="sb-item"><span class="ic">👤</span> Mi perfil</a>
+    <a class="sb-item"><span class="ic">💬</span> Contactar</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">SK</div>
+      <div><div class="sb-uname">Skate</div><div class="sb-uemail">skate@mail.com</div></div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Explorar actividades</span>
+      <div class="topbar-right"><div class="notif-btn">🔔<span class="notif-dot"></span></div></div>
+    </div>
+    <div class="content">
+      <div class="search-bar"><span>🔍</span><input type="text" placeholder="Buscar actividad, lugar o dispositivo..."></div>
+      <div class="filter-row">
+        <span class="chip active">Todos</span>
+        <span class="chip">🎨 Artístico</span><span class="chip">⚽ Deportivo</span>
+        <span class="chip">🎵 Cultural</span><span class="chip">🌿 Ambiental</span>
+        <span class="chip">💬 Escucha</span><span class="chip">📚 Educativo</span>
+      </div>
+      <div class="grid-3" style="margin-bottom:1.5rem">
+        <div class="act-card"><div class="act-card-emoji">🎨</div><div class="act-card-name">Taller de grafiti</div><div class="act-card-org">Arte Vivo · Parque Techotiva</div><div class="act-card-meta"><span class="tag green">Artístico</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Lun · 3pm</span></div></div>
+        <div class="act-card"><div class="act-card-emoji">⚽</div><div class="act-card-name">Fútbol comunitario</div><div class="act-card-org">Red Deportiva Sur · Cancha</div><div class="act-card-meta"><span class="tag mustard">Deportivo</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Mié · 4pm</span></div></div>
+        <div class="act-card"><div class="act-card-emoji">🎵</div><div class="act-card-name">Círculo musical</div><div class="act-card-org">Arte Vivo · Salón comunal</div><div class="act-card-meta"><span class="tag rust">Cultural</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Vie · 5pm</span></div></div>
+        <div class="act-card"><div class="act-card-emoji">🌿</div><div class="act-card-name">Huerta urbana</div><div class="act-card-org">EcoTechotiva · Reserva</div><div class="act-card-meta"><span class="tag green">Ambiental</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Sáb · 9am</span></div></div>
+        <div class="act-card"><div class="act-card-emoji">💬</div><div class="act-card-name">Centro de escucha</div><div class="act-card-org">MASCATE · Sede propia</div><div class="act-card-meta"><span class="tag blue">Escucha</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Jue · 2pm</span></div></div>
+        <div class="act-card"><div class="act-card-emoji">📚</div><div class="act-card-name">Taller de lectura</div><div class="act-card-org">Casa Cultural · Salón</div><div class="act-card-meta"><span class="tag purple">Educativo</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Mar · 4pm</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Detalle del dispositivo seleccionado</span><button class="panel-action">Ver en mapa</button></div>
+        <div class="detail-hero">
+          <h2>Arte Vivo Techotiva</h2>
+          <p>📍 Parque El Tintal · Bogotá</p>
+          <div class="detail-tags"><span class="detail-tag">🎨 Artístico</span><span class="detail-tag">🎵 Cultural</span><span class="detail-tag">⚽ Deportivo</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+          <div class="contact-card"><div class="contact-icon" style="background:var(--secondary-dim)">📞</div><div><div class="contact-val">+57 310 000 0001</div><div class="contact-lbl">Teléfono</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--tertiary-dim)">📱</div><div><div class="contact-val">@artevivo_tec</div><div class="contact-lbl">Instagram</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val">Lun, Mié, Vie · 2–6pm</div><div class="contact-lbl">Horario</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val">María P.</div><div class="contact-lbl">Facilitadxra</div></div></div>
+        </div>
+        <div style="margin-top:0.85rem"><button class="btn btn-md btn-green" style="width:100%">✉️ Contactar dispositivo</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ SCREEN 4 — ADMIN ═══════════ -->
+<div class="screen" id="screen-admin">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🔐</div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Administrador</div></div>
+    </div>
+    <span class="sb-section">Sistema</span>
+    <a class="sb-item active"><span class="ic">📊</span> Panel central</a>
+    <a class="sb-item"><span class="ic">🏘️</span> Dispositivos</a>
+    <a class="sb-item"><span class="ic">👥</span> Usuarios</a>
+    <a class="sb-item"><span class="ic">📋</span> Formularios</a>
+    <span class="sb-section">Config</span>
+    <a class="sb-item"><span class="ic">🔧</span> Configuración</a>
+    <a class="sb-item"><span class="ic">📄</span> Reportes</a>
+    <a class="sb-item"><span class="ic">🛡️</span> Roles y permisos</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">AD</div>
+      <div><div class="sb-uname">Admin MASCATE</div><div class="sb-uemail">admin@mascate.org</div></div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Panel central</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-mustard">+ Nuevo dispositivo</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header"><h1>Panel de Administración</h1><p>Control total del sistema MASCATE · Seguimiento Piloto 1</p></div>
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val">8</div><div class="stat-label">Dispositivos totales</div><div class="stat-delta">↑ +1 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-val">214</div><div class="stat-label">Usuarixs registradxs</div><div class="stat-delta">↑ +28 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">🎯</div><div class="stat-val">12</div><div class="stat-label">Prescriptxrs activos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">⚠️</div><div class="stat-val">5</div><div class="stat-label">Alertas pendientes</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Usuarixs por rol</span><button class="panel-action">Gestionar →</button></div>
+          <div class="list-row"><div class="list-avatar" style="font-size:1rem">🏘️</div><div class="list-info"><div class="list-name">Dispositivos CBC</div><div class="seed-track"><div class="seed-fill" style="width:80%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">8</div><span class="tag green">Activos</span></div></div>
+          <div class="list-row"><div class="list-avatar mustard" style="font-size:1rem">🎯</div><div class="list-info"><div class="list-name">Prescriptxrs</div><div class="seed-track"><div class="seed-fill" style="width:60%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">12</div><span class="tag mustard">Activos</span></div></div>
+          <div class="list-row"><div class="list-avatar rust" style="font-size:1rem">🌱</div><div class="list-info"><div class="list-name">Beneficiarixs</div><div class="seed-track"><div class="seed-fill" style="width:95%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">214</div><span class="tag green">Activos</span></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Alertas del sistema</span><button class="panel-action">Ver todas →</button></div>
+          <div class="list-row"><div class="list-avatar rust" style="border-radius:8px;font-size:1rem">⚠️</div><div class="list-info"><div class="list-name">Dispositivo sin reporte</div><div class="list-sub">Casa Cultural Norte · 14 días sin actividad</div></div><span class="tag rust">Urgente</span></div>
+          <div class="list-row"><div class="list-avatar mustard" style="border-radius:8px;font-size:1rem">🔔</div><div class="list-info"><div class="list-name">Nuevo registro pendiente</div><div class="list-sub">3 formularios esperan aprobación</div></div><span class="tag mustard">Revisar</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Todos los dispositivos</span>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-sm btn-outline">⬇ Exportar</button>
+            <button class="btn btn-sm btn-green">+ Nuevo</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Dispositivo</th><th>Tipo</th><th>Benef.</th><th>Prescriptxr</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Arte Vivo Techotiva</td><td><span class="tag green">Artístico</span></td><td style="color:var(--primary);font-weight:700">34</td><td>María P.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
+              <tr><td>Red Deportiva Sur</td><td><span class="tag mustard">Deportivo</span></td><td style="color:var(--primary);font-weight:700">28</td><td>Carlos R.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
+              <tr><td>Casa Cultural Norte</td><td><span class="tag purple">Educativo</span></td><td style="color:var(--primary);font-weight:700">22</td><td>Ana L.</td><td><span class="tag mustard">En pausa</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
+              <tr><td>EcoTechotiva</td><td><span class="tag green">Ambiental</span></td><td style="color:var(--primary);font-weight:700">18</td><td>Pedro G.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API    = 'http://127.0.0.1:8080';
+const token  = localStorage.getItem('mascate_token');
+const rol    = localStorage.getItem('mascate_rol');
+const nombre = localStorage.getItem('mascate_nombre');
+
+if (!token || !rol) { window.location.href = '/login'; }
+
+// ── Helpers de autenticación ──
+function authHeaders() { return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }; }
+function authGet()     { return { headers: { 'Authorization': 'Bearer ' + token } }; }
+
+// ── Navegación entre pantallas ──
+function showScreen(role) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.demo-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(role));
+  });
+  document.getElementById('screen-' + role)?.classList.add('active');
+}
+
+// ── Logout ──
+function doLogout() {
+  ['mascate_token', 'mascate_rol', 'mascate_nombre'].forEach(k => localStorage.removeItem(k));
+  window.location.href = '/login';
+}
+
+// Agregar botón logout a cada sidebar
+document.querySelectorAll('.sb-user').forEach(u => {
+  const btn = document.createElement('button');
+  btn.textContent = 'Cerrar sesion';
+  btn.className = 'btn btn-sm btn-outline';
+  btn.style.cssText = 'margin-top:0.5rem;width:100%;font-size:0.72rem;';
+  btn.onclick = doLogout;
+  u.after(btn);
+});
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded', async () => {
+  showScreen(rol);
+  if (rol !== 'admin') document.querySelector('.demo-bar')?.remove();
+  try {
+    if      (rol === 'dispositivo') await loadDispositivo();
+    else if (rol === 'prescriptor') await loadPrescriptor();
+    else if (rol === 'beneficiario') await loadBeneficiario();
+    else if (rol === 'admin')       await loadAdmin();
+  } catch(e) { console.error('Error cargando datos:', e); }
+});
+
+// ── Helpers de UI ──
+function setStatVal(screen, index, value) {
+  const cards = document.querySelectorAll(`#screen-${screen} .stat-val`);
+  if (cards[index] != null) cards[index].textContent = value;
+}
+
+function setInnerHTML(el, html) { if (el) el.innerHTML = html; }
+
+// ═══ DISPOSITIVO ═══
+async function loadDispositivo() {
+  const disps = await (await fetch(API + '/dispositivos/', authGet())).json();
+  for (const d of disps) {
+    try {
+      const stats = await (await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet())).json();
+      setStatVal('dispositivo', 0, stats.beneficiarios_activos);
+      setStatVal('dispositivo', 1, stats.actividades_registradas);
+      setStatVal('dispositivo', 2, stats.valoracion_promedio ?? '—');
+      setStatVal('dispositivo', 3, stats.seguimientos_semana);
+
+      // Header
+      const h1 = document.querySelector('#screen-dispositivo .page-header h1');
+      if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
+
+      // Sidebar user
+      const sbName = document.querySelector('#screen-dispositivo .sb-uname');
+      if (sbName) sbName.textContent = nombre;
+
+      // Beneficiarios
+      const benefs = await (await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet())).json();
+      const listPanel = document.querySelectorAll('#screen-dispositivo .panel')[2];
+      if (listPanel && benefs.length > 0) {
+        let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs</span></div>';
+        benefs.forEach(b => {
+          const ini = b.nombre_apodo.substring(0, 2).toUpperCase();
+          html += `<div class="list-row"><div class="list-avatar">${ini}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
+        });
+        setInnerHTML(listPanel, html);
+      }
+
+      // Actividades
+      const acts = await (await fetch(API + '/actividades/?dispositivo_id=' + d.id)).json();
+      const actPanel = document.querySelectorAll('#screen-dispositivo .panel')[3];
+      if (actPanel && acts.length > 0) {
+        let html = '<div class="panel-head"><span class="panel-title">Actividades</span></div>';
+        acts.forEach(a => {
+          html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
+        });
+        setInnerHTML(actPanel, html);
+      }
+      break;
+    } catch(e) { continue; }
+  }
+}
+
+// ═══ PRESCRIPTOR ═══
+async function loadPrescriptor() {
+  const h1 = document.querySelector('#screen-prescriptor .page-header h1');
+  if (h1) h1.textContent = 'Hola, ' + nombre + ' 🎯';
+  const sbName = document.querySelector('#screen-prescriptor .sb-uname');
+  if (sbName) sbName.textContent = nombre;
+
+  try {
+    const asignados = await (await fetch(API + '/prescriptores/mis-asignados', authGet())).json();
+    setStatVal('prescriptor', 0, asignados.length);
+    setStatVal('prescriptor', 2, asignados.filter(a => a.estado === 'urgente').length);
+
+    // Panel de asignados
+    const panel = document.querySelector('#screen-prescriptor .panel.span-2');
+    if (panel && asignados.length > 0) {
+      let html = '<div class="panel-head"><span class="panel-title">Personas asignadas</span></div><div>';
+      asignados.forEach(a => {
+        const ini      = a.nombre_apodo.substring(0, 2).toUpperCase();
+        const tagClass = a.estado === 'urgente' ? 'rust' : (a.estado === 'revisar' ? 'mustard' : 'green');
+        const label    = a.estado === 'urgente' ? 'Urgente' : (a.estado === 'revisar' ? 'Revisar' : 'Al dia');
+        const dias     = a.dias_sin_sesion != null ? 'Hace ' + a.dias_sin_sesion + ' dias' : 'Sin sesiones';
+        html += `<div class="list-row"><div class="list-avatar ${tagClass}">${ini}</div><div class="list-info"><div class="list-name">${a.nombre_apodo}</div><div class="list-sub">${dias}</div></div><span class="tag ${tagClass}">${label}</span></div>`;
+      });
+      html += '</div>';
+      setInnerHTML(panel, html);
+    }
+
+    // Formulario de seguimiento: poblar select y conectar botón
+    const formPanels = document.querySelectorAll('#screen-prescriptor .panel:not(.span-2)');
+    const fp = formPanels[formPanels.length - 1];
+    if (fp) {
+      const selects = fp.querySelectorAll('select');
+      if (selects[0] && asignados.length > 0) {
+        selects[0].innerHTML = asignados.map(a => `<option value="${a.id}">${a.nombre_apodo}</option>`).join('');
+      }
+      const btn = fp.querySelector('.btn');
+      if (btn) {
+        btn.onclick = async () => {
+          const payload = {
+            beneficiario_id: parseInt(selects[0].value),
+            tipo_registro:   selects[1]?.value ?? 'Sesion grupal',
+            observaciones:   fp.querySelector('textarea')?.value ?? '',
+          };
+          try {
+            const res = await fetch(API + '/prescriptores/seguimientos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+            if (res.ok) {
+              btn.textContent = 'Guardado!';
+              if (fp.querySelector('textarea')) fp.querySelector('textarea').value = '';
+              setTimeout(() => { btn.textContent = 'Guardar registro'; loadPrescriptor(); }, 1500);
+            }
+          } catch(e) { console.error(e); }
+        };
+      }
+    }
+  } catch(e) { console.error('Error cargando asignados:', e); }
+
+  try {
+    const segs = await (await fetch(API + '/prescriptores/seguimientos', authGet())).json();
+    setStatVal('prescriptor', 1, segs.length);
+  } catch(e) {}
+}
+
+// ═══ BENEFICIARIO ═══
+async function loadBeneficiario() {
+  const sbName = document.querySelector('#screen-beneficiario .sb-uname');
+  if (sbName) sbName.textContent = nombre;
+
+  try {
+    const acts = await (await fetch(API + '/actividades/')).json();
+    const grid = document.querySelector('#screen-beneficiario .grid-3');
+    if (grid && acts.length > 0) {
+      grid.innerHTML = acts.map(a =>
+        `<div class="act-card"><div class="act-card-emoji">${a.emoji || ''}</div><div class="act-card-name">${a.nombre}</div><div class="act-card-org">${a.lugar}</div><div class="act-card-meta"><span class="tag green">${a.tipo || ''}</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">${a.dia_semana || ''} - ${a.hora || ''}</span></div></div>`
+      ).join('');
+    }
+  } catch(e) {}
+
+  try {
+    const disps = await (await fetch(API + '/dispositivos/')).json();
+    if (disps.length > 0) {
+      const d    = disps[0];
+      const hero = document.querySelector('#screen-beneficiario .detail-hero');
+      if (hero) {
+        hero.querySelector('h2').textContent = d.nombre;
+        hero.querySelector('p').textContent  = '📍 ' + (d.ubicacion || '');
+      }
+    }
+  } catch(e) {}
+}
+
+// ═══ ADMIN ═══
+async function loadAdmin() {
+  try {
+    const stats = await (await fetch(API + '/admin/stats', authGet())).json();
+    setStatVal('admin', 0, stats.total_dispositivos);
+    setStatVal('admin', 1, stats.total_usuarios);
+    setStatVal('admin', 2, stats.total_prescriptores);
+    setStatVal('admin', 3, stats.alertas_pendientes);
+  } catch(e) { console.error(e); }
+
+  try {
+    const alertas   = await (await fetch(API + '/admin/alertas', authGet())).json();
+    const alertPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[1];
+    if (alertPanel && alertas.length > 0) {
+      let html = '<div class="panel-head"><span class="panel-title">Alertas del sistema</span></div>';
+      alertas.forEach(a => {
+        html += `<div class="list-row"><div class="list-avatar rust" style="border-radius:8px;font-size:1rem">⚠️</div><div class="list-info"><div class="list-name">${a.mensaje}</div><div class="list-sub">${a.dispositivo}</div></div><span class="tag rust">Urgente</span></div>`;
+      });
+      setInnerHTML(alertPanel, html);
+    }
+  } catch(e) {}
+
+  try {
+    const disps = await (await fetch(API + '/admin/dispositivos', authGet())).json();
+    const tbody = document.querySelector('#screen-admin table tbody');
+    if (tbody) {
+      tbody.innerHTML = disps.map(d => {
+        const estado = d.activo ? '<span class="tag green">Activo</span>' : '<span class="tag rust">Inactivo</span>';
+        return `<tr><td>${d.nombre}</td><td><span class="tag green">${d.tipo_servicio || '-'}</span></td><td style="color:var(--primary);font-weight:700">${d.num_beneficiarios}</td><td>${d.prescriptor || '-'}</td><td>${estado}</td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>`;
+      }).join('');
+    }
+  } catch(e) {}
+
+  try {
+    const users  = await (await fetch(API + '/admin/usuarios', authGet())).json();
+    const rolPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[0];
+    if (rolPanel) {
+      const disps2 = users.filter(u => u.rol === 'dispositivo').length;
+      const prescs = users.filter(u => u.rol === 'prescriptor').length;
+      const benefs = users.filter(u => u.rol === 'beneficiario').length;
+      const total  = Math.max(disps2, prescs, benefs, 1);
+      const fills  = rolPanel.querySelectorAll('.seed-fill');
+      const nums   = rolPanel.querySelectorAll('div[style*="font-weight:700"]');
+      if (fills[0]) fills[0].style.width = Math.round(disps2 / total * 100) + '%';
+      if (fills[1]) fills[1].style.width = Math.round(prescs  / total * 100) + '%';
+      if (fills[2]) fills[2].style.width = Math.round(benefs  / total * 100) + '%';
+      if (nums[0])  nums[0].textContent  = disps2;
+      if (nums[1])  nums[1].textContent  = prescs;
+      if (nums[2])  nums[2].textContent  = benefs;
+    }
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

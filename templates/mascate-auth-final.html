@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASCATE — Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══ LIVING ARCHIVE TOKENS ═══ */
+:root {
+  --surface:            #00180d;
+  --surface-low:        #001f10;
+  --surface-mid:        #052e18;
+  --surface-high:       #0a3d20;
+  --surface-highest:    #0f4a28;
+  --primary:            #f6be39;
+  --on-primary:         #3d2c00;
+  --primary-container:  #52390a;
+  --secondary:          #95d4b3;
+  --secondary-container:#0d3d28;
+  --tertiary:           #d2bbff;
+  --error:              #e85d3a;
+  --on-bg:              #c1ecd4;
+  --on-bg-muted:        #5f9e78;
+  --on-surface:         #e8f5ec;
+  --outline-variant:    rgba(149,212,179,0.15);
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: var(--surface);
+  color: var(--on-bg);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grain texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+}
+
+/* leaf pattern */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8 C28 20 16 26 18 40 C20 54 34 57 40 72 C46 57 60 54 62 40 C64 26 52 20 40 8Z' fill='%2395d4b3' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
+
+/* ── LEFT PANEL ── */
+.left {
+  background: var(--surface-low);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  position: relative; overflow: hidden;
+}
+
+.blob { position: absolute; border-radius: 50%; pointer-events: none; }
+.blob-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(10,61,32,0.9) 0%, transparent 70%);
+  top: -150px; right: -150px;
+}
+.blob-2 {
+  width: 360px; height: 360px;
+  background: radial-gradient(circle, rgba(246,190,57,0.12) 0%, transparent 65%);
+  bottom: -100px; left: -100px;
+}
+.blob-3 {
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(149,212,179,0.08) 0%, transparent 70%);
+  top: 40%; right: 1rem;
+}
+
+/* ── LOGO ── */
+.logo-area {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; gap: 1rem;
+}
+.logo-placeholder {
+  width: 60px; height: 60px; border-radius: 50%;
+  border: 2px dashed rgba(149,212,179,0.3);
+  background: rgba(149,212,179,0.05);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.logo-placeholder img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.placeholder-text { font-size:0.48rem; color:rgba(149,212,179,0.4); text-align:center; line-height:1.3; padding:4px; }
+
+.brand-name {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 1.6rem; font-weight: 900;
+  color: var(--primary);
+  letter-spacing: -0.04em; line-height: 1;
+}
+.brand-sub {
+  font-size: 0.63rem; color: var(--secondary);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-top: 0.25rem; font-weight: 500; opacity: 0.7;
+}
+
+/* ── HERO ── */
+.left-hero { position: relative; z-index: 2; }
+
+.left-hero h1 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+  font-weight: 900; line-height: 1.08;
+  margin-bottom: 1.3rem;
+  color: var(--on-surface);
+}
+.left-hero h1 .accent-gold   { color: var(--primary); }
+.left-hero h1 .accent-green  { color: var(--secondary); }
+
+.left-hero p {
+  color: var(--on-bg-muted);
+  font-size: 0.95rem; line-height: 1.7;
+  max-width: 340px; font-weight: 400;
+}
+
+.pills { display:flex; flex-wrap:wrap; gap:0.45rem; margin-top:1.8rem; position:relative; z-index:2; }
+.pill {
+  background: rgba(149,212,179,0.08);
+  border: 1px solid rgba(149,212,179,0.18);
+  color: var(--secondary);
+  font-size: 0.74rem; font-weight: 500;
+  padding: 0.28rem 0.85rem; border-radius: 999px;
+  display: flex; align-items: center; gap: 0.35rem;
+  backdrop-filter: blur(4px);
+}
+
+.mascote-badge {
+  position: relative; z-index: 2;
+  display: inline-flex; align-items: center; gap: 0.7rem;
+  background: rgba(246,190,57,0.08);
+  border: 1px solid rgba(246,190,57,0.2);
+  border-radius: var(--radius-md); padding: 0.65rem 1rem;
+  margin-top: 2rem; backdrop-filter: blur(8px);
+}
+.badge-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px dashed rgba(246,190,57,0.4);
+  background: rgba(246,190,57,0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.badge-text { font-size: 0.72rem; color: var(--on-bg-muted); line-height: 1.45; }
+.badge-text strong { display:block; color: var(--primary); font-size: 0.78rem; margin-bottom:0.1rem; }
+
+.left-footer {
+  font-size: 0.7rem; color: var(--on-bg-muted);
+  opacity: 0.5; position: relative; z-index: 2;
+}
+
+/* ── RIGHT PANEL ── */
+.right {
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem; position: relative;
+  background: var(--surface);
+}
+.right::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle at top right, rgba(246,190,57,0.05), transparent 70%);
+  pointer-events: none;
+}
+
+/* ── CARD ── */
+.card {
+  background: rgba(5,46,24,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  padding: 2.4rem 2.6rem;
+  width: 100%; max-width: 440px;
+  border: 1px solid var(--outline-variant);
+  box-shadow: 0 32px 64px rgba(0,0,0,0.35), 0 1px 0 rgba(149,212,179,0.06) inset;
+  animation: fadeUp 0.5s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  background: var(--surface-low);
+  border-radius: var(--radius-sm);
+  padding: 4px; margin-bottom: 1.8rem;
+  border: 1px solid var(--outline-variant);
+}
+.tab-btn {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.88rem; font-weight: 500;
+  color: var(--on-bg-muted);
+  padding: 0.55rem 0; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--primary);
+  color: var(--on-primary); font-weight: 700;
+  box-shadow: 0 4px 16px rgba(246,190,57,0.3);
+}
+
+/* ── FORM TEXT ── */
+.form-title {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 1.15rem; font-weight: 700;
+  margin-bottom: 0.3rem; color: var(--on-surface);
+}
+.form-sub { font-size: 0.82rem; color: var(--on-bg-muted); margin-bottom: 1.5rem; line-height: 1.55; }
+
+/* ── FIELDS ── */
+.field { margin-bottom: 0.9rem; }
+.field label {
+  display: block; font-size: 0.71rem; font-weight: 600;
+  color: var(--secondary); margin-bottom: 0.3rem;
+  text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.8;
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  background: var(--surface-high);
+  border: none;
+  border-bottom: 2px solid rgba(149,212,179,0.2);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  padding: 0.7rem 1rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.92rem; color: var(--on-surface);
+  outline: none; -webkit-appearance: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-bottom-color: var(--primary);
+  background: var(--surface-highest);
+  box-shadow: 0 4px 16px rgba(246,190,57,0.08);
+}
+.field input::placeholder,
+.field textarea::placeholder { color: var(--on-bg-muted); opacity: 0.5; }
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%235f9e78' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 1rem center;
+  padding-right: 2.5rem; cursor: pointer;
+}
+.field select option { background: var(--surface-mid); }
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ── ROLE SELECTOR ── */
+.role-label {
+  font-size: 0.71rem; font-weight: 600; color: var(--secondary);
+  text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.8;
+  margin-bottom: 0.6rem;
+}
+.role-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 0.5rem; margin-bottom: 1rem;
+}
+.role-card {
+  background: var(--surface-high);
+  border-radius: var(--radius-md);
+  padding: 0.8rem;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; gap: 0.2rem;
+  border: 1px solid transparent;
+}
+.role-card:hover {
+  background: var(--surface-highest);
+  border-color: rgba(246,190,57,0.3);
+  transform: translateY(-1px);
+}
+.role-card.selected {
+  background: rgba(246,190,57,0.08);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(246,190,57,0.1), 0 8px 24px rgba(246,190,57,0.08);
+}
+.role-icon { font-size: 1.3rem; }
+.role-name { font-size: 0.76rem; font-weight: 600; color: var(--on-surface); }
+.role-desc { font-size: 0.65rem; color: var(--on-bg-muted); line-height: 1.3; }
+.role-card.full { grid-column: 1/-1; flex-direction: row; align-items: center; gap: 0.75rem; }
+
+/* ── DYNAMIC FIELDS ── */
+.dynamic-fields { display: none; }
+.dynamic-fields.visible { display: block; animation: fadeUp 0.3s ease both; }
+
+/* ── BUTTON ── */
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, #f6be39 0%, #e8a820 100%);
+  color: var(--on-primary); border: none;
+  border-radius: var(--radius-xl);
+  padding: 0.9rem;
+  font-family: 'Epilogue', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.02em;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+  box-shadow: 0 8px 24px rgba(246,190,57,0.3);
+  position: relative; overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.45s;
+}
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 32px rgba(246,190,57,0.4);
+}
+.btn-primary:hover::after { transform: translateX(100%); }
+.btn-primary:active { transform: scale(0.98); }
+
+.divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  color: var(--on-bg-muted); font-size: 0.75rem; margin: 1.1rem 0; opacity: 0.6;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--outline-variant);
+}
+
+.link-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--secondary); font-size: 0.85rem; font-weight: 500;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  text-decoration: underline; text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+.link-btn:hover { color: var(--primary); }
+
+/* pw toggle */
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 2.8rem; }
+.pw-toggle {
+  position: absolute; right: 0.85rem; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--on-bg-muted); padding: 0;
+  display: flex; align-items: center; opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.pw-toggle:hover { opacity: 1; }
+
+/* ── SUCCESS ── */
+.success-screen {
+  display: none; flex-direction: column;
+  align-items: center; text-align: center;
+  padding: 1rem 0; animation: fadeUp 0.4s ease both;
+}
+.success-screen.visible { display: flex; }
+.success-icon {
+  width: 72px; height: 72px;
+  background: rgba(149,212,179,0.1);
+  border: 2px solid var(--secondary);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; margin-bottom: 1rem;
+  box-shadow: 0 0 40px rgba(149,212,179,0.15);
+}
+.success-screen h2 {
+  font-family: 'Epilogue', sans-serif;
+  font-size: 1.1rem; font-weight: 700;
+  margin-bottom: 0.5rem; color: var(--primary);
+}
+.success-screen p { font-size: 0.88rem; color: var(--on-bg-muted); margin-bottom: 1.5rem; line-height: 1.55; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(5,46,24,0.95);
+  backdrop-filter: blur(16px);
+  color: var(--tertiary);
+  padding: 0.75rem 1.5rem; border-radius: 999px;
+  font-size: 0.83rem; font-weight: 500;
+  transition: transform 0.3s; z-index: 999;
+  white-space: nowrap;
+  border: 1px solid rgba(210,187,255,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: rgba(42,18,8,0.95); color: var(--error); border-color: rgba(232,93,58,0.3); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .left { padding: 2rem; min-height: 260px; }
+  .left-hero h1 { font-size: 1.8rem; }
+  .right { padding: 1.5rem; align-items: flex-start; padding-top: 2rem; }
+  .card { padding: 1.8rem 1.5rem; }
+}
+@media (max-width: 480px) {
+  .role-grid { grid-template-columns: 1fr 1fr; }
+  .role-card.full { grid-column: 1/-1; }
+  .row-2 { grid-template-columns: 1fr; }
+}
+</style>
+
+<!-- SVG reutilizable para el ojo de contraseña -->
+<svg style="display:none">
+  <symbol id="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </symbol>
+</svg>
+
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ══ LEFT ══ -->
+  <div class="left">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="logo-area">
+      <div class="logo-placeholder" id="logoPlaceholder">
+        <!-- <img src="ruta/al/logo-mascate.png" alt="MASCATE logo"> -->
+        <span class="placeholder-text">LOGO<br>MASCATE</span>
+      </div>
+      <div>
+        <div class="brand-name">MASCATE</div>
+        <div class="brand-sub">Mesa Autónoma · SPA &amp; Cannábica</div>
+      </div>
+    </div>
+
+    <div class="left-hero">
+      <h1>Arte, deporte<br><span class="accent-green">y comunidad</span><br><span class="accent-gold">desde Techotiva.</span></h1>
+      <p>Acompañamos a jóvenes a través de actividades artísticas, culturales y deportivas, construyendo redes de cuidado autónomo en el territorio.</p>
+
+      <div class="pills">
+        <span class="pill">🎨 Arte</span>
+        <span class="pill">⚽ Deporte</span>
+        <span class="pill">🎵 Cultura</span>
+        <span class="pill">🌿 Ambiente</span>
+        <span class="pill">🤝 Comunidad</span>
+      </div>
+
+      <div class="mascote-badge">
+        <div class="badge-icon">
+          <!-- <img src="ruta/logo-mascate-sm.png" style="width:100%;height:100%;border-radius:50%;object-fit:cover"> -->
+          🌱
+        </div>
+        <div class="badge-text">
+          <strong>Seguimiento Piloto 1</strong>
+          Sistema de registro comunitario SATC
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">MASCATE © 2026 · Mesa Autónoma de SPA y Cannábica Techotiva</div>
+  </div>
+
+  <!-- ══ RIGHT ══ -->
+  <div class="right">
+    <div class="card" id="mainCard">
+
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Ingresar</button>
+        <button class="tab-btn" id="tabReg" onclick="switchTab('register')">Registrarme</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginView">
+        <div class="form-title">Bienvenidx de vuelta</div>
+        <div class="form-sub">Ingresa tus credenciales para acceder al sistema MASCATE</div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="loginEmail" placeholder="tucorreo@ejemplo.com">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <div class="pw-wrap">
+            <input type="password" id="loginPw" placeholder="••••••••">
+            <button class="pw-toggle" onclick="togglePw('loginPw',this)" tabindex="-1">
+              <svg width="17" height="17"><use href="#eye-open"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Entrar →</button>
+        <div class="divider">¿no tienes cuenta?</div>
+        <div style="text-align:center"><button class="link-btn" onclick="switchTab('register')">Crear cuenta</button></div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="registerView" style="display:none">
+        <div class="form-title">Crear cuenta</div>
+        <div class="form-sub">Elige cómo participas en MASCATE para personalizar tu registro</div>
+
+        <div class="role-label">¿Cuál es tu rol?</div>
+        <div class="role-grid" id="roleGrid">
+          <div class="role-card" onclick="selectRole('dispositivo')" id="role-dispositivo">
+            <span class="role-icon">🏘️</span>
+            <span class="role-name">Dispositivo CBC</span>
+            <span class="role-desc">Base comunitaria o club</span>
+          </div>
+          <div class="role-card" onclick="selectRole('prescriptor')" id="role-prescriptor">
+            <span class="role-icon">🎯</span>
+            <span class="role-name">Prescriptxr</span>
+            <span class="role-desc">Facilitadxr de actividades</span>
+          </div>
+          <div class="role-card" onclick="selectRole('beneficiario')" id="role-beneficiario">
+            <span class="role-icon">🌱</span>
+            <span class="role-name">Beneficiarix</span>
+            <span class="role-desc">Participante del colectivo</span>
+          </div>
+        </div>
+
+        <!-- DISPOSITIVO -->
+        <div class="dynamic-fields" id="fields-dispositivo">
+          <div class="field"><label>Nombre del dispositivo</label><input type="text" id="regDispNombre" placeholder="Ej: Club Arte Vivo Techotiva"></div>
+          <div class="field"><label>Lugar de actividades</label>
+            <select id="regDispLugar"><option value="">Selecciona...</option><option>Parque</option><option>Salón comunal</option><option>Sede propia</option><option>Espacio de reserva natural</option><option>Otro</option></select>
+          </div>
+          <div class="field"><label>Ubicación / Dirección</label><input type="text" id="regDispUbicacion" placeholder="Barrio, localidad o coordenadas"></div>
+          <div class="field"><label>Tipo de servicio</label>
+            <select id="regDispTipo"><option value="">Selecciona...</option><option>Artístico</option><option>Cultural</option><option>Deportivo</option><option>Centro de escucha</option><option>Psicoterapia</option><option>Educativo</option><option>Ambiental</option></select>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>Día de actividad</label><input type="text" id="regDispDia" placeholder="Ej: Lunes, Jueves"></div>
+            <div class="field"><label>Hora</label><input type="time" id="regDispHora"></div>
+          </div>
+          <div class="field"><label>Teléfono</label><input type="tel" id="regDispTel" placeholder="+57 300 000 0000"></div>
+          <div class="field"><label>Redes sociales</label><input type="text" id="regDispRedes" placeholder="@usuario o enlace"></div>
+          <div class="field"><label>Correo</label><input type="email" id="regDispEmail" placeholder="correo@dispositivo.com"></div>
+          <div class="field"><label>Contraseña</label>
+            <div class="pw-wrap"><input type="password" id="p1" placeholder="••••••••">
+              <button class="pw-toggle" onclick="togglePw('p1',this)" tabindex="-1"><svg width="17" height="17"><use href="#eye-open"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRESCRIPTOR -->
+        <div class="dynamic-fields" id="fields-prescriptor">
+          <div class="field"><label>Nombre completo</label><input type="text" id="regPrescNombre" placeholder="Tu nombre"></div>
+          <div class="field"><label>Perfil / Disciplina</label>
+            <select id="regPrescDisciplina"><option value="">Selecciona tu área...</option><option>Arte y cultura</option><option>Deporte</option><option>Psicología</option><option>Educación</option><option>Trabajo social</option><option>Otro</option></select>
+          </div>
+          <div class="field"><label>Teléfono</label><input type="tel" id="regPrescTel" placeholder="+57 300 000 0000"></div>
+          <div class="field"><label>Dispositivo al que perteneces</label>
+            <select id="regPrescDisp"><option value="">Cargando dispositivos...</option></select>
+          </div>
+          <div class="field"><label>Correo</label><input type="email" id="regPrescEmail" placeholder="correo@ejemplo.com"></div>
+          <div class="field"><label>Contraseña</label>
+            <div class="pw-wrap"><input type="password" id="p2" placeholder="••••••••">
+              <button class="pw-toggle" onclick="togglePw('p2',this)" tabindex="-1"><svg width="17" height="17"><use href="#eye-open"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BENEFICIARIO -->
+        <div class="dynamic-fields" id="fields-beneficiario">
+          <div class="field"><label>Nombre (o apodo)</label><input type="text" id="regBenefNombre" placeholder="¿Cómo te llamamos?"></div>
+          <div class="field"><label>Correo</label><input type="email" id="regBenefEmail" placeholder="correo@ejemplo.com"></div>
+          <div class="field"><label>Contraseña</label>
+            <div class="pw-wrap"><input type="password" id="p4" placeholder="••••••••">
+              <button class="pw-toggle" onclick="togglePw('p4',this)" tabindex="-1"><svg width="17" height="17"><use href="#eye-open"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="submitWrap" style="display:none">
+          <button class="btn-primary" onclick="doRegister()">Crear mi cuenta →</button>
+        </div>
+        <div class="divider">¿ya tienes cuenta?</div>
+        <div style="text-align:center"><button class="link-btn" onclick="switchTab('login')">Iniciar sesión</button></div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="success-screen" id="successView">
+        <div class="success-icon">🌱</div>
+        <h2>¡Bienvenidx a MASCATE!</h2>
+        <p>Tu cuenta ha sido creada. Pronto recibirás una confirmación en tu correo y podrás acceder al sistema.</p>
+        <button class="btn-primary" style="max-width:220px" onclick="goToLogin()">Ir a ingresar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://127.0.0.1:8080';
+  let selectedRole = null;
+
+  // SVG del ojo: abierto y cerrado
+  const EYE_OPEN   = '<svg width="17" height="17"><use href="#eye-open"/></svg>';
+  const EYE_CLOSED = '<svg width="17" height="17"><use href="#eye-closed"/></svg>';
+
+  // Cargar dispositivos para el select de prescriptor
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch(API + '/dispositivos/');
+      const disps = await res.json();
+      const sel = document.getElementById('regPrescDisp');
+      sel.innerHTML = '<option value="">Selecciona dispositivo...</option>';
+      disps.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.nombre}</option>`; });
+    } catch(e) { console.log('Sin conexion al backend'); }
+  });
+
+  function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabReg').classList.toggle('active', tab === 'register');
+    document.getElementById('loginView').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('registerView').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('successView').classList.remove('visible');
+    document.getElementById('successView').style.display = '';
+  }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('role-' + role).classList.add('selected');
+    document.querySelectorAll('.dynamic-fields').forEach(f => f.classList.remove('visible'));
+    document.getElementById('fields-' + role).classList.add('visible');
+    document.getElementById('submitWrap').style.display = 'block';
+  }
+
+  function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    const isPassword = inp.type === 'password';
+    inp.type = isPassword ? 'text' : 'password';
+    btn.innerHTML = isPassword ? EYE_CLOSED : EYE_OPEN;
+  }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '') + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function val(id) { return document.getElementById(id)?.value?.trim() ?? ''; }
+
+  async function doLogin() {
+    const email = val('loginEmail');
+    const pw    = document.getElementById('loginPw').value;
+    if (!email || !pw) { showToast('Por favor completa todos los campos', true); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { showToast('Correo no valido', true); return; }
+    showToast('Verificando credenciales...');
+    try {
+      const res = await fetch(API + '/auth/login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password: pw })
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.detail || 'Credenciales incorrectas', true); return; }
+      localStorage.setItem('mascate_token', data.access_token);
+      localStorage.setItem('mascate_rol', data.rol);
+      localStorage.setItem('mascate_nombre', data.nombre);
+      showToast('Bienvenidx, ' + data.nombre + '!');
+      setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+    } catch(e) {
+      showToast('Error de conexion con el servidor', true);
+    }
+  }
+
+  // Campos requeridos por rol
+  const ROL_FIELDS = {
+    dispositivo: {
+      email:            'regDispEmail',
+      password:         'p1',
+      nombre:           'regDispNombre',
+      lugar_actividades:'regDispLugar',
+      ubicacion:        'regDispUbicacion',
+      tipo_servicio:    'regDispTipo',
+      dia_actividad:    'regDispDia',
+      hora_actividad:   'regDispHora',
+      telefono:         'regDispTel',
+      redes_sociales:   'regDispRedes',
+    },
+    prescriptor: {
+      email:             'regPrescEmail',
+      password:          'p2',
+      nombre_completo:   'regPrescNombre',
+      perfil_disciplina: 'regPrescDisciplina',
+      telefono:          'regPrescTel',
+      _dispositivo_id:   'regPrescDisp',   // prefijo _ = tratamiento especial
+    },
+    beneficiario: {
+      email:       'regBenefEmail',
+      password:    'p4',
+      nombre_apodo:'regBenefNombre',
+    },
+  };
+
+  // Validaciones mínimas por rol
+  const ROL_REQUIRED = {
+    dispositivo:  { field: 'nombre',           msg: 'Ingresa el nombre del dispositivo' },
+    prescriptor:  { field: 'nombre_completo',  msg: 'Ingresa tu nombre completo' },
+    beneficiario: { field: 'nombre_apodo',     msg: 'Ingresa tu nombre o apodo' },
+  };
+
+  async function doRegister() {
+    if (!selectedRole) { showToast('Elige un rol primero', true); return; }
+    const mapping = ROL_FIELDS[selectedRole];
+    const p = { rol: selectedRole };
+
+    for (const [key, id] of Object.entries(mapping)) {
+      if (key === '_dispositivo_id') {
+        const did = document.getElementById(id).value;
+        if (did) p.dispositivo_id = parseInt(did);
+      } else {
+        p[key] = document.getElementById(id).value.trim();
+      }
+    }
+
+    // Validación específica del rol
+    const req = ROL_REQUIRED[selectedRole];
+    if (req && !p[req.field]) { showToast(req.msg, true); return; }
+    if (!p.email || !p.password) { showToast('Completa correo y contraseña', true); return; }
+
+    showToast('Creando tu cuenta...');
+    try {
+      const res = await fetch(API + '/auth/register', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(p)
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.detail || 'Error al registrar', true); return; }
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('registerView').style.display = 'none';
+      const sv = document.getElementById('successView');
+      sv.style.display = 'flex'; sv.classList.add('visible');
+    } catch(e) {
+      showToast('Error de conexion con el servidor', true);
+    }
+  }
+
+  function goToLogin() {
+    document.getElementById('successView').classList.remove('visible');
+    document.getElementById('successView').style.display = 'none';
+    switchTab('login');
+  }
+</script>
+</body>
+</html>
