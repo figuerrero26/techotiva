@@ -251,6 +251,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
+
+
 # CORS — permitir peticiones desde los HTML locales
 app.add_middleware(
     CORSMiddleware,
