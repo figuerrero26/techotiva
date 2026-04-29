@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Proyecto Techotiva — Grupo Noche 2026-1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="parts/mascate-docs.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🌱</div>
+      <div>
+        <div class="sb-brand-name">Techotiva</div>
+        <div class="sb-brand-sub">Grupo Noche 2026-1</div>
+      </div>
+    </div>
+
+    <span class="sb-section">Introducción</span>
+    <a class="sb-link active" onclick="nav(this,'intro')"><span class="ic">📖</span> Descripción general</a>
+    <a class="sb-link" onclick="nav(this,'ecosistema')"><span class="ic">🗺️</span> Ecosistema del proyecto</a>
+    <a class="sb-link" onclick="nav(this,'stack')"><span class="ic">🧱</span> Stack tecnológico</a>
+    <a class="sb-link" onclick="nav(this,'estructura')"><span class="ic">📁</span> Estructura de archivos</a>
+
+    <span class="sb-section">Frontend — Auth</span>
+    <a class="sb-link" onclick="nav(this,'tokens')"><span class="ic">🎨</span> Design tokens</a>
+    <a class="sb-link" onclick="nav(this,'auth-html')"><span class="ic">📄</span> mascate-auth.html</a>
+    <a class="sb-link" onclick="nav(this,'auth-css')"><span class="ic">🖌️</span> auth.css</a>
+    <a class="sb-link" onclick="nav(this,'auth-js')"><span class="ic">⚙️</span> auth.js</a>
+
+    <span class="sb-section">Frontend — Dashboard</span>
+    <a class="sb-link" onclick="nav(this,'dashboard-html')"><span class="ic">📄</span> mascate-dashboard.html</a>
+    <a class="sb-link" onclick="nav(this,'dashboard-css')"><span class="ic">🖌️</span> dashboard.css</a>
+    <a class="sb-link" onclick="nav(this,'dashboard-js')"><span class="ic">⚙️</span> dashboard.js</a>
+    <a class="sb-link" onclick="nav(this,'componentes')"><span class="ic">🧩</span> Componentes UI</a>
+
+    <span class="sb-section">Backend / API</span>
+    <a class="sb-link" onclick="nav(this,'backend-espera')"><span class="ic">⏸️</span> Docs backend (pendiente)</a>
+    <a class="sb-link" onclick="nav(this,'contrato-api')"><span class="ic">🤝</span> Contrato frontend ↔ API</a>
+    <a class="sb-link" onclick="nav(this,'roles-permisos')"><span class="ic">🛡️</span> Roles y permisos</a>
+
+    <span class="sb-section">Desarrollo</span>
+    <a class="sb-link" onclick="nav(this,'pendientes')"><span class="ic">⏳</span> TODOs y pendientes</a>
+    <a class="sb-link" onclick="nav(this,'changelog')"><span class="ic">📝</span> Changelog</a>
+    <a class="sb-link" onclick="nav(this,'notas')"><span class="ic">💬</span> Notas del equipo</a>
+
+    <div class="sb-version">
+      <span class="version-tag">en desarrollo</span>
+      <div style="font-size:0.65rem;color:var(--on-bg-muted);margin-top:0.4rem">Piloto 1 · SATC 2026</div>
+    </div>
+  </nav>
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════
+         INTRO
+    ══════════════════════════════════════ -->
+    <section class="section" id="intro">
+      <div class="page-header">
+        <div class="page-header-meta">
+          <span class="badge badge-pilot">Piloto 1</span>
+          <span class="badge badge-dev">En desarrollo</span>
+          <span class="badge badge-open">Documento vivo</span>
+        </div>
+        <h1>Proyecto Techotiva <span class="accent">Docs</span></h1>
+        <p class="page-desc" contenteditable="true">Documentación técnica del módulo de autenticación y dashboards del sistema SATC — desarrollado por el Grupo Noche 2026-1. Este módulo es una pieza dentro de un ecosistema más amplio que incluye una landing page separada y un backend independiente.</p>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-card-label">Versión actual</div>
+          <div class="info-card-val" contenteditable="true">0.1.0-alpha</div>
+          <div class="info-card-sub">Piloto en desarrollo</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Nuestro módulo</div>
+          <div class="info-card-val">Login + Dashboards</div>
+          <div class="info-card-sub">HTML · CSS · JS vanilla</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">API conectada a</div>
+          <div class="info-card-val">FastAPI (Python)</div>
+          <div class="info-card-sub" contenteditable="true">localhost:8080 — pendiente URL prod</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">Estado</div>
+          <div class="info-card-val" style="color:var(--error)">🔴 Prototipo</div>
+          <div class="info-card-sub">No en producción aún</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>Este documento es <strong>editable directamente en el navegador</strong>. Hacé clic en cualquier bloque con <span style="font-style:italic;color:var(--on-bg-muted)">✏️ editar</span> para modificarlo. Los cambios se pierden al cerrar la pestaña — guardá el HTML para conservarlos.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         ECOSISTEMA
+    ══════════════════════════════════════ -->
+    <section class="section" id="ecosistema">
+      <h2>🗺️ Ecosistema del proyecto</h2>
+      <p>El sistema Techotiva no es una sola app: está compuesto por tres partes independientes desarrolladas por equipos distintos. Este documento cubre <strong>únicamente el módulo de login y dashboards</strong>.</p>
+
+      <div class="ecosystem-grid">
+
+        <div class="eco-card eco-external">
+          <div class="eco-header">
+            <span class="eco-icon">🌐</span>
+            <div>
+              <div class="eco-name">Landing page</div>
+              <div class="eco-team">Otro equipo</div>
+            </div>
+            <span class="badge badge-ext">Externo</span>
+          </div>
+          <div class="eco-desc" contenteditable="true">Muestra los dispositivos CBC, información de la marca MASCATE y sus objetivos comunitarios. Es el punto de entrada público al ecosistema.</div>
+          <div class="eco-footer">
+            <span class="eco-fact">📤 Redirige a <code style="font-family:monospace">/login</code> de nuestro sistema</span>
+          </div>
+        </div>
+
+        <div class="eco-arrow">→</div>
+
+        <div class="eco-card eco-ours">
+          <div class="eco-header">
+            <span class="eco-icon">🔐</span>
+            <div>
+              <div class="eco-name">Login + Dashboards</div>
+              <div class="eco-team">Grupo Noche 2026-1 — este repo</div>
+            </div>
+            <span class="badge badge-pilot">Nuestro</span>
+          </div>
+          <div class="eco-desc">Autenticación de usuarixs y dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin). Todo lo que documenta este archivo.</div>
+          <div class="eco-footer">
+            <span class="eco-fact">🔄 Se comunica con el backend vía API REST</span>
+          </div>
+        </div>
+
+        <div class="eco-arrow">⇅</div>
+
+        <div class="eco-card eco-backend">
+          <div class="eco-header">
+            <span class="eco-icon">⚙️</span>
+            <div>
+              <div class="eco-name">Backend / API</div>
+              <div class="eco-team">Equipo de backend</div>
+            </div>
+            <span class="badge badge-ext">Externo</span>
+          </div>
+          <div class="eco-desc" contenteditable="true">API REST en FastAPI (Python). Gestiona usuarios, autenticación, dispositivos, actividades y seguimientos. JWT pendiente de implementar.</div>
+          <div class="eco-footer">
+            <span class="eco-fact">📋 Docs pendientes — ver sección <a onclick="nav(document.querySelector('[onclick*=backend-espera]'),'backend-espera')" style="color:var(--primary);cursor:pointer">Backend / API</a></span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="callout warn" style="margin-top:1.25rem">
+        <span class="callout-icon">⚠️</span>
+        <div contenteditable="true"><strong>Límite de responsabilidad:</strong> Este equipo no desarrolla la landing page ni el backend. Si hay cambios en la URL de redirección de la landing o en los contratos de la API, el equipo correspondiente debe notificarnos para actualizar <code style="font-family:monospace">auth.js</code> y <code style="font-family:monospace">dashboard.js</code>.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         STACK
+    ══════════════════════════════════════ -->
+    <section class="section" id="stack">
+      <h2>🧱 Stack tecnológico</h2>
+
+      <h3>Nuestro frontend</h3>
+      <table class="ep-table">
+        <thead><tr><th>Tecnología</th><th>Uso en el proyecto</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>HTML5</td><td>Estructura de páginas — auth y dashboard</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td>CSS3 + custom properties</td><td>Estilos, design tokens, layout (sin framework CSS)</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td>JavaScript vanilla (ES6+)</td><td>Lógica de UI, fetch a la API, manejo de estado local</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td>Epilogue (Google Fonts)</td><td>Tipografía de títulos y headings</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td>Be Vietnam Pro (Google Fonts)</td><td>Tipografía de cuerpo y UI</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td>JetBrains Mono (Google Fonts)</td><td>Código en documentación</td><td><span class="tag-green">Solo en docs</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Backend (equipo externo)</h3>
+      <table class="ep-table">
+        <thead><tr><th>Tecnología</th><th>Rol</th><th>Estado conocido</th></tr></thead>
+        <tbody>
+          <tr><td>FastAPI (Python)</td><td>API REST, manejo de rutas y modelos</td><td><span class="tag-green">Activo</span></td></tr>
+          <tr><td contenteditable="true">Base de datos</td><td contenteditable="true">Persistencia de usuarios, actividades, seguimientos</td><td><span class="tag-yellow">Por confirmar</span></td></tr>
+          <tr><td>JWT / Bearer tokens</td><td>Autenticación y autorización por rol</td><td><span class="tag-yellow">Pendiente implementar</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div>La constante <code style="font-family:monospace;background:var(--surface-highest);padding:0.1rem 0.4rem;border-radius:4px">API</code> está hardcodeada como <code style="font-family:monospace;background:var(--surface-highest);padding:0.1rem 0.4rem;border-radius:4px">http://127.0.0.1:8080</code> en <strong>auth.js</strong> y <strong>dashboard.js</strong>. Cuando el equipo de backend confirme la URL de producción, hay que actualizar esa línea en ambos archivos.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         ESTRUCTURA
+    ══════════════════════════════════════ -->
+    <section class="section" id="estructura">
+      <h2>📁 Estructura de archivos</h2>
+      <p>El frontend está dividido en archivos separados por responsabilidad: estructura (HTML), estilos (CSS) y comportamiento (JS). Los archivos estáticos los sirve el backend de FastAPI.</p>
+
+      <div class="file-tree">
+<span class="dir">proyecto/</span>
+├── <span class="dir">static/</span>
+│   ├── <span class="dir">css/</span>
+│   │   ├── tokens.css             <span class="note">← Variables globales: colores, tipografía, radios</span>
+│   │   ├── auth.css               <span class="note">← Layout y estilos exclusivos de la pantalla de acceso</span>
+│   │   └── dashboard.css          <span class="note">← Layout y estilos de los dashboards (sidebar, cards, etc.)</span>
+│   └── <span class="dir">js/</span>
+│       ├── auth.js                <span class="note">← Lógica de login/registro + llamadas a /auth/*</span>
+│       └── dashboard.js           <span class="note">← Lógica de dashboards + fetch de datos por rol</span>
+├── <span class="dir">templates/</span>
+│   ├── mascate-auth-final.html    <span class="note">← Página de login y registro</span>
+│   └── mascate-dashboards-final.html  <span class="note">← Dashboards (4 pantallas en un mismo HTML)</span>
+└── <span class="dir">backend/</span>                   <span class="note">← Código del equipo de backend (no documentado aquí)</span>
+      </div>
+
+      <h3>Dependencias entre archivos</h3>
+      <p>El orden de carga importa. Cada HTML carga primero los tokens (base) y luego sus estilos específicos:</p>
+      <div class="code-block"><span class="cm"><!-- En mascate-auth-final.html --></span>
+&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/tokens.css"</span>&gt;   <span class="cm">← primero: variables</span>
+&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/auth.css"</span>&gt;     <span class="cm">← segundo: estilos de auth</span>
+&lt;script src=<span class="str">"/static/js/auth.js"</span>&gt;&lt;/script&gt;              <span class="cm">← al final del body</span>
+
+<span class="cm"><!-- En mascate-dashboards-final.html --></span>
+&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/tokens.css"</span>&gt;
+&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/dashboard.css"</span>&gt;
+&lt;script src=<span class="str">"/static/js/dashboard.js"</span>&gt;&lt;/script&gt;</div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         TOKENS
+    ══════════════════════════════════════ -->
+    <section class="section" id="tokens">
+      <h2>🎨 tokens.css — Design tokens</h2>
+      <p>Centraliza todas las variables de diseño. <strong>Cambiar aquí afecta auth y dashboard simultáneamente.</strong> Es el único lugar donde se definen colores, radios y tipografía base.</p>
+
+      <h3>Paleta de colores</h3>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div contenteditable="true"><strong>Paleta en definición.</strong> Los valores de color aún están siendo establecidos por el equipo. Una vez confirmados, actualizar los valores de cada token acá y en <code style="font-family:monospace">tokens.css</code>. Los nombres de las variables no deben cambiar — son referenciados por auth.css y dashboard.css.</div>
+      </div>
+
+      <div class="info-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
+        <div class="info-card">
+          <div class="info-card-label">--primary</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Botones CTA, acciones principales</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--on-primary</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Texto sobre fondo primario</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--secondary</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Labels, tags de estado activo</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--tertiary</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Acentos, toasts, keywords</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--error</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Alertas urgentes, errores</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--surface</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Fondo base de la app</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--surface-low</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Panel izquierdo (auth), sidebar</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--surface-high</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Inputs, campos de formulario</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--on-bg-muted</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Textos secundarios, subtítulos</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">--outline-variant</div>
+          <div class="info-card-val" contenteditable="true">por definir</div>
+          <div class="info-card-sub">Bordes de cards y divisores</div>
+        </div>
+      </div>
+
+      <h3>Radios</h3>
+      <div class="code-block"><span class="kw">--radius-sm</span>:  8px;   <span class="cm">/* chips, inputs, tags */</span>
+<span class="kw">--radius-md</span>: 14px;   <span class="cm">/* role-cards, panels, callouts */</span>
+<span class="kw">--radius-lg</span>: 20px;   <span class="cm">/* card principal del auth */</span>
+<span class="kw">--radius-xl</span>: 28px;   <span class="cm">/* botón CTA principal */</span></div>
+
+      <h3>Tipografía base</h3>
+      <div class="code-block"><span class="cm">/* Cargadas en el &lt;head&gt; de cada HTML */</span>
+<span class="str">Epilogue</span>        → h1, h2, h3, .brand-name, .form-title
+<span class="str">Be Vietnam Pro</span>  → body, párrafos, labels, inputs, botones</div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>Los prefijos <code style="font-family:monospace">--primary-dim</code>, <code style="font-family:monospace">--secondary-dim</code>, etc., son versiones con transparencia usadas para fondos de iconos y avatares. Si se actualiza el color base, actualizar también su versión <code style="font-family:monospace">-dim</code> correspondiente.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         AUTH HTML
+    ══════════════════════════════════════ -->
+    <section class="section" id="auth-html">
+      <h2>📄 mascate-auth-final.html</h2>
+      <p>Página de acceso al sistema. Contiene el layout completo de autenticación: panel izquierdo informativo y panel derecho con el formulario. No hace fetch directo — toda la lógica vive en <code style="font-family:monospace">auth.js</code>.</p>
+
+      <h3>Estructura del HTML</h3>
+      <div class="code-block"><span class="kw">body</span>
+└── <span class="str">.layout</span>                      <span class="cm">← grid de 2 columnas</span>
+    ├── <span class="str">.left</span>                    <span class="cm">← panel visual: logo, hero, pills, badge</span>
+    │   ├── <span class="fn">.blob-1/2/3</span>           <span class="cm">← decoración de fondo (CSS puro)</span>
+    │   ├── <span class="fn">.logo-area</span>            <span class="cm">← logo + nombre de marca</span>
+    │   ├── <span class="fn">.left-hero</span>            <span class="cm">← h1, descripción, pills, badge</span>
+    │   └── <span class="fn">.left-footer</span>          <span class="cm">← pie del panel</span>
+    └── <span class="str">.right</span>                   <span class="cm">← panel funcional: card con vistas</span>
+        └── <span class="fn">#mainCard</span> .card
+            ├── <span class="fn">.tabs</span>             <span class="cm">← botones "Ingresar" / "Registrarme"</span>
+            ├── <span class="fn">#loginView</span>        <span class="cm">← formulario de login (visible por defecto)</span>
+            ├── <span class="fn">#registerView</span>     <span class="cm">← formulario de registro (oculto por defecto)</span>
+            └── <span class="fn">#successView</span>      <span class="cm">← pantalla de éxito post-registro (oculta)</span></div>
+
+      <h3>Vistas dentro del card</h3>
+      <p>Las tres vistas coexisten en el DOM. <code style="font-family:monospace">auth.js</code> las muestra/oculta con <code style="font-family:monospace">display</code> sin recargar la página:</p>
+      <div class="flow">
+        <div class="flow-step">🔑 <code style="font-family:monospace">#loginView</code></div>
+        <span class="flow-arrow">⇄</span>
+        <div class="flow-step">📝 <code style="font-family:monospace">#registerView</code></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">✅ <code style="font-family:monospace">#successView</code></div>
+      </div>
+
+      <h3>Formularios dinámicos por rol</h3>
+      <p>Dentro de <code style="font-family:monospace">#registerView</code> hay tres bloques de campos, uno por rol. Solo el del rol seleccionado se muestra (clase <code style="font-family:monospace">.visible</code> añadida por JS):</p>
+      <div class="code-block"><span class="fn">#fields-dispositivo</span>   <span class="cm">← campos: nombre, lugar, tipo, horario, tel, redes, email, pw</span>
+<span class="fn">#fields-prescriptor</span>   <span class="cm">← campos: nombre, disciplina, tel, dispositivo (select dinámico), email, pw</span>
+<span class="fn">#fields-beneficiario</span>  <span class="cm">← campos: nombre/apodo, email, pw</span></div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>El <code style="font-family:monospace">select</code> de dispositivos en el formulario de prescriptxr se llena dinámicamente al cargar la página con un <code style="font-family:monospace">fetch</code> a <code style="font-family:monospace">/dispositivos/</code>. Ver <code style="font-family:monospace">auth.js → DOMContentLoaded</code>.</div>
+      </div>
+
+      <h3>SVG reutilizable (ojo de contraseña)</h3>
+      <p>Los íconos del toggle de contraseña están definidos como <code style="font-family:monospace">&lt;symbol&gt;</code> al inicio del body y se referencian con <code style="font-family:monospace">&lt;use href="#eye-open"&gt;</code> desde los botones. No se necesita una librería de íconos.</p>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         AUTH CSS
+    ══════════════════════════════════════ -->
+    <section class="section" id="auth-css">
+      <h2>🖌️ auth.css</h2>
+      <p>Estilos exclusivos de la pantalla de acceso. Depende de <code style="font-family:monospace">tokens.css</code> para todas las variables. No debe tener colores hardcodeados — todo debe referenciar variables de tokens.</p>
+
+      <h3>Bloques principales</h3>
+      <table class="ep-table">
+        <thead><tr><th>Selector / bloque</th><th>Qué controla</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">.layout</code></td><td>Grid de 2 columnas (izquierda / derecha). En móvil: 1 columna.</td></tr>
+          <tr><td><code style="font-family:monospace">.left</code></td><td>Panel visual. Flex vertical con blobs decorativos absolutamente posicionados.</td></tr>
+          <tr><td><code style="font-family:monospace">.blob-1/2/3</code></td><td>Elementos decorativos de fondo con gradientes radiales. Solo CSS, sin imágenes.</td></tr>
+          <tr><td><code style="font-family:monospace">.card</code></td><td>Contenedor del formulario. Glassmorphism: <code style="font-family:monospace">backdrop-filter: blur</code> + borde sutil.</td></tr>
+          <tr><td><code style="font-family:monospace">.tabs</code></td><td>Selector Ingresar / Registrarme. El tab activo usa <code style="font-family:monospace">--primary</code> con sombra.</td></tr>
+          <tr><td><code style="font-family:monospace">.field</code></td><td>Wrapper de cada campo. Input con borde inferior (underline style) + focus con <code style="font-family:monospace">--primary</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">.role-grid / .role-card</code></td><td>Selector de rol en el registro. 3 columnas, seleccionado con borde <code style="font-family:monospace">--primary</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">.dynamic-fields</code></td><td><code style="font-family:monospace">display:none</code> por defecto. JS agrega <code style="font-family:monospace">.visible</code> para mostrar con animación.</td></tr>
+          <tr><td><code style="font-family:monospace">.btn-primary</code></td><td>Botón CTA grande. Gradiente, sombra, efecto shimmer en hover con pseudo-elemento.</td></tr>
+          <tr><td><code style="font-family:monospace">.pw-wrap / .pw-toggle</code></td><td>Wrapper del input de contraseña + botón toggle del ícono del ojo, posicionado absoluto.</td></tr>
+          <tr><td><code style="font-family:monospace">.success-screen</code></td><td>Pantalla post-registro. <code style="font-family:monospace">display:none</code> → <code style="font-family:monospace">flex</code> cuando JS agrega <code style="font-family:monospace">.visible</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">.toast</code></td><td>Notificación flotante en la parte inferior. Traducida fuera del viewport y animada a posición con <code style="font-family:monospace">.show</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Responsive</h3>
+      <div class="code-block"><span class="cm">/* 860px: apila el layout en 1 columna */</span>
+<span class="kw">@media</span> (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .left   { min-height: 260px; }       <span class="cm">← panel visual más compacto</span>
+}
+
+<span class="cm">/* 480px: ajustes del formulario de registro */</span>
+<span class="kw">@media</span> (max-width: 480px) {
+  .role-grid { grid-template-columns: 1fr 1fr; }  <span class="cm">← roles en 2 cols</span>
+  .row-2     { grid-template-columns: 1fr; }       <span class="cm">← día/hora en 1 col</span>
+}</div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         AUTH JS
+    ══════════════════════════════════════ -->
+    <section class="section" id="auth-js">
+      <h2>⚙️ auth.js</h2>
+      <p>Toda la lógica de la pantalla de acceso. Maneja la UI, valida campos y se comunica con la API. Sin dependencias externas.</p>
+
+      <h3>Constantes y estado global</h3>
+      <div class="code-block"><span class="kw">const</span> <span class="fn">API</span> = <span class="str">'http://127.0.0.1:8080'</span>;  <span class="cm">← cambiar a URL de producción cuando esté lista</span>
+<span class="kw">let</span> <span class="fn">selectedRole</span> = <span class="kw">null</span>;           <span class="cm">← rol activo en el formulario de registro</span></div>
+
+      <h3>Inicialización (DOMContentLoaded)</h3>
+      <p>Al cargar la página, hace un <code style="font-family:monospace">GET /dispositivos/</code> para llenar el select de dispositivos en el formulario de prescriptxr. Si el backend no responde, lo maneja silenciosamente con <code style="font-family:monospace">console.log</code>.</p>
+
+      <h3>Funciones</h3>
+      <table class="ep-table">
+        <thead><tr><th>Función</th><th>Parámetros</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code style="font-family:monospace">switchTab(tab)</code></td>
+            <td><code style="font-family:monospace">'login' | 'register'</code></td>
+            <td>Alterna visibilidad de <code style="font-family:monospace">#loginView</code> y <code style="font-family:monospace">#registerView</code>. Limpia el estado de éxito.</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">selectRole(role)</code></td>
+            <td><code style="font-family:monospace">'dispositivo' | 'prescriptor' | 'beneficiario'</code></td>
+            <td>Marca la role-card seleccionada, muestra el bloque <code style="font-family:monospace">#fields-{role}</code>, actualiza <code style="font-family:monospace">selectedRole</code>, muestra el botón de submit.</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">togglePw(id, btn)</code></td>
+            <td><code style="font-family:monospace">id</code> del input, botón</td>
+            <td>Alterna <code style="font-family:monospace">type="password"</code> ↔ <code style="font-family:monospace">type="text"</code> y swapea el ícono del ojo en el botón.</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">showToast(msg, isError)</code></td>
+            <td>texto, booleano</td>
+            <td>Muestra el toast por 3s. Si <code style="font-family:monospace">isError=true</code> aplica clase <code style="font-family:monospace">.error</code> (color distinto).</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">doLogin()</code></td>
+            <td>—</td>
+            <td>Valida email y contraseña. <code style="font-family:monospace">POST /auth/login</code>. En éxito: guarda token/rol/nombre en localStorage, redirige a <code style="font-family:monospace">/dashboard</code> con 800ms de delay.</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">doRegister()</code></td>
+            <td>—</td>
+            <td>Lee los campos del rol activo usando el mapa <code style="font-family:monospace">ROL_FIELDS</code>, valida campos requeridos, <code style="font-family:monospace">POST /auth/register</code>. En éxito: muestra <code style="font-family:monospace">#successView</code>.</td>
+          </tr>
+          <tr>
+            <td><code style="font-family:monospace">goToLogin()</code></td>
+            <td>—</td>
+            <td>Oculta el successView y vuelve al tab de login.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Estructura de datos por rol</h3>
+      <p><code style="font-family:monospace">ROL_FIELDS</code> mapea claves del payload de la API a IDs de inputs del HTML. <code style="font-family:monospace">ROL_REQUIRED</code> define qué campo es mínimo obligatorio por rol (además de email y contraseña):</p>
+      <div class="code-block"><span class="kw">const</span> <span class="fn">ROL_FIELDS</span> = {
+  dispositivo: {
+    email: <span class="str">'regDispEmail'</span>, password: <span class="str">'p1'</span>,
+    nombre: <span class="str">'regDispNombre'</span>, lugar_actividades: <span class="str">'regDispLugar'</span>,
+    <span class="cm">/* ... más campos ... */</span>
+  },
+  prescriptor: {
+    email: <span class="str">'regPrescEmail'</span>, password: <span class="str">'p2'</span>,
+    nombre_completo: <span class="str">'regPrescNombre'</span>,
+    _dispositivo_id: <span class="str">'regPrescDisp'</span>  <span class="cm">← prefijo _ = tratamiento especial (parseInt)</span>
+  },
+  beneficiario: {
+    email: <span class="str">'regBenefEmail'</span>, password: <span class="str">'p4'</span>,
+    nombre_apodo: <span class="str">'regBenefNombre'</span>
+  }
+};</div>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div>Las claves de <code style="font-family:monospace">ROL_FIELDS</code> son los nombres exactos de los campos que el backend espera en el body del <code style="font-family:monospace">POST /auth/register</code>. Si el equipo de backend cambia los nombres de los campos, hay que actualizar este objeto.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         DASHBOARD HTML
+    ══════════════════════════════════════ -->
+    <section class="section" id="dashboard-html">
+      <h2>📄 mascate-dashboards-final.html</h2>
+      <p>Contiene las <strong>4 pantallas de dashboard</strong> simultáneamente en el mismo documento. Solo una es visible a la vez — <code style="font-family:monospace">dashboard.js</code> activa la pantalla correcta según el rol guardado en localStorage.</p>
+
+      <h3>Pantallas disponibles</h3>
+      <div class="role-grid">
+        <div class="role-card">
+          <span class="role-icon">🏘️</span>
+          <div class="role-name">Dispositivo CBC</div>
+          <div class="role-sub"><code style="font-family:monospace">#screen-dispositivo</code><br>Stats, asistencia, beneficiarixs, actividades.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🎯</span>
+          <div class="role-name">Prescriptxr</div>
+          <div class="role-sub"><code style="font-family:monospace">#screen-prescriptor</code><br>Asignados, formulario de seguimiento.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🌱</span>
+          <div class="role-name">Beneficiarix</div>
+          <div class="role-sub"><code style="font-family:monospace">#screen-beneficiario</code><br>Explorar actividades, ver dispositivos.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🔐</span>
+          <div class="role-name">Admin</div>
+          <div class="role-sub"><code style="font-family:monospace">#screen-admin</code><br>Control total: stats, alertas, tabla de dispositivos.</div>
+        </div>
+      </div>
+
+      <h3>Estructura base por pantalla</h3>
+      <div class="code-block"><span class="kw">div</span>.<span class="fn">screen</span>[id=<span class="str">"screen-{rol}"</span>]        <span class="cm">← cada pantalla es un div.screen</span>
+├── <span class="kw">nav</span>.<span class="fn">sidebar</span>                  <span class="cm">← navegación lateral con ítems del rol</span>
+│   └── <span class="kw">div</span>.<span class="fn">sb-user</span>               <span class="cm">← nombre y email del usuario (llenado por JS)</span>
+└── <span class="kw">div</span>.<span class="fn">main</span>
+    ├── <span class="kw">div</span>.<span class="fn">topbar</span>               <span class="cm">← barra superior: título + acciones</span>
+    └── <span class="kw">div</span>.<span class="fn">content</span>
+        ├── <span class="kw">div</span>.<span class="fn">page-header</span>        <span class="cm">← saludo + descripción</span>
+        ├── <span class="kw">div</span>.<span class="fn">stats-row</span>          <span class="cm">← tarjetas de métricas</span>
+        └── <span class="kw">div</span>.<span class="fn">grid-2 / panel</span>    <span class="cm">← bloques de contenido</span></div>
+
+      <h3>Demo bar</h3>
+      <p>En la parte superior hay una barra <code style="font-family:monospace">.demo-bar</code> con botones para cambiar entre pantallas manualmente. Solo se muestra si el rol es <code style="font-family:monospace">admin</code>; para otros roles, <code style="font-family:monospace">dashboard.js</code> la elimina del DOM.</p>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         DASHBOARD CSS
+    ══════════════════════════════════════ -->
+    <section class="section" id="dashboard-css">
+      <h2>🖌️ dashboard.css</h2>
+      <p>Estilos del sistema de dashboards. Cubre el layout general (sidebar + main), los componentes compartidos entre pantallas y las variaciones por tipo de contenido.</p>
+
+      <h3>Bloques principales</h3>
+      <table class="ep-table">
+        <thead><tr><th>Selector / bloque</th><th>Qué controla</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">.screen</code></td><td>Cada pantalla de rol. <code style="font-family:monospace">display:none</code> por defecto; <code style="font-family:monospace">.active</code> la muestra como grid (sidebar + main).</td></tr>
+          <tr><td><code style="font-family:monospace">.sidebar</code></td><td>Barra lateral fija. Flex vertical, scrollable si el contenido lo necesita.</td></tr>
+          <tr><td><code style="font-family:monospace">.sb-item / .sb-item.active</code></td><td>Ítem de navegación del sidebar. El activo tiene borde izquierdo y fondo con <code style="font-family:monospace">--primary</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">.topbar</code></td><td>Barra superior del contenido. Flex entre título y botones de acción.</td></tr>
+          <tr><td><code style="font-family:monospace">.stats-row</code></td><td>Fila de tarjetas de métricas. Variantes <code style="font-family:monospace">.cols-3</code> y <code style="font-family:monospace">.cols-4</code> para distintos números de cards.</td></tr>
+          <tr><td><code style="font-family:monospace">.stat-card</code></td><td>Tarjeta individual de métrica: ícono coloreado, valor grande, label, delta opcional.</td></tr>
+          <tr><td><code style="font-family:monospace">.grid-2</code></td><td>Grid de 2 columnas para paneles. <code style="font-family:monospace">.panel.span-2</code> ocupa las 2 columnas.</td></tr>
+          <tr><td><code style="font-family:monospace">.panel</code></td><td>Contenedor de sección. Tiene <code style="font-family:monospace">.panel-head</code> con título y botón de acción.</td></tr>
+          <tr><td><code style="font-family:monospace">.list-row</code></td><td>Fila de lista: avatar + info (nombre + sub) + tag de estado. Patrón reutilizable.</td></tr>
+          <tr><td><code style="font-family:monospace">.chart-bars / .donut-wrap</code></td><td>Gráficos decorativos en CSS/SVG. Actualmente son placeholders visuales, sin datos reales.</td></tr>
+          <tr><td><code style="font-family:monospace">.act-card</code></td><td>Card de actividad en la vista de beneficiarix. Grid de 3 columnas.</td></tr>
+          <tr><td><code style="font-family:monospace">.seed-track / .seed-fill</code></td><td>Barra de progreso en el panel admin de usuarixs por rol. El ancho del fill lo pone JS.</td></tr>
+          <tr><td><code style="font-family:monospace">.demo-bar</code></td><td>Barra de cambio de rol (solo visible para admin). JS la elimina para otros roles.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         DASHBOARD JS
+    ══════════════════════════════════════ -->
+    <section class="section" id="dashboard-js">
+      <h2>⚙️ dashboard.js</h2>
+      <p>Lógica de los dashboards. Lee el rol de localStorage, muestra la pantalla correcta y carga los datos desde la API para cada vista.</p>
+
+      <h3>Inicialización</h3>
+      <div class="code-block"><span class="kw">const</span> <span class="fn">token</span>  = localStorage.getItem(<span class="str">'mascate_token'</span>);
+<span class="kw">const</span> <span class="fn">rol</span>    = localStorage.getItem(<span class="str">'mascate_rol'</span>);
+<span class="kw">const</span> <span class="fn">nombre</span> = localStorage.getItem(<span class="str">'mascate_nombre'</span>);
+
+<span class="cm">← Si no hay token o rol, redirige inmediatamente a /login</span>
+<span class="kw">if</span> (!token || !rol) { window.location.href = <span class="str">'/login'</span>; }</div>
+
+      <h3>Flujo de carga</h3>
+      <div class="flow">
+        <div class="flow-step">Lee localStorage</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><code style="font-family:monospace">showScreen(rol)</code></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><code style="font-family:monospace">load{Rol}()</code></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Fetch API + renderiza DOM</div>
+      </div>
+
+      <h3>Funciones</h3>
+      <table class="ep-table">
+        <thead><tr><th>Función</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">showScreen(role)</code></td><td>Remueve <code style="font-family:monospace">.active</code> de todas las pantallas y lo agrega a <code style="font-family:monospace">#screen-{role}</code>. También actualiza los botones de la demo-bar.</td></tr>
+          <tr><td><code style="font-family:monospace">doLogout()</code></td><td>Elimina las 3 claves de localStorage y redirige a <code style="font-family:monospace">/login</code>. Se inyecta un botón de logout en cada <code style="font-family:monospace">.sb-user</code> al cargar.</td></tr>
+          <tr><td><code style="font-family:monospace">loadDispositivo()</code></td><td>Carga estadísticas, beneficiarixs y actividades del dispositivo autenticado. Actualiza header, sidebar y paneles.</td></tr>
+          <tr><td><code style="font-family:monospace">loadPrescriptor()</code></td><td>Carga lista de asignados con sus estados. Conecta el botón del formulario de seguimiento al endpoint <code style="font-family:monospace">POST /prescriptores/seguimientos</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">loadBeneficiario()</code></td><td>Carga actividades disponibles y el detalle del primer dispositivo. Renderiza el grid de actividades.</td></tr>
+          <tr><td><code style="font-family:monospace">loadAdmin()</code></td><td>Carga stats globales, alertas, tabla de dispositivos y conteos por rol para las barras de progreso.</td></tr>
+          <tr><td><code style="font-family:monospace">setStatVal(screen, i, val)</code></td><td>Helper: actualiza la i-ésima <code style="font-family:monospace">.stat-val</code> dentro de <code style="font-family:monospace">#screen-{screen}</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">setInnerHTML(el, html)</code></td><td>Helper: escribe innerHTML solo si el elemento existe (evita errores si cambia el HTML).</td></tr>
+          <tr><td><code style="font-family:monospace">authHeaders()</code></td><td>Devuelve objeto con <code style="font-family:monospace">Authorization: Bearer {token}</code> + Content-Type, para llamadas autenticadas con body.</td></tr>
+          <tr><td><code style="font-family:monospace">authGet()</code></td><td>Devuelve solo el header de autorización, para llamadas GET autenticadas (sin Content-Type).</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div><code style="font-family:monospace">loadDispositivo()</code> hace un loop sobre todos los dispositivos del usuario y usa el primero que responde exitosamente. Esto es un workaround temporal — una vez el backend implemente un endpoint <code style="font-family:monospace">/dispositivos/mi-dispositivo</code>, debería usarse ese directamente.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         COMPONENTES
+    ══════════════════════════════════════ -->
+    <section class="section" id="componentes">
+      <h2>🧩 Componentes UI reutilizables</h2>
+      <p>Patrones de clase usados en ambas páginas (auth y dashboard). Definidos en el CSS correspondiente, referenciados desde el HTML.</p>
+
+      <h3>Tags de estado</h3>
+      <div class="code-block"><span class="cm">/* Semántica de color */</span>
+<span class="str">.tag.green</span>   → Al día / Activo      <span class="cm">(color blanco por defecto de la paleta)</span>
+<span class="str">.tag.mustard</span> → Revisar / Pendiente  <span class="cm">(dorado)</span>
+<span class="str">.tag.rust</span>    → Urgente / Error      <span class="cm">(rojo)</span>
+<span class="str">.tag.gray</span>    → Inactivo / Sin datos <span class="cm">(gris)</span>
+<span class="str">.tag.blue</span>    → Informativo          <span class="cm">(azul)</span>
+<span class="str">.tag.purple</span>  → Educativo / especial <span class="cm">(lavanda)</span></div>
+
+      <h3>Avatares de lista</h3>
+      <div class="code-block"><span class="cm">/* 2 letras iniciales del nombre */</span>
+&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-avatar"</span>&gt;SG&lt;/div&gt;        <span class="cm">← color base por defecto</span>
+&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-avatar mustard"</span>&gt;JM&lt;/div&gt;  <span class="cm">← dorado</span>
+&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-avatar rust"</span>&gt;FR&lt;/div&gt;    <span class="cm">← rojo (urgente)</span>
+&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-avatar blue"</span>&gt;VL&lt;/div&gt;    <span class="cm">← azul</span></div>
+
+      <h3>Botones</h3>
+      <div class="code-block"><span class="cm">/* En dashboards */</span>
+<span class="str">.btn.btn-sm.btn-green</span>    → Acción principal
+<span class="str">.btn.btn-sm.btn-mustard</span>  → Acción secundaria
+<span class="str">.btn.btn-sm.btn-outline</span>  → Acción terciaria, solo borde
+
+<span class="cm">/* En auth */</span>
+<span class="str">.btn-primary</span>             → CTA grande (gradiente, sombra, shimmer en hover)</div>
+
+      <h3>Panel estándar</h3>
+      <div class="code-block">&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"panel"</span>&gt;
+  &lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"panel-head"</span>&gt;
+    &lt;<span class="kw">span</span> <span class="fn">class</span>=<span class="str">"panel-title"</span>&gt;Título del panel&lt;/<span class="kw">span</span>&gt;
+    &lt;<span class="kw">button</span> <span class="fn">class</span>=<span class="str">"panel-action"</span>&gt;Acción →&lt;/<span class="kw">button</span>&gt;  <span class="cm">← opcional</span>
+  &lt;/<span class="kw">div</span>&gt;
+  <span class="cm">/* contenido: .list-row, tabla, gráfico, etc. */</span>
+&lt;/<span class="kw">div</span>&gt;
+
+<span class="cm">/* Panel que ocupa 2 columnas en .grid-2 */</span>
+&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"panel span-2"</span>&gt; ... &lt;/<span class="kw">div</span>&gt;</div>
+
+      <h3>Fila de lista</h3>
+      <div class="code-block">&lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-row"</span>&gt;
+  &lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-avatar"</span>&gt;AB&lt;/<span class="kw">div</span>&gt;
+  &lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-info"</span>&gt;
+    &lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-name"</span>&gt;Nombre&lt;/<span class="kw">div</span>&gt;
+    &lt;<span class="kw">div</span> <span class="fn">class</span>=<span class="str">"list-sub"</span>&gt;Subtexto / metadato&lt;/<span class="kw">div</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+  &lt;<span class="kw">span</span> <span class="fn">class</span>=<span class="str">"tag green"</span>&gt;Activo&lt;/<span class="kw">span</span>&gt;  <span class="cm">← tag de estado (verde, mustard, rust, gray)</span>
+&lt;/<span class="kw">div</span>&gt;</div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         BACKEND — PLACEHOLDER
+    ══════════════════════════════════════ -->
+    <section class="section" id="backend-espera">
+      <h2>⏸️ Documentación de backend</h2>
+
+      <div class="callout todo">
+        <span class="callout-icon">📌</span>
+        <div contenteditable="true">
+          <strong>Esperando documentación del equipo de backend.</strong><br><br>
+          Cuando el equipo confirme sus docs, esta sección se reemplaza con el contenido correspondiente. Por ahora se deja el espacio preparado para integrarla fácilmente en este mismo archivo.
+        </div>
+      </div>
+
+      <h3>Lo que necesitamos que documenten</h3>
+      <table class="ep-table">
+        <thead><tr><th>Tema</th><th>Por qué lo necesitamos</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>URL de producción de la API</td><td>Para actualizar la constante <code style="font-family:monospace">API</code> en auth.js y dashboard.js</td><td><span class="tag-yellow">Pendiente</span></td></tr>
+          <tr><td>Contratos de los endpoints (ver sección siguiente)</td><td>Para saber qué campos exactos espera cada endpoint y qué devuelve</td><td><span class="tag-yellow">Pendiente</span></td></tr>
+          <tr><td>Implementación de JWT</td><td>Actualmente el frontend ya manda y guarda el token; falta que el backend lo emita y valide correctamente</td><td><span class="tag-yellow">Pendiente de implementar</span></td></tr>
+          <tr><td>Estructura de la respuesta de login</td><td>El frontend espera un JSON con <code style="font-family:monospace">access_token</code>, <code style="font-family:monospace">rol</code> y <code style="font-family:monospace">nombre</code></td><td><span class="tag-yellow">Por confirmar</span></td></tr>
+          <tr><td>Modelos de base de datos</td><td>Para entender las relaciones y asegurarnos que los payloads de registro son correctos</td><td><span class="tag-yellow">Pendiente</span></td></tr>
+          <tr><td contenteditable="true">Agregar más temas...</td><td contenteditable="true"></td><td><span class="tag-yellow">Pendiente</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="placeholder-backend">
+        <div class="ph-icon">📋</div>
+        <div class="ph-title" contenteditable="true">Aquí va la documentación del backend</div>
+        <div class="ph-desc" contenteditable="true">Pegar aquí las secciones de docs del equipo de backend cuando estén listas: modelos, endpoints completos con contratos, autenticación JWT, deploy, etc.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         CONTRATO FRONTEND ↔ API
+    ══════════════════════════════════════ -->
+    <section class="section" id="contrato-api">
+      <h2>🤝 Contrato frontend ↔ API</h2>
+      <p>Lo que el frontend ya tiene implementado y espera del backend. Esto es lo que el equipo de backend necesita garantizar para que nuestro código funcione sin cambios.</p>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div contenteditable="true">JWT aún no está implementado en el backend. Mientras tanto, los endpoints que requieren autenticación pueden no validar el token. Cuando se implemente, el frontend ya está listo — el header <code style="font-family:monospace">Authorization: Bearer {token}</code> ya se envía en todas las llamadas protegidas.</div>
+      </div>
+
+      <h3>Endpoints de autenticación</h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td class="ep-path">/auth/login</td>
+            <td class="ep-desc">Autentica usuario. El frontend espera recibir: <code style="font-family:monospace">{ access_token, rol, nombre }</code></td>
+            <td><span class="tag-gray">Público</span></td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td class="ep-path">/auth/register</td>
+            <td class="ep-desc">Crea cuenta. El body varía por rol — ver payloads abajo</td>
+            <td><span class="tag-gray">Público</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Payload login</h4>
+      <div class="code-block">{ <span class="str">"email"</span>: <span class="str">"user@mail.com"</span>, <span class="str">"password"</span>: <span class="str">"••••••••"</span> }</div>
+
+      <h4>Payload registro — Dispositivo</h4>
+      <div class="code-block">{
+  <span class="str">"rol"</span>: <span class="str">"dispositivo"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
+  <span class="str">"nombre"</span>: <span class="str">"..."</span>, <span class="str">"lugar_actividades"</span>: <span class="str">"Parque"</span>,
+  <span class="str">"ubicacion"</span>: <span class="str">"Barrio Techotiva"</span>, <span class="str">"tipo_servicio"</span>: <span class="str">"Artístico"</span>,
+  <span class="str">"dia_actividad"</span>: <span class="str">"Lunes"</span>, <span class="str">"hora_actividad"</span>: <span class="str">"15:00"</span>,
+  <span class="str">"telefono"</span>: <span class="str">"..."</span>, <span class="str">"redes_sociales"</span>: <span class="str">"@..."</span>
+}</div>
+
+      <h4>Payload registro — Prescriptxr</h4>
+      <div class="code-block">{
+  <span class="str">"rol"</span>: <span class="str">"prescriptor"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
+  <span class="str">"nombre_completo"</span>: <span class="str">"..."</span>, <span class="str">"perfil_disciplina"</span>: <span class="str">"Arte y cultura"</span>,
+  <span class="str">"telefono"</span>: <span class="str">"..."</span>, <span class="str">"dispositivo_id"</span>: 1
+}</div>
+
+      <h4>Payload registro — Beneficiarix</h4>
+      <div class="code-block">{
+  <span class="str">"rol"</span>: <span class="str">"beneficiario"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
+  <span class="str">"nombre_apodo"</span>: <span class="str">"Skate"</span>
+}</div>
+
+      <h3>Endpoints de datos</h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/</td><td class="ep-desc">Lista dispositivos. Usado en registro (select de prescriptxr) y en loadDispositivo().</td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/{id}/estadisticas</td><td class="ep-desc">Stats: <code style="font-family:monospace">beneficiarios_activos</code>, <code style="font-family:monospace">actividades_registradas</code>, <code style="font-family:monospace">valoracion_promedio</code>, <code style="font-family:monospace">seguimientos_semana</code></td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/{id}/beneficiarios</td><td class="ep-desc">Lista con al menos: <code style="font-family:monospace">nombre_apodo</code></td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/actividades/</td><td class="ep-desc">Lista actividades. Acepta <code style="font-family:monospace">?dispositivo_id=N</code>. Necesita: <code style="font-family:monospace">emoji</code>, <code style="font-family:monospace">nombre</code>, <code style="font-family:monospace">dia_semana</code>, <code style="font-family:monospace">hora</code>, <code style="font-family:monospace">lugar</code>, <code style="font-family:monospace">tipo</code></td><td><span class="tag-gray">Público</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/prescriptores/mis-asignados</td><td class="ep-desc">Lista con: <code style="font-family:monospace">id</code>, <code style="font-family:monospace">nombre_apodo</code>, <code style="font-family:monospace">estado</code> (al-dia/revisar/urgente), <code style="font-family:monospace">dias_sin_sesion</code></td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/prescriptores/seguimientos</td><td class="ep-desc">Seguimientos del prescriptxr autenticado</td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method post">POST</span></td><td class="ep-path">/prescriptores/seguimientos</td><td class="ep-desc">Body: <code style="font-family:monospace">{ beneficiario_id, tipo_registro, observaciones }</code></td><td><span class="tag-green">Bearer</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/stats</td><td class="ep-desc">Necesita: <code style="font-family:monospace">total_dispositivos</code>, <code style="font-family:monospace">total_usuarios</code>, <code style="font-family:monospace">total_prescriptores</code>, <code style="font-family:monospace">alertas_pendientes</code></td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/alertas</td><td class="ep-desc">Lista con: <code style="font-family:monospace">mensaje</code>, <code style="font-family:monospace">dispositivo</code></td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/dispositivos</td><td class="ep-desc">Lista con: <code style="font-family:monospace">nombre</code>, <code style="font-family:monospace">tipo_servicio</code>, <code style="font-family:monedio">num_beneficiarios</code>, <code style="font-family:monospace">prescriptor</code>, <code style="font-family:monospace">activo</code></td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/usuarios</td><td class="ep-desc">Lista con al menos: <code style="font-family:monospace">rol</code> de cada usuario (para conteos)</td><td><span class="tag-yellow">Admin</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         ROLES Y PERMISOS
+    ══════════════════════════════════════ -->
+    <section class="section" id="roles-permisos">
+      <h2>🛡️ Roles y permisos</h2>
+      <p>Los roles los define el backend en el login. El frontend los usa solo para mostrar la pantalla correcta — no hace validación de permisos del lado del cliente (eso es responsabilidad del backend).</p>
+
+      <table class="ep-table">
+        <thead><tr><th>Rol</th><th>Pantalla</th><th>Puede hacer en el frontend</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>🏘️ <strong>dispositivo</strong></td>
+            <td><code style="font-family:monospace">screen-dispositivo</code></td>
+            <td>Ver stats de su dispositivo, lista de sus beneficiarixs, próximas actividades</td>
+          </tr>
+          <tr>
+            <td>🎯 <strong>prescriptor</strong></td>
+            <td><code style="font-family:monospace">screen-prescriptor</code></td>
+            <td>Ver sus asignados con estados, registrar seguimientos</td>
+          </tr>
+          <tr>
+            <td>🌱 <strong>beneficiario</strong></td>
+            <td><code style="font-family:monospace">screen-beneficiario</code></td>
+            <td>Explorar actividades, ver detalle de dispositivos</td>
+          </tr>
+          <tr>
+            <td>🔐 <strong>admin</strong></td>
+            <td><code style="font-family:monospace">screen-admin</code></td>
+            <td>Ver stats globales, alertas, tabla completa de dispositivos y usuarixs. También ve la demo-bar.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>El flujo es: backend devuelve <code style="font-family:monospace">rol</code> en el login → frontend lo guarda en <code style="font-family:monospace">localStorage('mascate_rol')</code> → al cargar el dashboard, <code style="font-family:monospace">showScreen(rol)</code> activa la pantalla correspondiente y <code style="font-family:monospace">load{Rol}()</code> trae los datos.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         PENDIENTES
+    ══════════════════════════════════════ -->
+    <section class="section" id="pendientes">
+      <h2>⏳ TODOs y pendientes</h2>
+      <p>Lista de trabajo pendiente. <strong>Editá directamente este bloque</strong> para mantenerla al día.</p>
+
+      <div class="callout todo">
+        <span class="callout-icon">📌</span>
+        <div contenteditable="true">
+          <strong>Frontend — nuestro equipo</strong><br>
+          · Conectar gráfico de barras (asistencia semanal) con datos reales del backend<br>
+          · Conectar donut chart (tipos de actividad) con datos reales<br>
+          · Implementar buscador funcional de actividades (beneficiarix)<br>
+          · Hacer funcionales los chips de filtro por tipo<br>
+          · Pantalla "Mapa de dispositivos" (sidebar beneficiarix)<br>
+          · Formulario "Hoja de primer contacto" (sidebar dispositivo)<br>
+          · Vista "Mi perfil" para cada rol<br>
+          · Revisar responsive en dispositivos móviles reales<br>
+          · Definir y documentar la paleta de colores final en tokens.css
+        </div>
+      </div>
+
+      <div class="callout todo" style="margin-top:0.75rem">
+        <span class="callout-icon">📌</span>
+        <div contenteditable="true">
+          <strong>Coordinación con el equipo de backend</strong><br>
+          · Confirmar URL de producción de la API<br>
+          · Confirmar implementación de JWT y estructura del token<br>
+          · Confirmar nombres exactos de campos en todos los endpoints<br>
+          · Confirmar los valores posibles de <code style="font-family:monospace">estado</code> en /prescriptores/mis-asignados (al-dia / revisar / urgente)<br>
+          · Recibir documentación del backend para integrarla en esta doc
+        </div>
+      </div>
+
+      <div class="callout error" style="margin-top:0.75rem">
+        <span class="callout-icon">🚨</span>
+        <div contenteditable="true">
+          <strong>Antes de pasar a producción</strong><br>
+          · Actualizar constante <code style="font-family:monospace">API</code> de localhost:8080 a URL real (en auth.js y dashboard.js)<br>
+          · Asegurarse de que la API esté en HTTPS<br>
+          · Evaluar migrar tokens de localStorage a httpOnly cookies (más seguro)<br>
+          · Revisar manejo de errores en todos los fetch (actualmente algunos fallan silenciosamente)
+        </div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         CHANGELOG
+    ══════════════════════════════════════ -->
+    <section class="section" id="changelog">
+      <h2>📝 Changelog</h2>
+      <p>Registro de cambios del proyecto. <span class="edit-hint">agregar entradas acá</span></p>
+
+      <div class="changelog-entry">
+        <div class="cl-date">2026-04</div>
+        <div class="cl-desc">
+          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
+          Maqueta completa de los 4 dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin)
+        </div>
+      </div>
+      <div class="changelog-entry">
+        <div class="cl-date">2026-04</div>
+        <div class="cl-desc">
+          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
+          Página de autenticación con registro dinámico por rol y validaciones
+        </div>
+      </div>
+      <div class="changelog-entry">
+        <div class="cl-date">2026-04</div>
+        <div class="cl-desc">
+          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
+          Sistema de design tokens centralizado en tokens.css. CSS separado por módulo (tokens / auth / dashboard).
+        </div>
+      </div>
+      <div class="changelog-entry">
+        <div class="cl-date">2026-04</div>
+        <div class="cl-desc">
+          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
+          Primera versión de esta documentación técnica. JS separado en <code style="font-family:monospace">mascate-docs.js</code>.
+        </div>
+      </div>
+      <div class="changelog-entry" contenteditable="true">
+        <div class="cl-date">YYYY-MM</div>
+        <div class="cl-desc">
+          <span class="cl-tag"><span class="tag-yellow">cambio</span></span>
+          Agregar aquí el próximo cambio...
+        </div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         NOTAS
+    ══════════════════════════════════════ -->
+    <section class="section" id="notas">
+      <h2>💬 Notas del equipo</h2>
+      <p>Espacio para decisiones de diseño, acuerdos y contexto del proyecto. <span class="edit-hint">editar libremente</span></p>
+
+      <div class="info-card" style="margin-bottom:0.75rem" contenteditable="true">
+        <div class="info-card-label">Lenguaje inclusivo</div>
+        <div style="font-size:0.84rem;margin-top:0.3rem">Toda la interfaz usa lenguaje de género neutro con terminación -x (beneficiarix, prescriptxr). Esto es intencional y refleja el enfoque comunitario del proyecto MASCATE.</div>
+      </div>
+
+      <div class="info-card" style="margin-bottom:0.75rem" contenteditable="true">
+        <div class="info-card-label">Sobre el nombre "Dispositivo CBC"</div>
+        <div style="font-size:0.84rem;margin-top:0.3rem">CBC = Club/Base Comunitaria. Puede ser un parque, salón comunal, sede propia u otro espacio. El término refleja la autonomía territorial del proyecto.</div>
+      </div>
+
+      <div class="info-card" contenteditable="true">
+        <div class="info-card-label">Notas libres del equipo</div>
+        <div style="font-size:0.84rem;margin-top:0.3rem">Escribir aquí decisiones tomadas en reunión, acuerdos sobre el prototipo, preguntas pendientes, etc.</div>
+      </div>
+
+      <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--outline-variant);font-size:0.72rem;color:var(--on-bg-muted);opacity:0.6">
+        Frontend Proyecto Techotiva · Grupo Noche 2026-1 · Documento vivo — modificar según avance el desarrollo
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="parts/mascate-docs.js"></script>
+</body>
+</html>
