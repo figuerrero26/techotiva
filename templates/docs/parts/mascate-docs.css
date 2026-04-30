@@ -45,7 +45,7 @@ body::before {
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
-  position: relative; z-index: 1;
+  position: relative;
 }
 
 /* ─── SIDEBAR ─── */
@@ -61,6 +61,13 @@ body::before {
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--outline); border-radius: 2px; }
 
+/* ─── MAIN ─── */
+.main {
+  padding: 2.5rem 3rem;
+  max-width: 860px;
+}
+
+/* ─── SIDEBAR BRAND / LINKS ─── */
 .sb-brand {
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0 1.25rem 1.5rem;
@@ -119,12 +126,6 @@ body::before {
   text-transform: uppercase; letter-spacing: 0.06em;
 }
 .version-tag::before { content: '●'; font-size: 0.5rem; }
-
-/* ─── MAIN ─── */
-.main {
-  padding: 2.5rem 3rem;
-  max-width: 860px;
-}
 
 /* ─── HEADINGS ─── */
 h1 {
@@ -355,12 +356,190 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
 }
 .edit-hint::before { content: '✏️ '; }
 
+/* ─── ECOSYSTEM GRID ─── */
+.ecosystem-grid {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  flex-wrap: wrap;
+}
+.eco-card {
+  flex: 1 1 200px;
+  background: var(--surface-mid);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+.eco-card.eco-ours { border-color: rgba(212,160,23,0.35); }
+.eco-header {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.6rem; flex-wrap: wrap;
+}
+.eco-icon { font-size: 1.3rem; flex-shrink: 0; }
+.eco-name { font-family: 'Epilogue', sans-serif; font-weight: 700; font-size: 0.88rem; color: var(--on-surface); }
+.eco-team { font-size: 0.7rem; color: var(--on-bg-muted); }
+.eco-desc { font-size: 0.8rem; color: var(--on-bg); margin-bottom: 0.6rem; }
+.eco-footer { border-top: 1px solid var(--outline-variant); padding-top: 0.5rem; }
+.eco-fact { font-size: 0.72rem; color: var(--on-bg-muted); }
+.eco-arrow {
+  font-size: 1.2rem; color: var(--on-bg-muted);
+  flex-shrink: 0; text-align: center;
+}
+
+/* ─── PLACEHOLDER BACKEND ─── */
+.placeholder-backend {
+  background: var(--surface-mid);
+  border: 1px dashed var(--outline);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  text-align: center;
+  margin: 1.25rem 0;
+}
+.ph-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.ph-title { font-family: 'Epilogue', sans-serif; font-weight: 700; color: var(--on-surface); font-size: 0.95rem; margin-bottom: 0.4rem; }
+.ph-desc { font-size: 0.82rem; color: var(--on-bg-muted); }
+
+/* ─── HAMBURGER BUTTON ─── */
+.sb-toggle {
+  display: none;
+  position: fixed;
+  top: 0.85rem; left: 0.85rem;
+  z-index: 300;
+  background: var(--surface-mid);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-sm);
+  width: 40px; height: 40px;
+  align-items: center; justify-content: center;
+  cursor: pointer; flex-direction: column; gap: 5px;
+  padding: 0;
+}
+.sb-toggle span {
+  display: block;
+  width: 18px; height: 2px;
+  background: var(--on-bg);
+  border-radius: 2px;
+  transition: all 0.25s;
+}
+.sb-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.sb-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.sb-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ─── SIDEBAR OVERLAY (mobile) ─── */
+.sb-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 148;
+}
+/* sidebar y botón van en z-index > overlay */
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { position: relative; height: auto; }
-  .main { padding: 1.5rem; }
+  .layout {
+    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  /* Sidebar: exits grid, becomes fixed off-canvas drawer */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 280px;
+    height: 100dvh;
+    z-index: 150;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sb-overlay.open {
+    display: block;
+  }
+
+  /* Show hamburger */
+  .sb-toggle {
+    display: flex;
+  }
+
+  /* Remove sidebar offset, add top padding for hamburger */
+  .main {
+    margin-left: 0;
+    padding: 4.5rem 1rem 2rem;
+    max-width: 100%;
+  }
+
+  /* Stack info grid */
+  .info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .role-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Headings */
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.1rem; }
+
+  /* Tables: scroll horizontally */
+  .ep-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+  .ep-table td,
+  .ep-table th { white-space: normal; min-width: 100px; }
+  .ep-table .ep-desc { min-width: 160px; white-space: normal; }
+  .ep-table .ep-path { min-width: 120px; }
+
+  /* Code blocks: scroll horizontally */
+  .code-block {
+    font-size: 0.7rem;
+    overflow-x: auto;
+  }
+
+  /* File tree */
+  .file-tree {
+    font-size: 0.7rem;
+    overflow-x: auto;
+  }
+
+  /* Ecosystem cards */
+  .ecosystem-grid {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  .eco-arrow {
+    transform: rotate(90deg);
+    text-align: center;
+  }
+
+  /* Flow diagram */
+  .flow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .flow-arrow { transform: rotate(90deg); margin-left: 1rem; }
+
+  /* Changelog */
+  .changelog-entry {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page header meta wraps */
+  .page-header-meta { flex-wrap: wrap; gap: 0.4rem; }
 }
+
+@media (max-width: 480px) {
+  .info-grid  { grid-template-columns: 1fr; }
+  .role-grid  { grid-template-columns: 1fr; }
+  h1          { font-size: 1.35rem; }
+  .main       { padding: 4rem 0.85rem 2rem; }
+}
+
 @keyframes fadeUp {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }

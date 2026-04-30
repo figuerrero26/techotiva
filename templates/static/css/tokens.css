@@ -1,30 +1,59 @@
 /* ═══ MASCATE — DESIGN TOKENS & BASE ═══ */
+/* Palette: malspa — Purple · Gold · Black · Slate · Teal            */
+/*                                                                    */
+/*  ROLES                                                             */
+/*  --purple / surface-low/mid/high  → identidad, nav, sidebar       */
+/*  --primary (gold)                 → CTA, activo, énfasis           */
+/*  --secondary (teal)               → acento, links, etiquetas       */
+/*  --black / surface-highest        → contraste, banners, topbar     */
+/*  --tertiary (slate)               → texto muted, bordes, neutros   */
+/* ------------------------------------------------------------------ */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --surface:            #00180d;
-  --surface-low:        #001f10;
-  --surface-mid:        #052e18;
-  --surface-high:       #0a3d20;
-  --surface-highest:    #0f4a28;
-  --primary:            #f6be39;
-  --on-primary:         #3d2c00;
-  --primary-container:  #52390a;
-  --primary-dim:        rgba(246,190,57,0.12);
-  --secondary:          #95d4b3;
-  --secondary-container:#0d3d28;
-  --secondary-dim:      rgba(149,212,179,0.1);
-  --tertiary:           #d2bbff;
-  --tertiary-container: #2a1f4a;
-  --tertiary-dim:       rgba(210,187,255,0.1);
+  /* ── Superficies — escala de purple oscuro a medio ── */
+  --surface:            #d9cfe7;   /* página base — blanco roto cálido       */
+  --surface-low:        #2b1848;   /* sidebar, panel izquierdo auth          */
+  --surface-mid:        #3d2460;   /* cards sobre sidebar, inputs oscuros    */
+  --surface-high:       #4a2e72;   /* hover de inputs, cards elevadas        */
+  --surface-highest:    #5d3184;   /* purple puro — estado focus, acentos    */
+
+  /* ── Primary — Gold #F2BB05 ── */
+  --primary:            #f2bb05;
+  --primary-dark:       #c09300;
+  --primary-container:  #fffbe6;
+  --on-primary:         #1e1200;
+  --primary-dim:        rgba(242,187,5,0.14);
+
+  /* ── Secondary — Teal #2A7F62 ── */
+  --secondary:          #5ec49e;   /* versión clara para legibilidad sobre purple */
+  --secondary-solid:    #2a7f62;   /* teal puro para superficies claras      */
+  --secondary-container:#1a3d2e;   /* contenedor oscuro de teal              */
+  --secondary-dim:      rgba(94,196,158,0.12);
+
+  /* ── Tertiary — Slate #C7CCDB ── */
+  --tertiary:           #c7ccdb;
+  --tertiary-container: #2e2b40;
+  --tertiary-dim:       rgba(199,204,219,0.12);
+
+  /* ── Error ── */
   --error:              #e85d3a;
   --error-container:    #2a1208;
-  --error-dim:          rgba(232,93,58,0.1);
-  --on-bg:              #c1ecd4;
-  --on-bg-muted:        #5f9e78;
-  --on-surface:         #e8f5ec;
-  --outline-variant:    rgba(149,212,179,0.12);
-  --radius-sm:  8px;
+  --error-dim:          rgba(232,93,58,0.10);
+
+  /* ── Texto sobre superficies oscuras (sidebar, auth left) ── */
+  --on-bg:              #ddd5f0;   /* texto principal sobre purple oscuro    */
+  --on-bg-muted:        #9d8fc0;   /* texto secundario sobre purple oscuro   */
+  --on-surface:         #7f5abb;   /* texto más brillante sobre purple       */
+
+  /* ── Bordes ── */
+  --outline-variant:    rgba(199,204,219,0.12);
+  --outline-gold:       rgba(242,187,5,0.35);
+  --outline-teal:       rgba(94,196,158,0.25);
+
+  /* ── Radios ── */
+  --radius-sm:   8px;
   --radius-md:  14px;
   --radius-lg:  20px;
   --radius-xl:  28px;
@@ -45,11 +74,11 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
 }
 
-/* leaf pattern */
+/* hoja decorativa — teal de la paleta */
 body::after {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8 C28 20 16 26 18 40 C20 54 34 57 40 72 C46 57 60 54 62 40 C64 26 52 20 40 8Z' fill='%2395d4b3' opacity='0.02'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8 C28 20 16 26 18 40 C20 54 34 57 40 72 C46 57 60 54 62 40 C64 26 52 20 40 8Z' fill='%232a7f62' opacity='0.022'/%3E%3C/svg%3E");
   background-size: 80px 80px;
 }
 

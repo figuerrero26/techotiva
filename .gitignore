@@ -5,3 +5,4 @@ venv/
 *.db
 *.htmlz
 FIX.txt
+*.cssz

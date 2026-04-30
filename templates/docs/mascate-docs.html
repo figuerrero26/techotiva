@@ -9,6 +9,13 @@
 <link rel="stylesheet" href="parts/mascate-docs.css">
 </head>
 <body>
+<!-- Hamburger (mobile only) -->
+<button class="sb-toggle" id="sbToggle" aria-label="Abrir menú">
+  <span></span><span></span><span></span>
+</button>
+<!-- Overlay (mobile only) -->
+<div class="sb-overlay" id="sbOverlay"></div>
+
 <div class="layout">
 
   <!-- ══ SIDEBAR ══ -->
@@ -40,8 +47,8 @@
     <a class="sb-link" onclick="nav(this,'componentes')"><span class="ic">🧩</span> Componentes UI</a>
 
     <span class="sb-section">Backend / API</span>
-    <a class="sb-link" onclick="nav(this,'backend-espera')"><span class="ic">⏸️</span> Docs backend (pendiente)</a>
-    <a class="sb-link" onclick="nav(this,'contrato-api')"><span class="ic">🤝</span> Contrato frontend ↔ API</a>
+    <a class="sb-link" onclick="nav(this,'backend-espera')"><span class="ic">⚙️</span> Stack y arquitectura</a>
+    <a class="sb-link" onclick="nav(this,'contrato-api')"><span class="ic">📡</span> Referencia de endpoints</a>
     <a class="sb-link" onclick="nav(this,'roles-permisos')"><span class="ic">🛡️</span> Roles y permisos</a>
 
     <span class="sb-section">Desarrollo</span>
@@ -108,56 +115,68 @@
     ══════════════════════════════════════ -->
     <section class="section" id="ecosistema">
       <h2>🗺️ Ecosistema del proyecto</h2>
-      <p>El sistema Techotiva no es una sola app: está compuesto por tres partes independientes desarrolladas por equipos distintos. Este documento cubre <strong>únicamente el módulo de login y dashboards</strong>.</p>
+      <p>El proyecto está dividido en <strong>dos grupos grandes</strong> que trabajan en paralelo, cada uno con sus propios subequipos. Este documento cubre el trabajo del subequipo de frontend del Grupo Noche.</p>
 
-      <div class="ecosystem-grid">
+      <!-- Grupos -->
+      <div class="grupos-grid">
 
-        <div class="eco-card eco-external">
-          <div class="eco-header">
-            <span class="eco-icon">🌐</span>
+        <!-- GRUPO DÍA -->
+        <div class="grupo-card grupo-ext">
+          <div class="grupo-header">
+            <span class="grupo-icon">☀️</span>
             <div>
-              <div class="eco-name">Landing page</div>
-              <div class="eco-team">Otro equipo</div>
+              <div class="grupo-name">Grupo Día</div>
+              <div class="grupo-sub">Equipo externo al nuestro</div>
             </div>
             <span class="badge badge-ext">Externo</span>
           </div>
-          <div class="eco-desc" contenteditable="true">Muestra los dispositivos CBC, información de la marca MASCATE y sus objetivos comunitarios. Es el punto de entrada público al ecosistema.</div>
-          <div class="eco-footer">
-            <span class="eco-fact">📤 Redirige a <code style="font-family:monospace">/login</code> de nuestro sistema</span>
+          <div class="subequipo-list">
+            <div class="subequipo">
+              <span class="seq-dot seq-blue"></span>
+              <div>
+                <div class="seq-name">🌐 Landing page</div>
+                <div class="seq-desc" contenteditable="true">Sitio público de MASCATE: dispositivos CBC, información de la marca, objetivos comunitarios. Punto de entrada al ecosistema.</div>
+                <div class="seq-link">📤 Redirige a <code style="font-family:monospace">/login</code> de nuestro sistema</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="eco-arrow">→</div>
+        <div class="grupos-arrow">⇄</div>
 
-        <div class="eco-card eco-ours">
-          <div class="eco-header">
-            <span class="eco-icon">🔐</span>
+        <!-- GRUPO NOCHE -->
+        <div class="grupo-card grupo-ours">
+          <div class="grupo-header">
+            <span class="grupo-icon">🌙</span>
             <div>
-              <div class="eco-name">Login + Dashboards</div>
-              <div class="eco-team">Grupo Noche 2026-1 — este repo</div>
+              <div class="grupo-name">Grupo Noche 2026-1</div>
+              <div class="grupo-sub">Nuestro grupo — este repo</div>
             </div>
             <span class="badge badge-pilot">Nuestro</span>
           </div>
-          <div class="eco-desc">Autenticación de usuarixs y dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin). Todo lo que documenta este archivo.</div>
-          <div class="eco-footer">
-            <span class="eco-fact">🔄 Se comunica con el backend vía API REST</span>
-          </div>
-        </div>
-
-        <div class="eco-arrow">⇅</div>
-
-        <div class="eco-card eco-backend">
-          <div class="eco-header">
-            <span class="eco-icon">⚙️</span>
-            <div>
-              <div class="eco-name">Backend / API</div>
-              <div class="eco-team">Equipo de backend</div>
+          <div class="subequipo-list">
+            <div class="subequipo subequipo-active">
+              <span class="seq-dot seq-primary"></span>
+              <div>
+                <div class="seq-name">🔐 Subequipo Frontend <span class="seq-badge">este archivo</span></div>
+                <div class="seq-desc">Login, registro y dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin). HTML + CSS + JS vanilla.</div>
+              </div>
             </div>
-            <span class="badge badge-ext">Externo</span>
-          </div>
-          <div class="eco-desc" contenteditable="true">API REST en FastAPI (Python). Gestiona usuarios, autenticación, dispositivos, actividades y seguimientos. JWT pendiente de implementar.</div>
-          <div class="eco-footer">
-            <span class="eco-fact">📋 Docs pendientes — ver sección <a onclick="nav(document.querySelector('[onclick*=backend-espera]'),'backend-espera')" style="color:var(--primary);cursor:pointer">Backend / API</a></span>
+            <div class="subequipo">
+              <span class="seq-dot seq-green"></span>
+              <div>
+                <div class="seq-name">⚙️ Subequipo Backend</div>
+                <div class="seq-desc" contenteditable="true">API REST en FastAPI (Python). Gestiona usuarios, autenticación con JWT, dispositivos, actividades y seguimientos.</div>
+                <div class="seq-link">📋 Docs pendientes — ver <a onclick="nav(document.querySelector('[onclick*=backend-espera]'),\'backend-espera\')" style="color:var(--primary);cursor:pointer">sección Backend</a></div>
+              </div>
+            </div>
+            <div class="subequipo">
+              <span class="seq-dot seq-purple"></span>
+              <div>
+                <div class="seq-name">📊 Subequipo Datos / Análisis</div>
+                <div class="seq-desc" contenteditable="true">Dashboard de análisis de datos del proyecto. Alcance y stack por definir — agregar docs aquí cuando estén disponibles.</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -165,7 +184,7 @@
 
       <div class="callout warn" style="margin-top:1.25rem">
         <span class="callout-icon">⚠️</span>
-        <div contenteditable="true"><strong>Límite de responsabilidad:</strong> Este equipo no desarrolla la landing page ni el backend. Si hay cambios en la URL de redirección de la landing o en los contratos de la API, el equipo correspondiente debe notificarnos para actualizar <code style="font-family:monospace">auth.js</code> y <code style="font-family:monospace">dashboard.js</code>.</div>
+        <div contenteditable="true"><strong>Límites de responsabilidad:</strong> El subequipo de frontend no desarrolla la landing page (Grupo Día), ni el backend, ni el dashboard de datos (otros subequipos del Grupo Noche). Si alguno de esos equipos cambia algo que nos afecta — URL de redirección, contratos de la API, estructura de datos — deben notificarnos para actualizar <code style="font-family:monospace">auth.js</code> y <code style="font-family:monospace">dashboard.js</code>.</div>
       </div>
     </section>
 
@@ -196,7 +215,7 @@
         <tbody>
           <tr><td>FastAPI (Python)</td><td>API REST, manejo de rutas y modelos</td><td><span class="tag-green">Activo</span></td></tr>
           <tr><td contenteditable="true">Base de datos</td><td contenteditable="true">Persistencia de usuarios, actividades, seguimientos</td><td><span class="tag-yellow">Por confirmar</span></td></tr>
-          <tr><td>JWT / Bearer tokens</td><td>Autenticación y autorización por rol</td><td><span class="tag-yellow">Pendiente implementar</span></td></tr>
+          <tr><td>JWT / Bearer tokens</td><td>Autenticación y autorización por rol</td><td><span class="tag-green">Activo</span></td></tr>
         </tbody>
       </table>
 
@@ -692,114 +711,343 @@
     <hr class="doc-divider">
 
     <!-- ══════════════════════════════════════
-         BACKEND — PLACEHOLDER
+         BACKEND — DOCUMENTACIÓN REAL
     ══════════════════════════════════════ -->
     <section class="section" id="backend-espera">
-      <h2>⏸️ Documentación de backend</h2>
+      <h2>⚙️ Backend — MASCATE API</h2>
+      <p>Documentación del subequipo de backend del Grupo Noche 2026-1. La API es RESTful, desarrollada en Python con FastAPI.</p>
 
-      <div class="callout todo">
-        <span class="callout-icon">📌</span>
-        <div contenteditable="true">
-          <strong>Esperando documentación del equipo de backend.</strong><br><br>
-          Cuando el equipo confirme sus docs, esta sección se reemplaza con el contenido correspondiente. Por ahora se deja el espacio preparado para integrarla fácilmente en este mismo archivo.
-        </div>
+      <div class="callout info">
+        <span class="callout-icon">📖</span>
+        <div>FastAPI genera documentación interactiva automáticamente. Con el servidor encendido podés explorar y probar todos los endpoints en: <a href="http://127.0.0.1:8080/docs" target="_blank" style="color:var(--primary)">http://127.0.0.1:8080/docs</a> (Swagger UI)</div>
       </div>
 
-      <h3>Lo que necesitamos que documenten</h3>
+      <!-- Stack -->
+      <h3>Stack tecnológico</h3>
       <table class="ep-table">
-        <thead><tr><th>Tema</th><th>Por qué lo necesitamos</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Tecnología</th><th>Rol</th></tr></thead>
         <tbody>
-          <tr><td>URL de producción de la API</td><td>Para actualizar la constante <code style="font-family:monospace">API</code> en auth.js y dashboard.js</td><td><span class="tag-yellow">Pendiente</span></td></tr>
-          <tr><td>Contratos de los endpoints (ver sección siguiente)</td><td>Para saber qué campos exactos espera cada endpoint y qué devuelve</td><td><span class="tag-yellow">Pendiente</span></td></tr>
-          <tr><td>Implementación de JWT</td><td>Actualmente el frontend ya manda y guarda el token; falta que el backend lo emita y valide correctamente</td><td><span class="tag-yellow">Pendiente de implementar</span></td></tr>
-          <tr><td>Estructura de la respuesta de login</td><td>El frontend espera un JSON con <code style="font-family:monospace">access_token</code>, <code style="font-family:monospace">rol</code> y <code style="font-family:monospace">nombre</code></td><td><span class="tag-yellow">Por confirmar</span></td></tr>
-          <tr><td>Modelos de base de datos</td><td>Para entender las relaciones y asegurarnos que los payloads de registro son correctos</td><td><span class="tag-yellow">Pendiente</span></td></tr>
-          <tr><td contenteditable="true">Agregar más temas...</td><td contenteditable="true"></td><td><span class="tag-yellow">Pendiente</span></td></tr>
+          <tr><td>FastAPI (Python)</td><td>Framework web principal — rutas, validación, documentación automática</td></tr>
+          <tr><td>Uvicorn</td><td>Servidor ASGI que ejecuta la app</td></tr>
+          <tr><td>SQLite + SQLAlchemy</td><td>Base de datos local (<code style="font-family:monospace">mascate.db</code>) y ORM</td></tr>
+          <tr><td>Pydantic</td><td>Validación de requests y serialización de responses</td></tr>
+          <tr><td>JWT (<code style="font-family:monospace">python-jose</code>)</td><td>Generación y verificación de tokens de acceso</td></tr>
+          <tr><td>Bcrypt (<code style="font-family:monospace">passlib</code>)</td><td>Hashing seguro de contraseñas</td></tr>
         </tbody>
       </table>
 
-      <div class="placeholder-backend">
-        <div class="ph-icon">📋</div>
-        <div class="ph-title" contenteditable="true">Aquí va la documentación del backend</div>
-        <div class="ph-desc" contenteditable="true">Pegar aquí las secciones de docs del equipo de backend cuando estén listas: modelos, endpoints completos con contratos, autenticación JWT, deploy, etc.</div>
+      <!-- Arquitectura -->
+      <h3>Arquitectura de carpetas</h3>
+      <div class="file-tree">
+<span class="dir">mascate/</span>
+├── main.py                  <span class="note">← punto de entrada, configuración de CORS</span>
+├── database.py              <span class="note">← conexión a SQLite, sesión de DB</span>
+├── mascate.db               <span class="note">← archivo de base de datos (autogenerado)</span>
+└── <span class="dir">app/</span>
+    ├── <span class="dir">core/</span>              <span class="note">← JWT, hashing, configuraciones base de seguridad</span>
+    ├── <span class="dir">models/</span>            <span class="note">← modelos SQLAlchemy (tablas de la DB)</span>
+    ├── <span class="dir">schemas/</span>           <span class="note">← esquemas Pydantic (validación de entrada/salida)</span>
+    └── <span class="dir">routers/</span>           <span class="note">← endpoints divididos por entidad</span>
+        ├── auth.py          <span class="note">← /auth/login, /auth/register</span>
+        ├── dispositivos.py  <span class="note">← /dispositivos/*</span>
+        ├── actividades.py   <span class="note">← /actividades/*</span>
+        ├── prescriptores.py <span class="note">← /prescriptores/*</span>
+        ├── beneficiarios.py <span class="note">← /beneficiarios/*</span>
+        └── admin.py         <span class="note">← /admin/*</span>
       </div>
+
+      <!-- Roles -->
+      <h3>Sistema de roles</h3>
+      <p>El backend define 4 roles. El rol se asigna en el registro y se devuelve en el login dentro del JWT. El frontend lo usa para mostrar la pantalla correcta — la validación real de permisos la hace el backend.</p>
+      <div class="info-grid">
+        <div class="info-card"><div class="info-card-label">admin</div><div class="info-card-val">🔐</div><div class="info-card-sub">Acceso total al sistema</div></div>
+        <div class="info-card"><div class="info-card-label">dispositivo</div><div class="info-card-val">🏘️</div><div class="info-card-sub">Crea y gestiona actividades</div></div>
+        <div class="info-card"><div class="info-card-label">prescriptor</div><div class="info-card-val">🎯</div><div class="info-card-sub">Hace seguimientos a beneficiarixs</div></div>
+        <div class="info-card"><div class="info-card-label">beneficiario</div><div class="info-card-val">🌱</div><div class="info-card-sub">Participante del colectivo</div></div>
+      </div>
+
+      <!-- Auth -->
+      <h3>Autenticación JWT</h3>
+      <p>Las rutas protegidas requieren el token en el header. El frontend ya lo envía en todos los fetch autenticados.</p>
+      <div class="code-block"><span class="cm">// Header requerido en todas las rutas protegidas</span>
+Authorization: Bearer <span class="str">&lt;access_token&gt;</span>
+
+<span class="cm">// El token se obtiene del login y se guarda en localStorage:</span>
+localStorage.setItem(<span class="str">'mascate_token'</span>, data.access_token);</div>
+
+      <!-- Ejecución local -->
+      <h3>Ejecución local (Windows)</h3>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div>El backend debe estar corriendo en <code style="font-family:monospace">localhost:8080</code> para que el frontend funcione. Si el puerto cambia, actualizar la constante <code style="font-family:monospace">API</code> en <code style="font-family:monospace">auth.js</code> y <code style="font-family:monospace">dashboard.js</code>.</div>
+      </div>
+      <div class="code-block"><span class="cm"># Paso 1: entrar a la carpeta del backend</span>
+<span class="kw">cd</span> <span class="str">"C:\Users\USUARIO\Desktop\Proyectos U\Backend informatica social\mascate"</span>
+
+<span class="cm"># Paso 2: activar el entorno virtual</span>
+<span class="kw">.\venv\Scripts\activate</span>
+
+<span class="cm"># Paso 3: iniciar el servidor</span>
+<span class="kw">uvicorn</span> main:app --reload --port 8080</div>
+
+      <!-- Seed data -->
+      <h3>Base de datos y seed data</h3>
+      <p>La primera vez que corre el servidor, SQLAlchemy crea automáticamente las tablas en <code style="font-family:monospace">mascate.db</code> e inyecta datos de prueba.</p>
+      <div class="info-card" style="max-width:320px">
+        <div class="info-card-label">👤 Administrador por defecto</div>
+        <div style="margin-top:0.5rem;font-size:0.82rem">
+          <div style="margin-bottom:0.2rem"><span style="color:var(--on-bg-muted)">Correo:</span> <code style="font-family:monospace">admin@mascate.org</code></div>
+          <div><span style="color:var(--on-bg-muted)">Contraseña:</span> <code style="font-family:monospace">admin123</code></div>
+        </div>
+      </div>
+
+      <!-- Schemas rápidos -->
+      <h3>Schemas principales (Pydantic)</h3>
+      <p>Estos son los contratos de datos definidos por el backend. Lo que el frontend manda y lo que recibe debe coincidir exactamente.</p>
+
+      <h4>LoginRequest / LoginResponse</h4>
+      <div class="schemas-grid">
+        <div>
+          <div style="font-size:0.7rem;color:var(--on-bg-muted);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.07em">Request (lo que manda el frontend)</div>
+          <div class="code-block">{ <span class="str">"email"</span>: string, <span class="str">"password"</span>: string }</div>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--on-bg-muted);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.07em">Response (lo que devuelve el backend)</div>
+          <div class="code-block">{
+  <span class="str">"access_token"</span>: string,
+  <span class="str">"token_type"</span>: <span class="str">"bearer"</span>,
+  <span class="str">"rol"</span>: string,
+  <span class="str">"nombre"</span>: string
+}</div>
+        </div>
+      </div>
+
+      <h4>RegisterRequest</h4>
+      <div class="code-block"><span class="cm">// Campos requeridos para todos los roles:</span>
+{ <span class="str">"rol"</span>: string, <span class="str">"email"</span>: string, <span class="str">"password"</span>: string,
+
+  <span class="cm">// Campos opcionales según el rol:</span>
+  <span class="str">"nombre"</span>: string|null,                   <span class="cm">← dispositivo</span>
+  <span class="str">"lugar_actividades"</span>: string|null,
+  <span class="str">"ubicacion"</span>: string|null,
+  <span class="str">"tipo_servicio"</span>: string|null,
+  <span class="str">"dia_actividad"</span>: string|null,
+  <span class="str">"hora_actividad"</span>: string|null,
+  <span class="str">"telefono"</span>: string|null,
+  <span class="str">"redes_sociales"</span>: string|null,
+  <span class="str">"nombre_completo"</span>: string|null,          <span class="cm">← prescriptor</span>
+  <span class="str">"perfil_disciplina"</span>: string|null,
+  <span class="str">"dispositivo_id"</span>: integer|null,
+  <span class="str">"nombre_apodo"</span>: string|null              <span class="cm">← beneficiario</span>
+}</div>
+
+      <h4>RegisterResponse</h4>
+      <div class="code-block">{ <span class="str">"message"</span>: string, <span class="str">"usuario_id"</span>: integer, <span class="str">"rol"</span>: string }</div>
+
     </section>
 
     <hr class="doc-divider">
 
     <!-- ══════════════════════════════════════
-         CONTRATO FRONTEND ↔ API
+         REFERENCIA DE ENDPOINTS
     ══════════════════════════════════════ -->
     <section class="section" id="contrato-api">
-      <h2>🤝 Contrato frontend ↔ API</h2>
-      <p>Lo que el frontend ya tiene implementado y espera del backend. Esto es lo que el equipo de backend necesita garantizar para que nuestro código funcione sin cambios.</p>
+      <h2>📡 Referencia de endpoints</h2>
+      <p>Todos los endpoints de la API, extraídos del <code style="font-family:monospace">openapi.json</code> generado por FastAPI. Base URL: <code style="font-family:monospace">http://127.0.0.1:8080</code> — actualizar cuando haya URL de producción.</p>
 
       <div class="callout warn">
         <span class="callout-icon">⚠️</span>
-        <div contenteditable="true">JWT aún no está implementado en el backend. Mientras tanto, los endpoints que requieren autenticación pueden no validar el token. Cuando se implemente, el frontend ya está listo — el header <code style="font-family:monospace">Authorization: Bearer {token}</code> ya se envía en todas las llamadas protegidas.</div>
+        <div>Las rutas marcadas con <span class="tag-green" style="display:inline">Bearer</span> requieren el header <code style="font-family:monospace">Authorization: Bearer &lt;token&gt;</code>. El frontend ya lo envía en todos los fetch protegidos mediante <code style="font-family:monospace">authHeaders()</code> y <code style="font-family:monospace">authGet()</code>.</div>
       </div>
 
-      <h3>Endpoints de autenticación</h3>
+      <!-- Autenticación -->
+      <h3>🔑 Autenticación <code style="font-family:monospace;font-size:0.8em">/auth</code></h3>
       <table class="ep-table">
         <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
         <tbody>
           <tr>
             <td><span class="method post">POST</span></td>
             <td class="ep-path">/auth/login</td>
-            <td class="ep-desc">Autentica usuario. El frontend espera recibir: <code style="font-family:monospace">{ access_token, rol, nombre }</code></td>
+            <td class="ep-desc">Autentica un usuario. Devuelve <code style="font-family:monospace">access_token</code>, <code style="font-family:monospace">rol</code> y <code style="font-family:monospace">nombre</code>.</td>
             <td><span class="tag-gray">Público</span></td>
           </tr>
           <tr>
             <td><span class="method post">POST</span></td>
             <td class="ep-path">/auth/register</td>
-            <td class="ep-desc">Crea cuenta. El body varía por rol — ver payloads abajo</td>
+            <td class="ep-desc">Crea una cuenta nueva. El body varía por rol. Devuelve <code style="font-family:monospace">message</code>, <code style="font-family:monospace">usuario_id</code> y <code style="font-family:monospace">rol</code>. Respuesta: <code style="font-family:monospace">201</code>.</td>
             <td><span class="tag-gray">Público</span></td>
           </tr>
         </tbody>
       </table>
 
-      <h4>Payload login</h4>
-      <div class="code-block">{ <span class="str">"email"</span>: <span class="str">"user@mail.com"</span>, <span class="str">"password"</span>: <span class="str">"••••••••"</span> }</div>
-
-      <h4>Payload registro — Dispositivo</h4>
-      <div class="code-block">{
-  <span class="str">"rol"</span>: <span class="str">"dispositivo"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
-  <span class="str">"nombre"</span>: <span class="str">"..."</span>, <span class="str">"lugar_actividades"</span>: <span class="str">"Parque"</span>,
-  <span class="str">"ubicacion"</span>: <span class="str">"Barrio Techotiva"</span>, <span class="str">"tipo_servicio"</span>: <span class="str">"Artístico"</span>,
-  <span class="str">"dia_actividad"</span>: <span class="str">"Lunes"</span>, <span class="str">"hora_actividad"</span>: <span class="str">"15:00"</span>,
-  <span class="str">"telefono"</span>: <span class="str">"..."</span>, <span class="str">"redes_sociales"</span>: <span class="str">"@..."</span>
-}</div>
-
-      <h4>Payload registro — Prescriptxr</h4>
-      <div class="code-block">{
-  <span class="str">"rol"</span>: <span class="str">"prescriptor"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
-  <span class="str">"nombre_completo"</span>: <span class="str">"..."</span>, <span class="str">"perfil_disciplina"</span>: <span class="str">"Arte y cultura"</span>,
-  <span class="str">"telefono"</span>: <span class="str">"..."</span>, <span class="str">"dispositivo_id"</span>: 1
-}</div>
-
-      <h4>Payload registro — Beneficiarix</h4>
-      <div class="code-block">{
-  <span class="str">"rol"</span>: <span class="str">"beneficiario"</span>, <span class="str">"email"</span>: <span class="str">"..."</span>, <span class="str">"password"</span>: <span class="str">"..."</span>,
-  <span class="str">"nombre_apodo"</span>: <span class="str">"Skate"</span>
-}</div>
-
-      <h3>Endpoints de datos</h3>
+      <!-- Dispositivos -->
+      <h3>🏘️ Dispositivos <code style="font-family:monospace;font-size:0.8em">/dispositivos</code></h3>
       <table class="ep-table">
         <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
         <tbody>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/</td><td class="ep-desc">Lista dispositivos. Usado en registro (select de prescriptxr) y en loadDispositivo().</td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/{id}/estadisticas</td><td class="ep-desc">Stats: <code style="font-family:monospace">beneficiarios_activos</code>, <code style="font-family:monospace">actividades_registradas</code>, <code style="font-family:monospace">valoracion_promedio</code>, <code style="font-family:monospace">seguimientos_semana</code></td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/dispositivos/{id}/beneficiarios</td><td class="ep-desc">Lista con al menos: <code style="font-family:monospace">nombre_apodo</code></td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/actividades/</td><td class="ep-desc">Lista actividades. Acepta <code style="font-family:monospace">?dispositivo_id=N</code>. Necesita: <code style="font-family:monospace">emoji</code>, <code style="font-family:monospace">nombre</code>, <code style="font-family:monospace">dia_semana</code>, <code style="font-family:monospace">hora</code>, <code style="font-family:monospace">lugar</code>, <code style="font-family:monospace">tipo</code></td><td><span class="tag-gray">Público</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/prescriptores/mis-asignados</td><td class="ep-desc">Lista con: <code style="font-family:monospace">id</code>, <code style="font-family:monospace">nombre_apodo</code>, <code style="font-family:monospace">estado</code> (al-dia/revisar/urgente), <code style="font-family:monospace">dias_sin_sesion</code></td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/prescriptores/seguimientos</td><td class="ep-desc">Seguimientos del prescriptxr autenticado</td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method post">POST</span></td><td class="ep-path">/prescriptores/seguimientos</td><td class="ep-desc">Body: <code style="font-family:monospace">{ beneficiario_id, tipo_registro, observaciones }</code></td><td><span class="tag-green">Bearer</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/stats</td><td class="ep-desc">Necesita: <code style="font-family:monospace">total_dispositivos</code>, <code style="font-family:monospace">total_usuarios</code>, <code style="font-family:monospace">total_prescriptores</code>, <code style="font-family:monospace">alertas_pendientes</code></td><td><span class="tag-yellow">Admin</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/alertas</td><td class="ep-desc">Lista con: <code style="font-family:monospace">mensaje</code>, <code style="font-family:monospace">dispositivo</code></td><td><span class="tag-yellow">Admin</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/dispositivos</td><td class="ep-desc">Lista con: <code style="font-family:monospace">nombre</code>, <code style="font-family:monospace">tipo_servicio</code>, <code style="font-family:monedio">num_beneficiarios</code>, <code style="font-family:monospace">prescriptor</code>, <code style="font-family:monospace">activo</code></td><td><span class="tag-yellow">Admin</span></td></tr>
-          <tr><td><span class="method get">GET</span></td><td class="ep-path">/admin/usuarios</td><td class="ep-desc">Lista con al menos: <code style="font-family:monospace">rol</code> de cada usuario (para conteos)</td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/dispositivos/</td>
+            <td class="ep-desc">Lista todos los dispositivos. Devuelve array de <code style="font-family:monospace">DispositivoOut</code>.</td>
+            <td><span class="tag-gray">Público</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/dispositivos/{dispositivo_id}</td>
+            <td class="ep-desc">Detalle de un dispositivo por ID.</td>
+            <td><span class="tag-gray">Público</span></td>
+          </tr>
+          <tr>
+            <td><span class="method put">PUT</span></td>
+            <td class="ep-path">/dispositivos/{dispositivo_id}</td>
+            <td class="ep-desc">Edita un dispositivo. Body: <code style="font-family:monospace">DispositivoUpdate</code> (todos los campos opcionales).</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/dispositivos/{dispositivo_id}/beneficiarios</td>
+            <td class="ep-desc">Beneficiarixs de un dispositivo. Devuelve array de <code style="font-family:monospace">{ id, nombre_apodo }</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/dispositivos/{dispositivo_id}/estadisticas</td>
+            <td class="ep-desc">Devuelve <code style="font-family:monospace">{ beneficiarios_activos, actividades_registradas, seguimientos_semana }</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
         </tbody>
       </table>
+      <div class="callout info" style="margin-bottom:0.5rem">
+        <span class="callout-icon">ℹ️</span>
+        <div><strong>Nota:</strong> <code style="font-family:monospace">DispositivoEstadisticas</code> no incluye <code style="font-family:monospace">valoracion_promedio</code> — ese campo estaba en el contrato anterior del frontend pero no existe en el schema real. Actualizar <code style="font-family:monospace">dashboard.js → loadDispositivo()</code> si es necesario.</div>
+      </div>
+
+      <!-- Actividades -->
+      <h3>📅 Actividades <code style="font-family:monospace;font-size:0.8em">/actividades</code></h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/actividades/</td>
+            <td class="ep-desc">Lista actividades. Query params opcionales: <code style="font-family:monospace">?tipo=string</code> y <code style="font-family:monospace">?dispositivo_id=int</code>.</td>
+            <td><span class="tag-gray">Público</span></td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td class="ep-path">/actividades/</td>
+            <td class="ep-desc">Crea una actividad. Campo requerido: <code style="font-family:monospace">nombre</code>. Respuesta: <code style="font-family:monospace">201</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method put">PUT</span></td>
+            <td class="ep-path">/actividades/{actividad_id}</td>
+            <td class="ep-desc">Edita una actividad. Todos los campos son opcionales.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method del">DELETE</span></td>
+            <td class="ep-path">/actividades/{actividad_id}</td>
+            <td class="ep-desc">Elimina una actividad.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Prescriptores -->
+      <h3>🎯 Prescriptores <code style="font-family:monospace;font-size:0.8em">/prescriptores</code></h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/prescriptores/mis-asignados</td>
+            <td class="ep-desc">Beneficiarixs asignados al prescriptxr autenticado. Devuelve array de <code style="font-family:monospace">AsignadoOut</code>: <code style="font-family:monospace">{ id, nombre_apodo, ultima_sesion, dias_sin_sesion, estado }</code>. Estado: <code style="font-family:monospace">"al-dia" | "revisar" | "urgente"</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td class="ep-path">/prescriptores/seguimientos</td>
+            <td class="ep-desc">Crea un seguimiento. Body: <code style="font-family:monospace">{ beneficiario_id*, tipo_registro*, observaciones }</code>. Respuesta: <code style="font-family:monospace">201</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/prescriptores/seguimientos</td>
+            <td class="ep-desc">Lista seguimientos del prescriptxr autenticado. Query param opcional: <code style="font-family:monospace">?beneficiario_id=int</code> para filtrar.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Beneficiarios -->
+      <h3>🌱 Beneficiarixs <code style="font-family:monospace;font-size:0.8em">/beneficiarios</code></h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/beneficiarios/me</td>
+            <td class="ep-desc">Perfil del beneficiarix autenticado. Devuelve <code style="font-family:monospace">{ id, nombre_apodo, email, fecha_registro }</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/beneficiarios/mis-actividades</td>
+            <td class="ep-desc">Actividades en las que está inscrito el beneficiarix autenticado. Devuelve array de <code style="font-family:monospace">ActividadOut</code>.</td>
+            <td><span class="tag-green">Bearer</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout info" style="margin-bottom:0.5rem">
+        <span class="callout-icon">💡</span>
+        <div>Estos dos endpoints no estaban conectados en el frontend actual. <code style="font-family:monospace">/beneficiarios/me</code> puede usarse para la futura vista "Mi perfil" y <code style="font-family:monospace">/beneficiarios/mis-actividades</code> para mostrar las actividades del beneficiarix en su dashboard.</div>
+      </div>
+
+      <!-- Admin -->
+      <h3>🔐 Administración <code style="font-family:monospace;font-size:0.8em">/admin</code></h3>
+      <table class="ep-table">
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/admin/stats</td>
+            <td class="ep-desc">Stats globales: <code style="font-family:monospace">{ total_dispositivos, total_usuarios, total_prescriptores, total_beneficiarios, alertas_pendientes }</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/admin/usuarios</td>
+            <td class="ep-desc">Lista todos los usuarios. Devuelve <code style="font-family:monospace">{ id, email, rol, activo, fecha_registro, nombre }</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="method put">PUT</span></td>
+            <td class="ep-path">/admin/usuarios/{usuario_id}/estado</td>
+            <td class="ep-desc">Activa o desactiva un usuario. Body: <code style="font-family:monospace">{ "activo": boolean }</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/admin/alertas</td>
+            <td class="ep-desc">Alertas del sistema. Devuelve <code style="font-family:monospace">{ dispositivo_id, dispositivo, mensaje, dias_sin_actividad }</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="method get">GET</span></td>
+            <td class="ep-path">/admin/dispositivos</td>
+            <td class="ep-desc">Lista dispositivos con <code style="font-family:monospace">{ id, nombre, tipo_servicio, num_beneficiarios, prescriptor, activo }</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td class="ep-path">/admin/dispositivos</td>
+            <td class="ep-desc">Crea un dispositivo directamente desde admin. Requiere <code style="font-family:monospace">email</code>, <code style="font-family:monospace">password</code> y <code style="font-family:monospace">nombre</code>. Respuesta: <code style="font-family:monospace">201</code>.</td>
+            <td><span class="tag-yellow">Admin</span></td>
+          </tr>
+        </tbody>
+      </table>
+
     </section>
 
     <hr class="doc-divider">
@@ -872,11 +1120,11 @@
         <span class="callout-icon">📌</span>
         <div contenteditable="true">
           <strong>Coordinación con el equipo de backend</strong><br>
-          · Confirmar URL de producción de la API<br>
-          · Confirmar implementación de JWT y estructura del token<br>
-          · Confirmar nombres exactos de campos en todos los endpoints<br>
-          · Confirmar los valores posibles de <code style="font-family:monospace">estado</code> en /prescriptores/mis-asignados (al-dia / revisar / urgente)<br>
-          · Recibir documentación del backend para integrarla en esta doc
+          · Confirmar URL de producción de la API (actualizar constante <code style="font-family:monospace">API</code> en auth.js y dashboard.js)<br>
+          · Conectar <code style="font-family:monospace">/beneficiarios/me</code> al futuro "Mi perfil" del dashboard de beneficiarix<br>
+          · Conectar <code style="font-family:monospace">/beneficiarios/mis-actividades</code> al dashboard de beneficiarix<br>
+          · Revisar <code style="font-family:monospace">loadDispositivo()</code> — el campo <code style="font-family:monospace">valoracion_promedio</code> no existe en el schema real del backend<br>
+          · Explorar el endpoint <code style="font-family:monospace">PUT /admin/usuarios/{id}/estado</code> para el panel de gestión de usuarixs en admin
         </div>
       </div>
 
@@ -899,42 +1147,50 @@
     ══════════════════════════════════════ -->
     <section class="section" id="changelog">
       <h2>📝 Changelog</h2>
-      <p>Registro de cambios del proyecto. <span class="edit-hint">agregar entradas acá</span></p>
+      <p>Registro de cambios del proyecto.</p>
 
-      <div class="changelog-entry">
-        <div class="cl-date">2026-04</div>
-        <div class="cl-desc">
-          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
-          Maqueta completa de los 4 dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin)
+      <!-- Formulario para agregar entradas -->
+      <div class="cl-form" id="clForm">
+        <div class="cl-form-row">
+          <input type="month" id="clDate" class="cl-input" value="2026-04" title="Fecha">
+          <select id="clType" class="cl-input cl-select">
+            <option value="nuevo">🟢 nuevo</option>
+            <option value="cambio">🟡 cambio</option>
+            <option value="fix">🔵 fix</option>
+            <option value="deprecado">🔴 deprecado</option>
+          </select>
+          <input type="text" id="clText" class="cl-input cl-input-desc" placeholder="Descripción del cambio...">
+          <button class="cl-add-btn" onclick="addChangelog()">+ Agregar</button>
         </div>
       </div>
-      <div class="changelog-entry">
-        <div class="cl-date">2026-04</div>
-        <div class="cl-desc">
-          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
-          Página de autenticación con registro dinámico por rol y validaciones
+
+      <!-- Lista de entradas -->
+      <div id="changelogList">
+        <div class="changelog-entry">
+          <div class="cl-date">2026-04</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Documentación del backend integrada: stack, arquitectura, JWT, ejecución local y referencia completa de endpoints desde <code style="font-family:monospace">openapi.json</code>.</div>
+        </div>
+        <div class="changelog-entry">
+          <div class="cl-date">2026-04</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Primera versión de esta documentación técnica. JS separado en <code style="font-family:monospace">mascate-docs.js</code>.</div>
+        </div>
+        <div class="changelog-entry">
+          <div class="cl-date">2026-04</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Sistema de design tokens centralizado en tokens.css. CSS separado por módulo (tokens / auth / dashboard).</div>
+        </div>
+        <div class="changelog-entry">
+          <div class="cl-date">2026-04</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Página de autenticación con registro dinámico por rol y validaciones.</div>
+        </div>
+        <div class="changelog-entry">
+          <div class="cl-date">2026-04</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Maqueta completa de los 4 dashboards por rol (dispositivo, prescriptxr, beneficiarix, admin).</div>
         </div>
       </div>
-      <div class="changelog-entry">
-        <div class="cl-date">2026-04</div>
-        <div class="cl-desc">
-          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
-          Sistema de design tokens centralizado en tokens.css. CSS separado por módulo (tokens / auth / dashboard).
-        </div>
-      </div>
-      <div class="changelog-entry">
-        <div class="cl-date">2026-04</div>
-        <div class="cl-desc">
-          <span class="cl-tag"><span class="tag-green">nuevo</span></span>
-          Primera versión de esta documentación técnica. JS separado en <code style="font-family:monospace">mascate-docs.js</code>.
-        </div>
-      </div>
-      <div class="changelog-entry" contenteditable="true">
-        <div class="cl-date">YYYY-MM</div>
-        <div class="cl-desc">
-          <span class="cl-tag"><span class="tag-yellow">cambio</span></span>
-          Agregar aquí el próximo cambio...
-        </div>
+
+      <div class="callout info" style="margin-top:1rem">
+        <span class="callout-icon">💡</span>
+        <div>Las entradas que agregues con el formulario se guardan solo mientras la pestaña esté abierta. Para persistirlas, guardá el HTML después de agregarlas — el archivo ya incluye las entradas estáticas de arriba.</div>
       </div>
     </section>
 
@@ -945,21 +1201,36 @@
     ══════════════════════════════════════ -->
     <section class="section" id="notas">
       <h2>💬 Notas del equipo</h2>
-      <p>Espacio para decisiones de diseño, acuerdos y contexto del proyecto. <span class="edit-hint">editar libremente</span></p>
+      <p>Espacio para decisiones de diseño, acuerdos y contexto del proyecto.</p>
 
-      <div class="info-card" style="margin-bottom:0.75rem" contenteditable="true">
-        <div class="info-card-label">Lenguaje inclusivo</div>
-        <div style="font-size:0.84rem;margin-top:0.3rem">Toda la interfaz usa lenguaje de género neutro con terminación -x (beneficiarix, prescriptxr). Esto es intencional y refleja el enfoque comunitario del proyecto MASCATE.</div>
+      <!-- Formulario para agregar notas -->
+      <div class="cl-form" id="notaForm">
+        <div class="cl-form-col">
+          <input type="text" id="notaTitulo" class="cl-input" placeholder="Título de la nota (ej: Decisión de diseño, Acuerdo de reunión...)">
+          <div class="cl-form-row" style="margin-top:0.5rem">
+            <textarea id="notaCuerpo" class="cl-input cl-textarea" placeholder="Descripción o contenido de la nota..."></textarea>
+            <button class="cl-add-btn" style="align-self:flex-end" onclick="addNota()">+ Agregar</button>
+          </div>
+        </div>
       </div>
 
-      <div class="info-card" style="margin-bottom:0.75rem" contenteditable="true">
-        <div class="info-card-label">Sobre el nombre "Dispositivo CBC"</div>
-        <div style="font-size:0.84rem;margin-top:0.3rem">CBC = Club/Base Comunitaria. Puede ser un parque, salón comunal, sede propia u otro espacio. El término refleja la autonomía territorial del proyecto.</div>
+      <!-- Notas fijas -->
+      <div id="notasList">
+        <div class="info-card nota-card" style="margin-bottom:0.75rem">
+          <div class="info-card-label">Lenguaje inclusivo</div>
+          <div class="nota-body">Toda la interfaz usa lenguaje de género neutro con terminación -x (beneficiarix, prescriptxr). Esto es intencional y refleja el enfoque comunitario del proyecto MASCATE.</div>
+          <div class="nota-editable-hint">✏️ editar directamente</div>
+        </div>
+        <div class="info-card nota-card" style="margin-bottom:0.75rem">
+          <div class="info-card-label">Sobre el nombre "Dispositivo CBC"</div>
+          <div class="nota-body">CBC = Club/Base Comunitaria. Puede ser un parque, salón comunal, sede propia u otro espacio. El término refleja la autonomía territorial del proyecto.</div>
+          <div class="nota-editable-hint">✏️ editar directamente</div>
+        </div>
       </div>
 
-      <div class="info-card" contenteditable="true">
-        <div class="info-card-label">Notas libres del equipo</div>
-        <div style="font-size:0.84rem;margin-top:0.3rem">Escribir aquí decisiones tomadas en reunión, acuerdos sobre el prototipo, preguntas pendientes, etc.</div>
+      <div class="callout info" style="margin-top:1rem">
+        <span class="callout-icon">💡</span>
+        <div>Las notas que agregues con el formulario viven mientras la pestaña esté abierta. Para conservarlas, guardá el HTML luego de agregarlas. Las notas fijas de arriba son editables directamente haciendo clic en el texto.</div>
       </div>
 
       <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--outline-variant);font-size:0.72rem;color:var(--on-bg-muted);opacity:0.6">
@@ -971,5 +1242,36 @@
 </div>
 
 <script src="parts/mascate-docs.js"></script>
+<script>
+  // ── Mobile sidebar toggle ──
+  const toggle  = document.getElementById('sbToggle');
+  const overlay = document.getElementById('sbOverlay');
+  const sidebar = document.querySelector('.sidebar');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    toggle.classList.add('open');
+    toggle.setAttribute('aria-label', 'Cerrar menú');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    toggle.classList.remove('open');
+    toggle.setAttribute('aria-label', 'Abrir menú');
+  }
+
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+  overlay.addEventListener('click', closeSidebar);
+
+  // Close after clicking a nav link on mobile
+  document.querySelectorAll('.sb-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+</script>
 </body>
 </html>
