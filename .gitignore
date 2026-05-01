@@ -6,3 +6,4 @@ venv/
 *.htmlz
 FIX.txt
 *.cssz
+templates/THEMES
