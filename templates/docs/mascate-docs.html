@@ -273,62 +273,74 @@
       <p>Centraliza todas las variables de diseño. <strong>Cambiar aquí afecta auth y dashboard simultáneamente.</strong> Es el único lugar donde se definen colores, radios y tipografía base.</p>
 
       <h3>Paleta de colores</h3>
-      <div class="callout warn">
-        <span class="callout-icon">⚠️</span>
-        <div contenteditable="true"><strong>Paleta en definición.</strong> Los valores de color aún están siendo establecidos por el equipo. Una vez confirmados, actualizar los valores de cada token acá y en <code style="font-family:monospace">tokens.css</code>. Los nombres de las variables no deben cambiar — son referenciados por auth.css y dashboard.css.</div>
+      <p>Tema <strong>light multicolor</strong> — fondo lavanda muy claro con acentos en dorado, rosa, violeta y teal.</p>
+
+      <div class="info-grid" style="grid-template-columns:repeat(auto-fill,minmax(165px,1fr))">
+        <div class="info-card" style="border-top:3px solid #e8a800">
+          <div class="info-card-label">--primary</div>
+          <div class="info-card-val">#e8a800</div>
+          <div class="info-card-sub">Dorado. Botones CTA, tabs activos, acciones principales</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #2a7f62">
+          <div class="info-card-label">--secondary</div>
+          <div class="info-card-val">#2a7f62</div>
+          <div class="info-card-sub">Teal. Tags "al día", badges de éxito, deltas positivos</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #ff6b9e">
+          <div class="info-card-label">--pink</div>
+          <div class="info-card-val">#ff6b9e</div>
+          <div class="info-card-sub">Rosa. Tags urgentes, hover de roles seleccionados</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #7c5cbf">
+          <div class="info-card-label">--violet</div>
+          <div class="info-card-val">#7c5cbf</div>
+          <div class="info-card-sub">Violeta. Labels de formulario, sidebar activo, marca</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #ada3ff">
+          <div class="info-card-label">--violet-light</div>
+          <div class="info-card-val">#ada3ff</div>
+          <div class="info-card-sub">Lavanda. Focus de inputs, sidebar en hover</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #4a4560">
+          <div class="info-card-label">--tertiary</div>
+          <div class="info-card-val">#4a4560</div>
+          <div class="info-card-sub">Slate. Ítems de sidebar en reposo, textos neutros</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #d63b1a">
+          <div class="info-card-label">--error</div>
+          <div class="info-card-val">#d63b1a</div>
+          <div class="info-card-sub">Rojo-naranja. Alertas, toasts de error</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #f7f5ff">
+          <div class="info-card-label">--surface</div>
+          <div class="info-card-val">#f7f5ff</div>
+          <div class="info-card-sub">Fondo base lavanda muy claro</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #ffffff">
+          <div class="info-card-label">--surface-low</div>
+          <div class="info-card-val">#ffffff</div>
+          <div class="info-card-sub">Cards, sidebar, panel derecho del auth</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #f0ecff">
+          <div class="info-card-label">--surface-mid</div>
+          <div class="info-card-val">#f0ecff</div>
+          <div class="info-card-sub">Inputs, fondos de campos, tabs de roles</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #1a0e36">
+          <div class="info-card-label">--on-surface</div>
+          <div class="info-card-val">#1a0e36</div>
+          <div class="info-card-sub">Títulos y headings principales</div>
+        </div>
+        <div class="info-card" style="border-top:3px solid #7a7098">
+          <div class="info-card-label">--on-bg-muted</div>
+          <div class="info-card-val">#7a7098</div>
+          <div class="info-card-sub">Subtextos, placeholders, metadatos</div>
+        </div>
       </div>
 
-      <div class="info-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr))">
-        <div class="info-card">
-          <div class="info-card-label">--primary</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Botones CTA, acciones principales</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--on-primary</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Texto sobre fondo primario</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--secondary</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Labels, tags de estado activo</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--tertiary</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Acentos, toasts, keywords</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--error</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Alertas urgentes, errores</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--surface</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Fondo base de la app</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--surface-low</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Panel izquierdo (auth), sidebar</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--surface-high</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Inputs, campos de formulario</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--on-bg-muted</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Textos secundarios, subtítulos</div>
-        </div>
-        <div class="info-card">
-          <div class="info-card-label">--outline-variant</div>
-          <div class="info-card-val" contenteditable="true">por definir</div>
-          <div class="info-card-sub">Bordes de cards y divisores</div>
-        </div>
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>Cada color tiene variantes alpha en <code style="font-family:monospace">tokens.css</code> con el patrón <code style="font-family:monospace">--primary-a12</code>, <code style="font-family:monospace">--pink-dim</code>, <code style="font-family:monospace">--violet-dim</code>, etc. Usarlas en lugar de escribir <code style="font-family:monospace">rgba()</code> directo garantiza consistencia cuando cambie la paleta.</div>
       </div>
 
       <h3>Radios</h3>

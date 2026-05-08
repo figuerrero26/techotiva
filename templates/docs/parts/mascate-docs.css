@@ -1,27 +1,56 @@
 /* ═══ TOKENS ═══ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* ── Paleta: Blanco · Negro · Dorado · Rojo ── */
-  --surface:          #0a0a0a;
-  --surface-low:      #111111;
-  --surface-mid:      #1a1a1a;
-  --surface-high:     #242424;
-  --surface-highest:  #2e2e2e;
-  --primary:          #d4a017;
-  --on-primary:       #0a0a0a;
-  --primary-dim:      rgba(212,160,23,0.12);
-  --secondary:        #f5f5f5;
-  --secondary-dim:    rgba(245,245,245,0.08);
-  --tertiary:         #e8e8e8;
-  --tertiary-dim:     rgba(232,232,232,0.08);
-  --error:            #cc2200;
-  --error-dim:        rgba(204,34,0,0.12);
-  --on-bg:            #d8d8d8;
-  --on-bg-muted:      #888888;
-  --on-surface:       #f0f0f0;
-  --outline:          rgba(212,160,23,0.22);
-  --outline-variant:  rgba(255,255,255,0.08);
-  --radius-sm:  8px;
+  /* ── Superficies ── */
+  --surface:          #f7f5ff;
+  --surface-low:      #ffffff;
+  --surface-mid:      #f0ecff;
+  --surface-high:     #e8e2ff;
+  --surface-highest:  #d9d0ff;
+
+  /* ── Primary — Dorado ── */
+  --primary:          #e8a800;
+  --primary-dark:     #b07e00;
+  --on-primary:       #ffffff;
+  --primary-dim:      rgba(242,187,5,0.12);
+
+  /* ── Secondary — Teal ── */
+  --secondary:        #2a7f62;
+  --secondary-dim:    rgba(42,127,98,0.10);
+
+  /* ── Pink ── */
+  --pink:             #ff6b9e;
+  --pink-dark:        #d94d80;
+  --pink-dim:         rgba(255,107,158,0.12);
+
+  /* ── Violet ── */
+  --violet:           #7c5cbf;
+  --violet-light:     #ada3ff;
+  --violet-dim:       rgba(124,92,191,0.10);
+
+  /* ── Tertiary — Slate ── */
+  --tertiary:         #4a4560;
+  --tertiary-dim:     rgba(74,69,96,0.08);
+
+  /* ── Error ── */
+  --error:            #d63b1a;
+  --error-dim:        rgba(214,59,26,0.10);
+
+  /* ── Texto ── */
+  --on-surface:       #1a0e36;
+  --on-bg:            #2d2650;
+  --on-bg-muted:      #7a7098;
+
+  /* ── Bordes ── */
+  --outline:          rgba(232,168,0,0.30);
+  --outline-variant:  rgba(93,49,132,0.12);
+
+  /* ── Sombras ── */
+  --shadow-surface:   rgba(93,49,132,0.08);
+  --shadow-surface-lg:rgba(93,49,132,0.18);
+
+  /* ── Radios ── */
+  --radius-sm:   8px;
   --radius-md:  14px;
   --radius-lg:  20px;
 }
@@ -77,7 +106,7 @@ body::before {
 .sb-logo {
   width: 36px; height: 36px; border-radius: 10px;
   background: var(--primary-dim);
-  border: 1px solid rgba(212,160,23,0.3);
+  border: 1px solid rgba(232,168,0,0.3);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem;
 }
@@ -120,7 +149,7 @@ body::before {
 }
 .version-tag {
   display: inline-flex; align-items: center; gap: 0.4rem;
-  background: var(--error-dim); border: 1px solid rgba(204,34,0,0.3);
+  background: var(--error-dim); border: 1px solid rgba(214,59,26,0.3);
   color: var(--error); font-size: 0.65rem; font-weight: 600;
   padding: 0.2rem 0.6rem; border-radius: 999px;
   text-transform: uppercase; letter-spacing: 0.06em;
@@ -171,9 +200,9 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
   padding: 0.2rem 0.7rem; border-radius: 999px;
   text-transform: uppercase; letter-spacing: 0.07em;
 }
-.badge-pilot { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(212,160,23,0.3); }
-.badge-dev   { background: var(--error-dim);   color: var(--error);   border: 1px solid rgba(204,34,0,0.3); }
-.badge-open  { background: var(--secondary-dim); color: var(--secondary); border: 1px solid rgba(245,245,245,0.2); }
+.badge-pilot { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(232,168,0,0.3); }
+.badge-dev   { background: var(--error-dim);   color: var(--error);   border: 1px solid rgba(214,59,26,0.3); }
+.badge-open  { background: var(--secondary-dim); color: var(--secondary); border: 1px solid rgba(42,127,98,0.25); }
 
 .page-desc { font-size: 1rem; color: var(--on-bg-muted); max-width: 580px; line-height: 1.65; margin: 0; }
 
@@ -282,17 +311,17 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
   padding: 0.15rem 0.5rem; border-radius: 4px;
   display: inline-block;
 }
-.method.get  { background: rgba(245,245,245,0.1); color: var(--secondary); }
-.method.post { background: var(--primary-dim);    color: var(--primary); }
+.method.get  { background: var(--secondary-dim); color: var(--secondary); }
+.method.post { background: var(--primary-dim);   color: var(--primary); }
 .ep-path {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.78rem; color: var(--on-surface);
 }
 .ep-desc { color: var(--on-bg-muted); font-size: 0.8rem; }
 .ep-auth { font-size: 0.68rem; }
-.tag-green  { background: rgba(245,245,245,0.08); color: var(--secondary);  border: 1px solid rgba(245,245,245,0.15); border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
-.tag-yellow { background: var(--primary-dim);     color: var(--primary);    border: 1px solid rgba(212,160,23,0.2);  border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
-.tag-gray   { background: var(--surface-high);    color: var(--on-bg-muted); border: 1px solid var(--outline-variant); border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
+.tag-green  { background: var(--secondary-dim); color: var(--secondary);  border: 1px solid rgba(42,127,98,0.25);  border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
+.tag-yellow { background: var(--primary-dim);   color: var(--primary);    border: 1px solid rgba(232,168,0,0.25);  border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
+.tag-gray   { background: var(--surface-high);  color: var(--on-bg-muted); border: 1px solid var(--outline-variant); border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.65rem; font-weight: 600; }
 
 /* ─── CALLOUTS ─── */
 .callout {
@@ -301,10 +330,10 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
   margin: 0.75rem 0; font-size: 0.84rem;
 }
 .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
-.callout.warn  { background: rgba(212,160,23,0.08); border: 1px solid rgba(212,160,23,0.25); color: var(--on-bg); }
-.callout.info  { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: var(--on-bg); }
-.callout.todo  { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);  color: var(--on-bg); }
-.callout.error { background: var(--error-dim);       border: 1px solid rgba(204,34,0,0.25);    color: var(--on-bg); }
+.callout.warn  { background: rgba(232,168,0,0.08);    border: 1px solid rgba(232,168,0,0.25);    color: var(--on-bg); }
+.callout.info  { background: var(--secondary-dim);    border: 1px solid rgba(42,127,98,0.2);     color: var(--on-bg); }
+.callout.todo  { background: var(--violet-dim);        border: 1px solid rgba(124,92,191,0.2);    color: var(--on-bg); }
+.callout.error { background: var(--error-dim);         border: 1px solid rgba(214,59,26,0.25);    color: var(--on-bg); }
 
 /* ─── CHANGELOG ─── */
 .changelog-entry {
@@ -348,7 +377,7 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
 [contenteditable="true"]:focus {
   background: var(--surface-mid);
   border-radius: 4px;
-  box-shadow: 0 0 0 2px rgba(212,160,23,0.3);
+  box-shadow: 0 0 0 2px rgba(232,168,0,0.3);
 }
 .edit-hint {
   font-size: 0.65rem; color: var(--on-bg-muted); opacity: 0.5;
@@ -371,7 +400,7 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
   border-radius: var(--radius-md);
   padding: 1rem;
 }
-.eco-card.eco-ours { border-color: rgba(212,160,23,0.35); }
+.eco-card.eco-ours { border-color: rgba(232,168,0,0.35); }
 .eco-header {
   display: flex; align-items: center; gap: 0.6rem;
   margin-bottom: 0.6rem; flex-wrap: wrap;
@@ -429,7 +458,7 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
 .sb-overlay {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(26,14,54,0.4);
   z-index: 148;
 }
 /* sidebar y botón van en z-index > overlay */
@@ -450,7 +479,7 @@ p { color: var(--on-bg); margin-bottom: 0.9rem; font-size: 0.92rem; }
     z-index: 150;
     transform: translateX(-100%);
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    box-shadow: 4px 0 24px rgba(93,49,132,0.15);
   }
   .sidebar.open {
     transform: translateX(0);
