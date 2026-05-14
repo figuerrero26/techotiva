@@ -8,7 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="parts/mascate-docs.css">
 </head>
-<body>
+<body class="theme-light">
+<button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
 <!-- Hamburger (mobile only) -->
 <button class="sb-toggle" id="sbToggle" aria-label="Abrir menú">
   <span></span><span></span><span></span>
@@ -1284,6 +1285,18 @@ localStorage.setItem(<span class="str">'mascate_token'</span>, data.access_token
       if (window.innerWidth <= 768) closeSidebar();
     });
   });
+</script>
+<script>
+const btn = document.getElementById('themeToggle');
+const body = document.body;
+const saved = localStorage.getItem('mascate-docs-theme');
+if (saved) { body.className = saved; btn.textContent = saved === 'theme-dark' ? '☀️' : '🌙'; }
+btn.addEventListener('click', () => {
+  const isDark = body.classList.contains('theme-dark');
+  body.className = isDark ? 'theme-light' : 'theme-dark';
+  btn.textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('mascate-docs-theme', body.className);
+});
 </script>
 </body>
 </html>
