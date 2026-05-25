@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuarios | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="screen active">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🔐</div>
+      <div>
+        <div class="sb-name">MASCATE</div>
+        <div class="sb-role-tag">Administrador</div>
+      </div>
+    </div>
+    <span class="sb-section">Sistema</span>
+    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
+    <a class="sb-item active" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
+    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
+    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
+    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
+    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">JA</div>
+      <div>
+        <div class="sb-uname">Jhojan</div>
+        <div class="sb-uemail">admin@mascate.org</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Gestión de usuarios</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-mustard">+ Nuevo usuario</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1>Usuarios registrados</h1>
+        <p>Administración de beneficiarios, prescriptores y dispositivos.</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon mustard">👥</div><div class="stat-val">324</div><div class="stat-label">Usuarios registrados</div><div class="stat-delta">↑ +28 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-val">210</div><div class="stat-label">Beneficiarios</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🧑‍🏫</div><div class="stat-val">42</div><div class="stat-label">Prescriptores</div></div>
+        <div class="stat-card"><div class="stat-icon rust">🏢</div><div class="stat-val">18</div><div class="stat-label">Dispositivos</div></div>
+      </div>
+
+      <!-- BUSCADOR -->
+      <div class="panel">
+        <div class="frow" style="gap:0.75rem;align-items:flex-end">
+          <div class="field-mini" style="flex:1"><label>Buscar</label><input type="text" placeholder="Nombre, correo o localidad..."></div>
+          <div class="field-mini"><label>Rol</label>
+            <select>
+              <option>Todos</option>
+              <option>Beneficiarios</option>
+              <option>Prescriptores</option>
+              <option>Dispositivos</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-outline" style="margin-bottom:0">Filtrar</button>
+        </div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Lista de usuarios</span>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-sm btn-outline">⬇ Exportar</button>
+            <button class="btn btn-sm btn-green">+ Nuevo</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Usuario</th><th>Rol</th><th>Edad</th><th>Localidad</th><th>Estado</th><th>Actividad</th><th>Contacto</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">LM</div>Laura Martínez</div></td>
+                <td><span class="tag mustard">Beneficiario</span></td>
+                <td>19</td><td>Kennedy</td>
+                <td><span class="tag green">Activo</span></td>
+                <td>Taller artístico</td>
+                <td>3204441122</td>
+                <td><button class="btn btn-sm btn-outline">Editar</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar blue" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">AR</div>Andrea Ruiz</div></td>
+                <td><span class="tag blue">Prescriptor</span></td>
+                <td>31</td><td>Suba</td>
+                <td><span class="tag green">Activo</span></td>
+                <td>Seguimiento comunitario</td>
+                <td>3109998821</td>
+                <td><button class="btn btn-sm btn-outline">Editar</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.9rem;flex-shrink:0;background:var(--violet-dim,rgba(210,187,255,.15))">🏢</div>Casa Juvenil Kennedy</div></td>
+                <td><span class="tag purple">Dispositivo</span></td>
+                <td>—</td><td>Kennedy</td>
+                <td><span class="tag mustard">Pendiente</span></td>
+                <td>Actividades culturales</td>
+                <td>601223344</td>
+                <td><button class="btn btn-sm btn-outline">Editar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

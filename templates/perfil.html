@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfil | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="screen active">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🌱</div>
+      <div>
+        <div class="sb-name">MASCATE</div>
+        <div class="sb-role-tag">Beneficiarix</div>
+      </div>
+    </div>
+    <span class="sb-section">Principal</span>
+    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
+    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
+    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
+    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
+    <a class="sb-item active" href="/perfil"><span class="ic">👤</span> Perfil</a>
+    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">LM</div>
+      <div>
+        <div class="sb-uname">Laura Martínez</div>
+        <div class="sb-uemail">laura@mascate.org</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Perfil de usuario</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-mustard">Editar perfil</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- HERO -->
+      <div class="panel" style="margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+          <div class="list-avatar" style="width:3.5rem;height:3.5rem;font-size:1.1rem;flex-shrink:0;background:var(--error-dim);color:var(--error)">LM</div>
+          <div style="flex:1">
+            <h1 style="margin:0 0 0.25rem;font-size:1.4rem">Laura Martínez</h1>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+              <span class="tag mustard">Beneficiario</span>
+              <span style="font-size:0.82rem;color:var(--on-bg-muted)">Participante activa de actividades culturales, deportivas y comunitarias.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val">12</div><div class="stat-label">Actividades</div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-val">89%</div><div class="stat-label">Asistencia</div></div>
+        <div class="stat-card"><div class="stat-icon blue">⭐</div><div class="stat-val">4</div><div class="stat-label">Eventos activos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">🎯</div><div class="stat-val">72%</div><div class="stat-label">Progreso</div></div>
+      </div>
+
+      <!-- INFO + CONTACTO -->
+      <div class="grid-2">
+
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Información personal</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="contact-card"><div><div class="contact-lbl">Fecha nacimiento</div><div class="contact-val">12 ago 2004</div></div></div>
+            <div class="contact-card"><div><div class="contact-lbl">Localidad</div><div class="contact-val">Kennedy</div></div></div>
+            <div class="contact-card"><div><div class="contact-lbl">Correo</div><div class="contact-val">laura@gmail.com</div></div></div>
+            <div class="contact-card"><div><div class="contact-lbl">Teléfono</div><div class="contact-val">320 555 8821</div></div></div>
+          </div>
+          <div class="contact-card" style="margin-top:0.75rem">
+            <div><div class="contact-lbl">Descripción</div><div class="contact-val" style="font-size:0.85rem">Participa constantemente en procesos comunitarios, talleres culturales y actividades preventivas.</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Contactos y seguimiento</span></div>
+          <div class="list-row">
+            <div class="contact-icon" style="background:var(--primary-dim)">👩‍🏫</div>
+            <div class="list-info"><div class="list-name">Andrea Ruiz</div><div class="list-sub">Prescriptor asignado</div></div>
+          </div>
+          <div class="list-row">
+            <div class="contact-icon" style="background:var(--secondary-dim)">📞</div>
+            <div class="list-info"><div class="list-name">310 444 2211</div><div class="list-sub">Número principal</div></div>
+          </div>
+          <div class="list-row">
+            <div class="contact-icon" style="background:var(--tertiary-dim)">🏢</div>
+            <div class="list-info"><div class="list-name">Casa Juvenil Kennedy</div><div class="list-sub">Organización vinculada</div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIVIDADES RECIENTES -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Actividades recientes</span>
+          <button class="panel-action">Ver todas →</button>
+        </div>
+        <div class="grid-3">
+          <div class="act-card"><div class="act-card-emoji">🎨</div><div class="act-card-name">Taller artístico</div><div class="act-card-org">Casa Juvenil Kennedy</div><div class="act-card-meta"><span class="tag mustard">Activo</span></div></div>
+          <div class="act-card"><div class="act-card-emoji">⚽</div><div class="act-card-name">Escuela deportiva</div><div class="act-card-org">Fundación Impulso</div><div class="act-card-meta"><span class="tag green">Asistiendo</span></div></div>
+          <div class="act-card"><div class="act-card-emoji">🎭</div><div class="act-card-name">Integración cultural</div><div class="act-card-org">Centro comunitario</div><div class="act-card-meta"><span class="tag blue">Próxima</span></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

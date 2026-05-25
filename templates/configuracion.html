@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuración | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="screen active">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🔐</div>
+      <div>
+        <div class="sb-name">MASCATE</div>
+        <div class="sb-role-tag">Administrador</div>
+      </div>
+    </div>
+    <span class="sb-section">Sistema</span>
+    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
+    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
+    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
+    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
+    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
+    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a class="sb-item active" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">LA</div>
+      <div>
+        <div class="sb-uname">Laura Martínez</div>
+        <div class="sb-uemail">admin@mascate.org</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Configuración general</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-green">Guardar cambios</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1>Preferencias del sistema</h1>
+        <p>Personaliza la experiencia de la plataforma y administra la seguridad.</p>
+      </div>
+
+      <div class="grid-2">
+
+        <!-- PERFIL -->
+        <div class="panel span-2" style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+          <div class="list-avatar" style="width:3.5rem;height:3.5rem;font-size:1.1rem;flex-shrink:0;background:var(--error-dim);color:var(--error)">LM</div>
+          <div style="flex:1">
+            <h2 style="margin:0 0 0.2rem;font-size:1.2rem">Laura Martínez</h2>
+            <span style="font-size:0.83rem;color:var(--on-bg-muted)">Administrador principal · laura@mascate.org</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;min-width:280px">
+            <div class="contact-card"><div><div class="contact-lbl">Teléfono</div><div class="contact-val">320 441 1122</div></div></div>
+            <div class="contact-card"><div><div class="contact-lbl">Último acceso</div><div class="contact-val">Hoy · 08:35 AM</div></div></div>
+          </div>
+        </div>
+
+        <!-- SEGURIDAD -->
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Seguridad</span></div>
+
+          <div class="list-row" style="flex-wrap:wrap;gap:0.5rem">
+            <div class="list-info">
+              <div class="list-name">Cambiar contraseña</div>
+              <div class="list-sub">Actualiza tu contraseña periódicamente.</div>
+            </div>
+            <button class="btn btn-sm btn-green">Cambiar</button>
+          </div>
+
+          <div class="list-row" style="flex-wrap:wrap;gap:0.5rem">
+            <div class="list-info">
+              <div class="list-name">Autenticación adicional</div>
+              <div class="list-sub">Protege la cuenta con validación extra.</div>
+            </div>
+            <!-- toggle switch usando solo clases base -->
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.83rem">
+              <input type="checkbox" checked style="width:1rem;height:1rem;accent-color:var(--primary)">
+              Activada
+            </label>
+          </div>
+
+          <div class="list-row" style="flex-wrap:wrap;gap:0.5rem">
+            <div class="list-info">
+              <div class="list-name">Sesiones activas</div>
+              <div class="list-sub">Gestiona los dispositivos conectados.</div>
+            </div>
+            <button class="btn btn-sm btn-outline">Ver</button>
+          </div>
+        </div>
+
+        <!-- APARIENCIA -->
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Apariencia</span></div>
+          <div style="display:flex;gap:0.75rem;margin-bottom:1rem">
+            <div style="flex:1;border:2px solid var(--primary);border-radius:var(--radius-md);padding:0.75rem;text-align:center;cursor:pointer">
+              <div style="height:2.5rem;background:linear-gradient(135deg,#f5f3ef,#e8e4df);border-radius:var(--radius-sm);margin-bottom:0.4rem"></div>
+              <span style="font-size:0.8rem">Claro</span>
+              <span class="tag green" style="margin-left:0.4rem;font-size:0.68rem">Activo</span>
+            </div>
+            <div style="flex:1;border:2px solid var(--border);border-radius:var(--radius-md);padding:0.75rem;text-align:center;cursor:pointer">
+              <div style="height:2.5rem;background:linear-gradient(135deg,#1a1a2e,#0f0f1a);border-radius:var(--radius-sm);margin-bottom:0.4rem"></div>
+              <span style="font-size:0.8rem">Oscuro</span>
+            </div>
+          </div>
+          <div class="list-row">
+            <div class="list-info">
+              <div class="list-name">Modo compacto</div>
+              <div class="list-sub">Reduce espacios y simplifica la interfaz.</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.83rem">
+              <input type="checkbox" style="width:1rem;height:1rem;accent-color:var(--primary)">
+              Off
+            </label>
+          </div>
+        </div>
+
+        <!-- ESTADO DEL SISTEMA -->
+        <div class="panel span-2">
+          <div class="panel-head"><span class="panel-title">Estado del sistema</span></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem">
+            <div class="contact-card">
+              <div class="contact-icon" style="background:var(--secondary-dim)">🗄️</div>
+              <div>
+                <div class="contact-val">Base de datos</div>
+                <div class="contact-lbl"><span class="tag green">Activa</span></div>
+              </div>
+            </div>
+            <div class="contact-card">
+              <div class="contact-icon" style="background:var(--secondary-dim)">🖥️</div>
+              <div>
+                <div class="contact-val">Servidor</div>
+                <div class="contact-lbl"><span class="tag green">Estable</span></div>
+              </div>
+            </div>
+            <div class="contact-card">
+              <div class="contact-icon" style="background:var(--primary-dim)">💾</div>
+              <div>
+                <div class="contact-val">Backups</div>
+                <div class="contact-lbl"><span class="tag mustard">Pendiente</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

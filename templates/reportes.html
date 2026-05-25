@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reportes | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="screen active">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">🔐</div>
+      <div>
+        <div class="sb-name">MASCATE</div>
+        <div class="sb-role-tag">Administrador</div>
+      </div>
+    </div>
+    <span class="sb-section">Sistema</span>
+    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
+    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
+    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
+    <a class="sb-item active" href="/reportes"><span class="ic">📊</span> Reportes</a>
+    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
+    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
+    <div class="sb-spacer"></div>
+    <div class="sb-user">
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">AD</div>
+      <div>
+        <div class="sb-uname">Admin MASCATE</div>
+        <div class="sb-uemail">admin@mascate.org</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Reportes</span>
+      <div class="topbar-right">
+        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-outline">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1>Métricas generales</h1>
+        <p>Visualización estadística del sistema MASCATE · Seguimiento Piloto 1</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon mustard">📈</div><div class="stat-val">87%</div><div class="stat-label">Participación</div><div class="stat-delta">↑ +4% vs mes anterior</div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">1 240</div><div class="stat-label">Beneficiarios</div><div class="stat-delta">↑ +28 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🏢</div><div class="stat-val">32</div><div class="stat-label">Organizaciones</div></div>
+        <div class="stat-card"><div class="stat-icon rust">📅</div><div class="stat-val">98</div><div class="stat-label">Actividades</div></div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="grid-2">
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Participación mensual</span>
+            <button class="panel-action">Ver detalle →</button>
+          </div>
+          <div class="chart-bars">
+            <div class="bar active" style="height:80%"></div>
+            <div class="bar" style="height:60%"></div>
+            <div class="bar" style="height:95%"></div>
+            <div class="bar" style="height:75%"></div>
+            <div class="bar" style="height:50%"></div>
+          </div>
+          <div class="chart-labels"><span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Distribución por rol</span>
+          </div>
+          <div class="donut-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="105 71" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="38 138" stroke-dashoffset="-105" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#d2bbff" stroke-width="14" stroke-dasharray="33 143" stroke-dashoffset="-143" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#95d4b3"></div>Beneficiarios (59%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f6be39"></div>Prescriptores (22%)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#d2bbff"></div>Dispositivos (19%)</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABLA RESUMEN -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Actividad por dispositivo</span>
+          <button class="panel-action">Exportar →</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Dispositivo</th><th>Beneficiarios</th><th>Actividades</th><th>Asistencia</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Arte Vivo Techotiva</td><td style="color:var(--primary);font-weight:700">34</td><td>12</td><td><div class="seed-track" style="width:120px;display:inline-block"><div class="seed-fill" style="width:85%"></div></div> 85%</td><td><span class="tag green">Activo</span></td></tr>
+              <tr><td>Red Deportiva Sur</td><td style="color:var(--primary);font-weight:700">28</td><td>9</td><td><div class="seed-track" style="width:120px;display:inline-block"><div class="seed-fill" style="width:92%"></div></div> 92%</td><td><span class="tag green">Activo</span></td></tr>
+              <tr><td>Casa Cultural Norte</td><td style="color:var(--primary);font-weight:700">22</td><td>4</td><td><div class="seed-track" style="width:120px;display:inline-block"><div class="seed-fill" style="width:45%"></div></div> 45%</td><td><span class="tag mustard">En pausa</span></td></tr>
+              <tr><td>EcoTechotiva</td><td style="color:var(--primary);font-weight:700">18</td><td>7</td><td><div class="seed-track" style="width:120px;display:inline-block"><div class="seed-fill" style="width:78%"></div></div> 78%</td><td><span class="tag green">Activo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
