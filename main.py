@@ -283,6 +283,31 @@ def login_page():
 def dashboard_page():
     return FileResponse("templates/mascate-dashboards-final.html")
 
+@app.get("/usuarios", include_in_schema=False)
+def usuarios_page():
+    return FileResponse("templates/usuarios.html")
+
+@app.get("/actividades", include_in_schema=False)
+def actividades_page():
+    return FileResponse("templates/actividades.html")
+
+@app.get("/reportes", include_in_schema=False)
+def reportes_page():
+    return FileResponse("templates/reportes.html")
+
+@app.get("/perfil", include_in_schema=False)
+def perfil_page():
+    return FileResponse("templates/perfil.html")
+
+@app.get("/notificaciones", include_in_schema=False)
+def notificaciones_page():
+    return FileResponse("templates/notificaciones.html")
+
+@app.get("/configuracion", include_in_schema=False)
+def configuracion_page():
+    return FileResponse("templates/configuracion.html")
+
+
 @app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse(url="/login")

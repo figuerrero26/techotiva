@@ -8,3 +8,5 @@ FIX.txt
 *.cssz
 templates/THEMES
 baca/
+*.db
+*.sql
