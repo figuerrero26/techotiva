@@ -13,7 +13,10 @@ from database import get_db
 from app.models.models import (
     Usuario, Prescriptor, Beneficiario, Seguimiento, Dispositivo,
 )
-from app.schemas.schemas import AsignadoOut, SeguimientoCreate, SeguimientoOut
+from app.schemas.schemas import (
+    AsignadoOut, SeguimientoCreate, SeguimientoOut,
+    PrescriptorMe, PrescriptorUpdate,  
+)
 from app.routers._deps import get_current_user
 
 router = APIRouter(prefix="/prescriptores", tags=["Prescriptores"])
@@ -188,3 +191,64 @@ def listar_seguimientos(
             nombre_beneficiario=benef.nombre_apodo if benef else None,
         ))
     return result
+
+
+# ────────────────────────── GET /me ──────────────────────────
+@router.get("/me", response_model=PrescriptorMe)
+def mi_perfil_prescriptor(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if current_user.rol != "prescriptor":
+        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
+    presc = _get_prescriptor(db, current_user)
+
+    dispositivo_nombre = None
+    if presc.dispositivo_id:
+        disp = db.query(Dispositivo).filter(Dispositivo.id == presc.dispositivo_id).first()
+        dispositivo_nombre = disp.nombre if disp else None
+
+    return PrescriptorMe(
+        id=presc.id,
+        nombre_completo=presc.nombre_completo,
+        perfil_disciplina=presc.perfil_disciplina,
+        telefono=presc.telefono,
+        email=current_user.email,
+        dispositivo_id=presc.dispositivo_id,
+        dispositivo_nombre=dispositivo_nombre,
+        fecha_registro=current_user.fecha_registro,
+    )
+
+
+# ────────────────────────── PUT /me ──────────────────────────
+@router.put("/me", response_model=PrescriptorMe)
+def editar_perfil_prescriptor(
+    data: PrescriptorUpdate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if current_user.rol != "prescriptor":
+        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
+    presc = _get_prescriptor(db, current_user)
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(presc, field, value)
+
+    db.commit()
+    db.refresh(presc)
+
+    dispositivo_nombre = None
+    if presc.dispositivo_id:
+        disp = db.query(Dispositivo).filter(Dispositivo.id == presc.dispositivo_id).first()
+        dispositivo_nombre = disp.nombre if disp else None
+
+    return PrescriptorMe(
+        id=presc.id,
+        nombre_completo=presc.nombre_completo,
+        perfil_disciplina=presc.perfil_disciplina,
+        telefono=presc.telefono,
+        email=current_user.email,
+        dispositivo_id=presc.dispositivo_id,
+        dispositivo_nombre=dispositivo_nombre,
+        fecha_registro=current_user.fecha_registro,
+    )

@@ -146,6 +146,10 @@ def dispositivos_admin_page():
 def roles_page():
     return FileResponse("templates/roles.html")
 
+@app.get("/mis-prescriptores", include_in_schema=False)
+def mis_prescriptores_page():
+    return FileResponse("templates/mis-prescriptores.html")
+
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "ok", "app": "MASCATE API", "version": "1.0.0"}

@@ -21,8 +21,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch(e) {}
   } else if (rol === 'dispositivo') {
     try {
-      const disps = await (await fetch(API + '/dispositivos/', MASCATE.authGet())).json();
-      const d = disps[0];
+      const d = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
       if (d) {
         set('cfg-nombre', d.nombre); set('cfg-avatar', ini(d.nombre));
         set('cfg-sub', campo(d.tipo_servicio, ROL_LABELS[rol]));
@@ -134,7 +133,6 @@ async function guardarPassword() {
 
   if (ok) {
     cerrarModalPw();
-    // Toast visual
     const toast = document.createElement('div');
     toast.textContent = '✓ Contraseña actualizada correctamente';
     toast.style.cssText = `position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;

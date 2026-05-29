@@ -58,11 +58,11 @@ window.addEventListener('DOMContentLoaded', async () => {
       const asignados = await fetch(API + '/prescriptores/mis-asignados', authGet()).then(r => r.json());
       hay = asignados.some(a => a.estado === 'urgente' || a.estado === 'revisar');
     } else if (rol === 'dispositivo') {
-      const disps = await fetch(API + '/dispositivos/', authGet()).then(r => r.json());
-      if (disps.length) {
-        const pend = await fetch(API + '/dispositivos/' + disps[0].id + '/prescriptores/pendientes', authGet()).then(r => r.json());
-        hay = pend.length > 0;
-      }
+        const me = await fetch(API + '/dispositivos/me', authGet()).then(r => r.json());
+        if (me && me.id) {
+          const pend = await fetch(API + '/dispositivos/' + me.id + '/prescriptores/pendientes', authGet()).then(r => r.json());
+          hay = pend.length > 0;
+        }
     }
     if (hay) document.querySelectorAll('.notif-dot').forEach(d => d.style.display = 'block');
   } catch(e) {}
@@ -77,85 +77,85 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // ═══ DISPOSITIVO ═══
 async function loadDispositivo() {
-  const disps = await fetch(API + '/dispositivos/', authGet()).then(r => r.json());
-  for (const d of disps) {
-    try {
-      const stats = await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet()).then(r => r.json());
-      setStatVal('dispositivo', 0, stats.beneficiarios_activos);
-      setStatVal('dispositivo', 1, stats.actividades_registradas);
-      setStatVal('dispositivo', 2, stats.valoracion_promedio ?? '—');
-      setStatVal('dispositivo', 3, stats.seguimientos_semana);
+  setText('dispo-sb-name', nombre);
+  setText('dispo-sb-uname', nombre);
+  setText('dispo-sb-uemail', email || '');
+  const bAvatar = document.getElementById('dispo-sb-avatar');
+  if (bAvatar && nombre) bAvatar.textContent = nombre.substring(0,2).toUpperCase();
 
-      const h1 = document.querySelector('#screen-dispositivo .page-header h1');
-      if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
-      const sbName = document.querySelector('#screen-dispositivo .sb-uname');
-      if (sbName) sbName.textContent = nombre;
+  const d = await fetch(API + '/dispositivos/me', authGet()).then(r => r.json());
+  if (!d || !d.id) return;
 
-      // Botón registrar actividad → /actividades
-      const btnAct = document.querySelector('#screen-dispositivo .btn-green');
-      if (btnAct) btnAct.onclick = () => window.location.href = '/actividades';
-
-      // Prescriptores pendientes de aprobación
-      try {
-        const pendientes = await fetch(API + '/dispositivos/' + d.id + '/prescriptores/pendientes', authGet()).then(r => r.json());
-        if (pendientes.length > 0) {
-          const panel = document.querySelectorAll('#screen-dispositivo .panel')[1];
-          if (panel) {
-            let html = '<div class="panel-head"><span class="panel-title">⚠️ Prescriptxres pendientes</span><span class="tag rust">' + pendientes.length + '</span></div>';
-            pendientes.forEach(p => {
-              html += `<div class="list-row">
-                <div class="list-avatar" style="flex-shrink:0">${(p.nombre_completo||'??').substring(0,2).toUpperCase()}</div>
-                <div class="list-info"><div class="list-name">${p.nombre_completo||'—'}</div><div class="list-sub">${p.perfil_disciplina||'—'}</div></div>
-                <div style="display:flex;gap:0.4rem">
-                  <button class="btn btn-sm btn-green" onclick="aprobarPrescriptor(${d.id},${p.id})">✓ Aprobar</button>
-                </div>
-              </div>`;
-            });
-            setHTML(panel, html);
-          }
-        }
-      } catch(e) {}
-
-      // Beneficiarios
-      const benefs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json());
-      const listPanel = document.querySelectorAll('#screen-dispositivo .panel')[2];
-      if (listPanel && benefs.length > 0) {
-        let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs</span></div>';
-        benefs.forEach(b => {
-          const i = b.nombre_apodo.substring(0,2).toUpperCase();
-          html += `<div class="list-row"><div class="list-avatar">${i}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
-        });
-        setHTML(listPanel, html);
-      }
-
-      // Actividades
-      const acts = await fetch(API + '/actividades/?dispositivo_id=' + d.id).then(r => r.json());
-      const actPanel = document.querySelectorAll('#screen-dispositivo .panel')[3];
-      if (actPanel && acts.length > 0) {
-        let html = '<div class="panel-head"><span class="panel-title">Actividades</span></div>';
-        acts.forEach(a => {
-          html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji||'📅'}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
-        });
-        setHTML(actPanel, html);
-      }
-      break;
-    } catch(e) { continue; }
-  }
-}
-
-async function aprobarPrescriptor(dispId, prescId) {
   try {
-    const res = await fetch(API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/aprobar',
-      { method: 'POST', headers: authHeaders() });
-    if (res.ok) { loadDispositivo(); }
-    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
-  } catch(e) { console.error(e); }
+    const stats = await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet()).then(r => r.json());
+    setStatVal('dispositivo', 0, stats.beneficiarios_activos);
+    setStatVal('dispositivo', 1, stats.actividades_registradas);
+    setStatVal('dispositivo', 2, stats.valoracion_promedio ?? '—');
+    setStatVal('dispositivo', 3, stats.seguimientos_semana);
+
+    const h1 = document.querySelector('#screen-dispositivo .page-header h1');
+    if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
+    const sbName = document.querySelector('#screen-dispositivo .sb-uname');
+    if (sbName) sbName.textContent = nombre;
+
+    // Botón registrar actividad → /actividades
+    const btnAct = document.querySelector('#screen-dispositivo .topbar-right .btn-green');
+    if (btnAct) btnAct.onclick = () => window.location.href = '/actividades';
+
+    // Prescriptores pendientes de aprobación
+    try {
+      const pendientes = await fetch(API + '/dispositivos/' + d.id + '/prescriptores/pendientes', authGet()).then(r => r.json());
+      if (pendientes.length > 0) {
+        const panel = document.querySelectorAll('#screen-dispositivo .panel')[1];
+        if (panel) {
+          let html = '<div class="panel-head"><span class="panel-title">⚠️ Prescriptxres pendientes</span><span class="tag rust">' + pendientes.length + '</span></div>';
+          pendientes.forEach(p => {
+            html += `<div class="list-row">
+              <div class="list-avatar" style="flex-shrink:0">${(p.nombre_completo||'??').substring(0,2).toUpperCase()}</div>
+              <div class="list-info"><div class="list-name">${p.nombre_completo||'—'}</div><div class="list-sub">${p.perfil_disciplina||'—'}</div></div>
+              <div style="display:flex;gap:0.4rem">
+                <button class="btn btn-sm btn-green" onclick="window.aprobarPrescriptor(${d.id},${p.id})">✓ Aprobar</button>
+              </div>
+            </div>`;
+          });
+          setHTML(panel, html);
+        }
+      }
+    } catch(e) {}
+
+    // Beneficiarios
+    const benefs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json());
+    const listPanel = document.querySelectorAll('#screen-dispositivo .panel')[2];
+    if (listPanel && benefs.length > 0) {
+      let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs</span></div>';
+      benefs.forEach(b => {
+        const i = b.nombre_apodo.substring(0,2).toUpperCase();
+        html += `<div class="list-row"><div class="list-avatar">${i}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
+      });
+      setHTML(listPanel, html);
+    }
+
+    // Actividades
+    const acts = await fetch(API + '/actividades/?dispositivo_id=' + d.id).then(r => r.json());
+    const actPanel = document.querySelectorAll('#screen-dispositivo .panel')[3];
+    if (actPanel && acts.length > 0) {
+      let html = '<div class="panel-head"><span class="panel-title">Actividades</span></div>';
+      acts.forEach(a => {
+        html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji||'📅'}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
+      });
+      setHTML(actPanel, html);
+    }
+
+  } catch(e) { console.error('Error cargando dispositivo:', e); }
 }
 
 // ═══ PRESCRIPTOR ═══
 async function loadPrescriptor() {
+  setText('presc-sb-name', nombre);
   setText('presc-sb-uname', nombre);
   setText('presc-sb-uemail', email || '');
+  const bAvatar = document.getElementById('sb-avatar');
+  if (bAvatar && nombre) bAvatar.textContent = nombre.substring(0,2).toUpperCase();
 
   const h1 = document.querySelector('#screen-prescriptor .page-header h1');
   if (h1) h1.textContent = 'Hola, ' + nombre + ' 🎯';
@@ -232,6 +232,7 @@ async function loadPrescriptor() {
 
 // ═══ BENEFICIARIO ═══
 async function loadBeneficiario() {
+  setText('benef-sb-name', nombre);
   setText('benef-sb-uname', nombre);
   setText('benef-sb-uemail', email || '');
   const bAvatar = document.getElementById('benef-sb-avatar');
@@ -307,9 +308,16 @@ function filtrarActsBenef(tipo, q) {
 
 // ═══ ADMIN ═══
 async function loadAdmin() {
+  setText('admin-sb-name', nombre);
   setText('admin-sb-uname', nombre);
   setText('admin-sb-uemail', email || '');
 
+  const adminAvatar = document.querySelector('#screen-admin admin-sb-avatar');
+  if (adminAvatar && nombre) {
+    adminAvatar.textContent = nombre.substring(0,2).toUpperCase();
+    adminAvatar.style.background = 'var(--primary-dim)';
+    adminAvatar.style.color = 'var(--primary)';
+  }
   // Botones topbar
   document.querySelector('#screen-admin .topbar-right .btn-mustard')?.addEventListener('click', () => {
     window.location.href = '/dispositivos-admin';
@@ -400,6 +408,15 @@ async function aprobarDisp(usuarioId) {
     const res = await fetch(API + '/admin/usuarios/' + usuarioId + '/aprobar',
       { method: 'POST', headers: authHeaders() });
     if (res.ok) { loadAdmin(); }
+    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
+  } catch(e) { console.error(e); }
+}
+
+async function aprobarPrescriptor(dispId, prescId) {
+  try {
+    const res = await fetch(API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/aprobar',
+      { method: 'POST', headers: authHeaders() });
+    if (res.ok) { loadDispositivo(); }
     else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
   } catch(e) { console.error(e); }
 }

@@ -269,6 +269,7 @@ const SIDEBARS = {
         { href:'/perfil',      ic:'👤', txt:'Mi perfil' },
         { href:'/actividades', ic:'📋', txt:'Actividades' },
         { href:'/usuarios',    ic:'👥', txt:'Beneficiarixs' },
+        { href:'/mis-prescriptores', ic:'🎯', txt:'Prescriptorxs' },
         { href:'/formularios', ic:'🤝', txt:'Hoja de primer contacto' },
       ]},
       { label: 'Reportes', items: [
@@ -341,14 +342,14 @@ function renderSidebar(nombreVal, emailVal) {
     <div class="sb-brand">
       <div class="sb-logo">${rolData.logo}</div>
       <div>
-        <div class="sb-name">MASCATE</div>
+        <div class="sb-name" id="sb-uname">${nombreVal || '—'}</div>
         <div class="sb-role-tag" id="sb-role-tag">${ROL_LABELS[MASCATE.rol] ?? MASCATE.rol}</div>
       </div>
     </div>
     ${sectionsHtml}
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" id="sb-avatar" style="background:var(--error-dim);color:var(--error)">${i}</div>
+      <div class="sb-avatar" id="sb-avatar">${i}</div>
       <div>
         <div class="sb-uname" id="sb-uname">${nombreVal || '—'}</div>
         <div class="sb-uemail" id="sb-uemail">${emailVal || '—'}</div>

@@ -151,6 +151,8 @@ class Beneficiario(Base):
     telefono         = Column(String(30), nullable=True)
     descripcion      = Column(Text, nullable=True)
     genero           = Column(String(30), nullable=True)
+    dispositivo_id   = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)  # ← agregar
+    dispositivo      = relationship("Dispositivo", foreign_keys=[dispositivo_id])     # ← agregar
     # ──────────────────────────────────────────────
 
     estado_actual      = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
@@ -158,6 +160,7 @@ class Beneficiario(Base):
     seguimientos       = relationship("Seguimiento", back_populates="beneficiario")
     primeros_contactos = relationship("PrimerContacto", back_populates="beneficiario")
     inscripciones      = relationship("Inscripcion", back_populates="beneficiario", cascade="all, delete-orphan")
+    dispositivo        = relationship("Dispositivo", foreign_keys=[dispositivo_id])
 
     @property
     def estado(self) -> str:

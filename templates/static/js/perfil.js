@@ -22,16 +22,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       set('hero-desc',    campo(me.descripcion, 'Participante del colectivo MASCATE.'));
 
       setStats([
-        { id:'stat-0', val: acts.length,                         lbl:'Actividades',  icon:'📅' },
-        { id:'stat-1', val: campo(me.asistencia_pct, '—'),       lbl:'Asistencia',   icon:'✅' },
-        { id:'stat-2', val: acts.filter(a=>a.activa).length||'—',lbl:'Activas',      icon:'⭐' },
-        { id:'stat-3', val: campo(me.progreso, '—'),             lbl:'Progreso',     icon:'🎯' },
+        { id:'stat-0', val: acts.length,                          lbl:'Actividades',  icon:'📅' },
+        { id:'stat-1', val: campo(me.asistencia_pct, '—'),        lbl:'Asistencia',   icon:'✅' },
+        { id:'stat-2', val: acts.filter(a=>a.activa).length||'—', lbl:'Activas',      icon:'⭐' },
+        { id:'stat-3', val: campo(me.progreso, '—'),              lbl:'Progreso',     icon:'🎯' },
       ]);
 
-      // Info personal — renderInfoGrid muestra solo lo que el back manda
       renderInfoGrid('info-grid', me, rol, rol);
 
-      // Contacto — prescriptor asignado si el back lo manda
       const contactoList = document.getElementById('contacto-list');
       if (contactoList) {
         let html = '';
@@ -61,15 +59,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       set('hero-rol', ROL_LABELS[rol]); set('hero-desc', '');
 
       setStats([
-        { id:'stat-0', val: asignados.length,                                   lbl:'Asignados',    icon:'👥' },
-        { id:'stat-1', val: segs.length,                                         lbl:'Seguimientos', icon:'📋' },
-        { id:'stat-2', val: asignados.filter(a=>a.estado==='urgente').length,   lbl:'Urgentes',     icon:'⚠️' },
-        { id:'stat-3', val: asignados.filter(a=>a.estado==='al_dia').length,    lbl:'Al día',       icon:'✅' },
+        { id:'stat-0', val: asignados.length,                                  lbl:'Asignados',    icon:'👥' },
+        { id:'stat-1', val: segs.length,                                        lbl:'Seguimientos', icon:'📋' },
+        { id:'stat-2', val: asignados.filter(a=>a.estado==='urgente').length,  lbl:'Urgentes',     icon:'⚠️' },
+        { id:'stat-3', val: asignados.filter(a=>a.estado==='al_dia').length,   lbl:'Al día',       icon:'✅' },
       ]);
 
       renderInfoGrid('info-grid', { nombre_completo: nombre, email }, rol, rol);
 
-      // Asignados como contactos
       const contactoList = document.getElementById('contacto-list');
       if (contactoList) {
         contactoList.innerHTML = asignados.slice(0,3).map(a => `
@@ -90,9 +87,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ══ DISPOSITIVO ══
   else if (rol === 'dispositivo') {
     try {
-      const disps = await (await fetch(API + '/dispositivos/', MASCATE.authGet())).json();
-      const d     = disps[0];
-      if (!d) return;
+      const d = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
+      if (!d || !d.id) return;
+
       const stats = await (await fetch(API + '/dispositivos/' + d.id + '/estadisticas', MASCATE.authGet())).json();
       const acts  = await (await fetch(API + '/actividades/?dispositivo_id=' + d.id)).json();
 

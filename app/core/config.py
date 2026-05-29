@@ -4,7 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Base de datos
-    database_url: str
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/mascate_db"
 
     # JWT
     secret_key: str = "cambia_esto_en_produccion"
@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 480
 
     # Admin por defecto
-    admin_email: str = "admin@mascate.org"
-    admin_password: str = "admin123"
+    admin_email: str = "admin@mascate.com"
+    admin_password: str = "Admin1234!"
 
     # App
     app_env: str = "development"

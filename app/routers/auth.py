@@ -195,7 +195,11 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
     elif data.rol == "beneficiario":
         if not data.nombre_apodo:
             raise HTTPException(400, detail="El nombre o apodo es obligatorio")
-        perfil = Beneficiario(usuario_id=usuario.id, nombre_apodo=data.nombre_apodo)
+        perfil = Beneficiario(
+            usuario_id=usuario.id,
+            nombre_apodo=data.nombre_apodo,
+            dispositivo_id=data.dispositivo_id,  # ← NUEVO
+        )
         db.add(perfil)
         db.flush()
         estado_benef = EstadoRegistro(entidad_tipo="beneficiario", entidad_id=perfil.id, estado=Estados.ACTIVO, motivo="Registro de beneficiario", cambiado_por=None)

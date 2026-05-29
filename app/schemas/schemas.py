@@ -108,11 +108,11 @@ class BeneficiarioMe(BaseModel):
     telefono:         Optional[str] = None
     descripcion:      Optional[str] = None
     genero:           Optional[str] = None
+    dispositivo_id:     Optional[int] = None   # ← agregar
+    dispositivo_nombre: Optional[str] = None   # ← agregar
 
     class Config:
         from_attributes = True
-
-
 # ════════════════════ ACTIVIDAD ════════════════════
 
 class ActividadCreate(BaseModel):
@@ -166,10 +166,11 @@ class AsignadoOut(BaseModel):
     nombre_apodo: str
     ultima_sesion: Optional[datetime] = None
     dias_sin_sesion: Optional[int] = None
-    estado: str  # al_dia | revisar | urgente
+    estado: str
     localidad:        Optional[str] = None
     telefono:         Optional[str] = None
     fecha_nacimiento: Optional[date] = None
+    dispositivo_id:   Optional[int] = None
 
 
 class SeguimientoCreate(BaseModel):
@@ -256,7 +257,44 @@ class AdminDispositivoCreate(BaseModel):
     telefono: Optional[str] = None
     redes_sociales: Optional[str] = None
 
+# ════════════════════ PRESCRIPTOR ME ════════════════════
 
+class PrescriptorMe(BaseModel):
+    id: int
+    nombre_completo: str
+    perfil_disciplina: Optional[str] = None
+    telefono: Optional[str] = None
+    email: str
+    dispositivo_id: Optional[int] = None
+    dispositivo_nombre: Optional[str] = None
+    fecha_registro: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PrescriptorUpdate(BaseModel):
+    nombre_completo: Optional[str] = None
+    perfil_disciplina: Optional[str] = None
+    telefono: Optional[str] = None
+
+
+class BeneficiarioUpdate(BaseModel):
+    nombre_apodo: Optional[str] = None
+    telefono: Optional[str] = None
+    localidad: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    genero: Optional[str] = None
+    descripcion: Optional[str] = None
+
+
+class InscripcionRequest(BaseModel):
+    actividad_id: int
+
+
+class InscripcionResponse(BaseModel):
+    mensaje: str
+    actividad_id: int
 # ════════════════════ AUTH EXTRA ════════════════════
 
 class CambiarPasswordRequest(BaseModel):

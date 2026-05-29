@@ -36,6 +36,23 @@ def listar_dispositivos(db: Session = Depends(get_db)):
     return result
 
 
+# ────────────────────────── MI PERFIL (DISPOSITIVO) ──────────────────────────
+@router.get("/me", response_model=DispositivoOut)
+def mi_perfil_dispositivo(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if current_user.rol != "dispositivo":
+        raise HTTPException(status_code=403, detail="Requiere rol dispositivo")
+    
+    disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Perfil de dispositivo no encontrado")
+    
+    r = DispositivoOut.model_validate(disp)
+    r.activo = disp.usuario.activo if disp.usuario else True
+    return r
+
 # ────────────────────────── DETALLE ──────────────────────────
 @router.get("/{dispositivo_id}", response_model=DispositivoOut)
 def detalle_dispositivo(dispositivo_id: int, db: Session = Depends(get_db)):
@@ -84,44 +101,12 @@ def beneficiarios_dispositivo(
     if not disp:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
 
-    # Beneficiarios inscritos en actividades de este dispositivo
-    benef_ids = (
-        db.query(Inscripcion.beneficiario_id)
-        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-        .filter(Actividad.dispositivo_id == dispositivo_id)
-        .distinct()
+    benefs = (
+        db.query(Beneficiario)
+        .filter(Beneficiario.dispositivo_id == dispositivo_id)
         .all()
     )
-    ids = [b[0] for b in benef_ids]
-
-    # También beneficiarios con primer contacto en este dispositivo
-    pc_ids = (
-        db.query(PrimerContacto.beneficiario_id)
-        .filter(PrimerContacto.dispositivo_id == dispositivo_id)
-        .distinct()
-        .all()
-    )
-    ids.extend([b[0] for b in pc_ids])
-
-    # También beneficiarios con seguimiento de prescriptores de este dispositivo
-    presc_ids = [p.id for p in disp.prescriptores]
-    if presc_ids:
-        seg_ids = (
-            db.query(Seguimiento.beneficiario_id)
-            .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-            .distinct()
-            .all()
-        )
-        ids.extend([b[0] for b in seg_ids])
-
-    unique_ids = list(set(ids))
-    if not unique_ids:
-        return []
-
-    benefs = db.query(Beneficiario).filter(Beneficiario.id.in_(unique_ids)).all()
     return [BeneficiarioResumen.model_validate(b) for b in benefs]
-
-
 # ────────────────────────── ESTADÍSTICAS ──────────────────────────
 @router.get("/{dispositivo_id}/estadisticas", response_model=DispositivoEstadisticas)
 def estadisticas_dispositivo(
