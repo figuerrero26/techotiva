@@ -1,21 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
-import re
-
+from fastapi import BackgroundTasks
 from app.services.email_service import generar_token, enviar_correo_verificacion
 from app.core.config import settings
 from database import get_db
-from app.models.models import Usuario, Estados, EstadoRegistro, Dispositivo, Prescriptor, Beneficiario
+from app.models.models import Usuario, Dispositivo, Prescriptor, Beneficiario
 from app.core.security import hash_password, verify_password, create_access_token
-from app.routers._deps import get_current_user
-from app.schemas.schemas import CambiarPasswordRequest
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 
-# ─── Schemas locales ──────────────────────────────────────────────────────────
+# ─── Schemas ──────────────────────────────────────────────────────────────────
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -33,12 +30,12 @@ class RegisterRequest(BaseModel):
     tipo_servicio: Optional[str] = None
     dia_actividad: Optional[str] = None
     hora_actividad: Optional[str] = None
-    telefono: Optional[str] = None
     redes_sociales: Optional[str] = None
-
+    
     # Prescriptxr
     nombre_completo: Optional[str] = None
     perfil_disciplina: Optional[str] = None
+    telefono: Optional[str] = None
     dispositivo_id: Optional[int] = None
 
     # Beneficiarix
@@ -62,6 +59,7 @@ class RegisterRequest(BaseModel):
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 def _get_nombre(db: Session, usuario: Usuario) -> str:
+    """Retorna el nombre visible según el rol del usuario."""
     if usuario.rol == "dispositivo":
         d = db.query(Dispositivo).filter(Dispositivo.usuario_id == usuario.id).first()
         return d.nombre if d else usuario.email
@@ -74,36 +72,22 @@ def _get_nombre(db: Session, usuario: Usuario) -> str:
     return "Administrador MASCATE"
 
 
-def _validar_password_nueva(password: str) -> bool:
-    """Mínimo 8 caracteres, al menos una mayúscula y un número."""
-    if len(password) < 8:
-        return False
-    if not re.search(r"[A-Z]", password):
-        return False
-    if not re.search(r"\d", password):
-        return False
-    return True
-
-
 # ─── Login ────────────────────────────────────────────────────────────────────
 @router.post("/login", summary="Iniciar sesión")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.email == data.email).first()
 
     if not usuario or not verify_password(data.password, usuario.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+        )
 
-    if not usuario.estado_actual:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Error de configuración de cuenta. Contacta soporte.")
-
-    if usuario.estado_actual.estado == Estados.PENDIENTE:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tu cuenta está pendiente de aprobación")
-
-    if usuario.estado_actual.estado == Estados.INACTIVO:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tu cuenta ha sido desactivada")
-
-    if not usuario.email_verificado:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Debes verificar tu correo electrónico antes de iniciar sesión")
+    if not usuario.activo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta está pendiente de aprobación o ha sido desactivada",
+        )
 
     nombre = _get_nombre(db, usuario)
     token = create_access_token({"sub": str(usuario.id), "rol": usuario.rol})
@@ -118,32 +102,23 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 
 # ─── Register ─────────────────────────────────────────────────────────────────
-@router.post("/register", status_code=201, summary="Registrar nuevo usuario")
+@router.post("/register", status_code=201)
 def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    # 1. Email duplicado
     if db.query(Usuario).filter(Usuario.email == data.email).first():
         raise HTTPException(status_code=409, detail="Este correo ya está registrado")
 
+    # 2. Crear usuario base (inactivo hasta aprobación)
     usuario = Usuario(
         email=data.email,
         password_hash=hash_password(data.password),
         rol=data.rol,
-        email_verificado=False,
+        activo=False,  # pendiente de aprobación
     )
     db.add(usuario)
-    db.flush()
+    db.flush()  # obtiene el ID sin hacer commit aún
 
-    estado_valor = Estados.ACTIVO if data.rol == "beneficiario" else Estados.PENDIENTE
-    estado_inicial = EstadoRegistro(
-        entidad_tipo="usuario",
-        entidad_id=usuario.id,
-        estado=estado_valor,
-        motivo="Registro inicial de usuario a través de la plataforma",
-        cambiado_por=None
-    )
-    db.add(estado_inicial)
-    db.flush()
-    usuario.estado_actual_id = estado_inicial.id
-
+    # 3. Crear perfil según rol
     if data.rol == "dispositivo":
         if not data.nombre:
             raise HTTPException(400, detail="El nombre del dispositivo es obligatorio")
@@ -153,30 +128,24 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
             lugar_actividades=data.lugar_actividades,
             ubicacion=data.ubicacion,
             tipo_servicio=data.tipo_servicio,
-            dia_actividad=data.dia_actividad,
-            hora_actividad=data.hora_actividad,
-            telefono=data.telefono,
-            redes_sociales=data.redes_sociales,
         )
         db.add(perfil)
-        db.flush()
-        estado_disp = EstadoRegistro(entidad_tipo="dispositivo", entidad_id=perfil.id, estado=Estados.PENDIENTE, motivo="Solicitud de registro como dispositivo", cambiado_por=None)
-        db.add(estado_disp)
-        db.flush()
-        perfil.estado_actual_id = estado_disp.id
-        mensaje = "Solicitud enviada. Verifica tu correo y luego un administrador debe aprobarte."
+        mensaje = "Solicitud enviada. Un administrador debe aprobarte."
 
     elif data.rol == "prescriptor":
         if not data.nombre_completo:
             raise HTTPException(400, detail="El nombre completo es obligatorio")
         if not data.dispositivo_id:
             raise HTTPException(400, detail="Debes seleccionar un Dispositivo CBC")
+
+        # Verificar que el dispositivo exista y esté activo
         disp = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
         if not disp:
             raise HTTPException(400, detail="El dispositivo seleccionado no es válido")
         disp_usuario = db.query(Usuario).filter(Usuario.id == disp.usuario_id).first()
-        if not disp_usuario or not disp_usuario.estado_actual or disp_usuario.estado_actual.estado != Estados.ACTIVO:
+        if not disp_usuario or not disp_usuario.activo:
             raise HTTPException(400, detail="El dispositivo seleccionado no está activo")
+
         perfil = Prescriptor(
             usuario_id=usuario.id,
             nombre_completo=data.nombre_completo,
@@ -185,45 +154,43 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
             dispositivo_id=data.dispositivo_id,
         )
         db.add(perfil)
-        db.flush()
-        estado_presc = EstadoRegistro(entidad_tipo="prescriptor", entidad_id=perfil.id, estado=Estados.PENDIENTE, motivo="Solicitud de registro como prescriptor", cambiado_por=None)
-        db.add(estado_presc)
-        db.flush()
-        perfil.estado_actual_id = estado_presc.id
-        mensaje = "Solicitud enviada. Verifica tu correo y luego el Dispositivo CBC debe aprobarte."
+        mensaje = "Solicitud enviada. El Dispositivo CBC que elegiste debe aprobarte."
 
     elif data.rol == "beneficiario":
         if not data.nombre_apodo:
             raise HTTPException(400, detail="El nombre o apodo es obligatorio")
-        perfil = Beneficiario(usuario_id=usuario.id, nombre_apodo=data.nombre_apodo)
+        perfil = Beneficiario(
+            usuario_id=usuario.id,
+            nombre_apodo=data.nombre_apodo,
+        )
         db.add(perfil)
-        db.flush()
-        estado_benef = EstadoRegistro(entidad_tipo="beneficiario", entidad_id=perfil.id, estado=Estados.ACTIVO, motivo="Registro de beneficiario", cambiado_por=None)
-        db.add(estado_benef)
-        db.flush()
-        perfil.estado_actual_id = estado_benef.id
-        mensaje = "Registro completado. Verifica tu correo para iniciar sesión."
-
-    token_verificacion = generar_token()
-    usuario.email_token = token_verificacion
-
+        mensaje = "Solicitud enviada. Tu Prescriptxr debe aprobarte."
+    # Generar token de verificación
+    token = generar_token()
+    usuario.email_token = token
+    usuario.email_verificado = False
     db.commit()
 
-    background_tasks.add_task(
-        enviar_correo_verificacion,
-        email=data.email,
-        token=token_verificacion,
-        base_url=settings.app_base_url
-    )
+    import asyncio
+    try:
+        asyncio.get_event_loop().run_until_complete(
+            enviar_correo_verificacion(
+                email=data.email,
+                token=token,
+                base_url=settings.app_base_url
+            )
+        )
+        print("✅ Correo enviado")
+    except Exception as e:
+        print(f"❌ ERROR EMAIL: {e}")
 
     return {
         "message": mensaje,
         "user_id": usuario.id,
-        "status": estado_valor,
+        "status": "pendiente",
     }
 
 
-# ─── Verificar email ──────────────────────────────────────────────────────────
 @router.get("/verificar-email")
 def verificar_email(token: str, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.email_token == token).first()
@@ -231,31 +198,9 @@ def verificar_email(token: str, db: Session = Depends(get_db)):
         raise HTTPException(400, detail="Token inválido o expirado")
     if usuario.email_verificado:
         return {"message": "Correo ya verificado"}
+    
     usuario.email_verificado = True
     usuario.email_token = None
     db.commit()
-    return {"message": "¡Correo verificado! Tu solicitud será revisada pronto."}
-
-
-# ─── Cambiar contraseña ───────────────────────────────────────────────────────
-@router.post("/cambiar-password", summary="Cambiar contraseña del usuario logueado")
-def cambiar_password(
-    data: CambiarPasswordRequest,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    # Verificar que la contraseña actual es correcta
-    if not verify_password(data.password_actual, current_user.password_hash):
-        raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta")
-
-    # Validar requisitos de la nueva contraseña
-    if not _validar_password_nueva(data.password_nueva):
-        raise HTTPException(
-            status_code=422,
-            detail="La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número"
-        )
-
-    current_user.password_hash = hash_password(data.password_nueva)
-    db.commit()
-
-    return {"mensaje": "Contraseña actualizada correctamente"}
+    
+    return {"message": "Correo verificado correctamente. Tu solicitud será revisada pronto."}

@@ -1,6 +1,6 @@
 /* ═══ MASCATE — AUTH JS ═══ */
 
-const API = 'http://127.0.0.1:8080';
+const API = window.location.origin;
 let selectedRole = null;
 
 const EYE_OPEN   = '<svg width="17" height="17"><use href="#eye-open"/></svg>';
@@ -67,6 +67,7 @@ async function doLogin() {
     localStorage.setItem('mascate_token', data.access_token);
     localStorage.setItem('mascate_rol', data.rol);
     localStorage.setItem('mascate_nombre', data.nombre);
+    localStorage.setItem('mascate_email', email);
     showToast('Bienvenidx, ' + data.nombre + '!');
     setTimeout(() => { window.location.href = '/dashboard'; }, 800);
   } catch(e) {

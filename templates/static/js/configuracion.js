@@ -1,87 +1,154 @@
 /* ═══ MASCATE — CONFIGURACIÓN JS ═══ */
-
-const API    = 'http://127.0.0.1:8080';
-const token  = localStorage.getItem('mascate_token');
-const rol    = localStorage.getItem('mascate_rol');
-const nombre = localStorage.getItem('mascate_nombre');
-
-if (!token) window.location.href = '/login';
-
-function authGet() { return { headers: { 'Authorization': 'Bearer ' + token } }; }
-
-// Logout
-document.querySelectorAll('.sb-user').forEach(u => {
-  const btn = document.createElement('button');
-  btn.textContent = 'Cerrar sesion';
-  btn.className = 'btn btn-sm btn-outline';
-  btn.style.cssText = 'margin-top:0.5rem;width:100%;font-size:0.72rem;';
-  btn.onclick = () => {
-    ['mascate_token','mascate_rol','mascate_nombre'].forEach(k => localStorage.removeItem(k));
-    window.location.href = '/login';
-  };
-  u.after(btn);
-});
+const API = window.location.origin;
+MASCATE.guardAuth();
 
 window.addEventListener('DOMContentLoaded', async () => {
-  // Nombre en sidebar y perfil
-  const sbName  = document.querySelector('.sb-uname');
-  const sbEmail = document.querySelector('.sb-uemail');
-  if (sbName && nombre) sbName.textContent = nombre;
+  const { rol, nombre, email } = MASCATE;
+  renderSidebar(nombre, email);
 
-  // Iniciales en avatares
-  const ini = (nombre || 'AD').substring(0,2).toUpperCase();
-  document.querySelectorAll('.list-avatar, .sb-avatar').forEach(el => {
-    if (['LA','LM','AD'].includes(el.textContent.trim())) el.textContent = ini;
-  });
+  set('cfg-avatar', ini(nombre));
+  set('cfg-nombre', nombre || '—');
+  set('cfg-sub',    ROL_LABELS[rol] ?? rol);
+  set('cfg-email',  email || '—');
+  set('cfg-acceso', new Date().toLocaleString('es-CO', { dateStyle:'short', timeStyle:'short' }));
 
-  // Nombre en la card de perfil
-  const heroH2 = document.querySelector('h2');
-  if (heroH2 && nombre) heroH2.textContent = nombre;
-
-  // Rol label
-  const labels = { admin:'Administrador principal', dispositivo:'Dispositivo CBC', prescriptor:'Prescriptxr', beneficiario:'Beneficiarix' };
-  const rolSpan = document.querySelector('h2 + span');
-  if (rolSpan) rolSpan.textContent = labels[rol] ?? rol;
-
-  // Estado del sistema: intentar ping a /admin/stats
-  if (rol === 'admin') {
+  // Datos reales según rol
+  if (rol === 'beneficiario') {
     try {
-      await fetch(API + '/admin/stats', authGet());
-      // Si llega aquí, el servidor responde
-      const statusItems = document.querySelectorAll('.contact-val');
-      // Los valores de estado ya están en el HTML como Activa/Estable/Pendiente
-    } catch(e) {
-      // Servidor no responde, marcar en rojo
-      const items = document.querySelectorAll('.tag.green');
-      items.forEach(t => { t.className = 'tag rust'; t.textContent = 'Error'; });
-    }
+      const me = await (await fetch(API + '/beneficiarios/me', MASCATE.authGet())).json();
+      set('cfg-nombre', me.nombre_apodo); set('cfg-avatar', ini(me.nombre_apodo));
+      set('cfg-email',  me.email);
+    } catch(e) {}
+  } else if (rol === 'dispositivo') {
+    try {
+      const disps = await (await fetch(API + '/dispositivos/', MASCATE.authGet())).json();
+      const d = disps[0];
+      if (d) {
+        set('cfg-nombre', d.nombre); set('cfg-avatar', ini(d.nombre));
+        set('cfg-sub', campo(d.tipo_servicio, ROL_LABELS[rol]));
+      }
+    } catch(e) {}
   }
 
-  // Toggle de tema (claro / oscuro) — solo UI local
-  const themeBoxes = document.querySelectorAll('[style*="border:2px solid"]');
-  themeBoxes.forEach((box, i) => {
-    box.style.cursor = 'pointer';
-    box.addEventListener('click', () => {
-      themeBoxes.forEach(b => b.style.border = '2px solid var(--border)');
-      box.style.border = '2px solid var(--primary)';
-      // aquí podrías aplicar data-theme al <html> si tienes modo oscuro implementado
+  // Estado sistema solo para admin
+  if (rol !== "admin") {
+    document.querySelector(".panel.span-2:last-of-type")?.remove();
+  }
+
+  // Ping estado sistema
+  try {
+    await fetch(API + '/admin/stats', MASCATE.authGet());
+  } catch(e) {
+    ['status-db','status-srv'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.className = 'tag rust'; el.textContent = 'Error'; }
     });
+  }
+
+  // Tema
+  document.getElementById('theme-claro')?.addEventListener('click', () => {
+    document.getElementById('theme-claro').style.border  = '2px solid var(--primary)';
+    document.getElementById('theme-oscuro').style.border = '2px solid var(--border)';
+  });
+  document.getElementById('theme-oscuro')?.addEventListener('click', () => {
+    document.getElementById('theme-oscuro').style.border = '2px solid var(--primary)';
+    document.getElementById('theme-claro').style.border  = '2px solid var(--border)';
   });
 
-  // Modo compacto toggle
-  const compactoCheck = document.querySelector('input[type="checkbox"]:last-of-type');
-  if (compactoCheck) {
-    compactoCheck.addEventListener('change', () => {
-      document.body.classList.toggle('compact', compactoCheck.checked);
-    });
+  // Modo compacto
+  document.getElementById('chk-compacto')?.addEventListener('change', e => {
+    document.body.classList.toggle('compact', e.target.checked);
+    e.target.nextSibling.textContent = e.target.checked ? ' On' : ' Off';
+  });
+
+  // Abrir modal contraseña
+  document.getElementById('btn-pw')?.addEventListener('click', abrirModalPw);
+
+  // Guardar preferencias
+  document.getElementById('btn-guardar')?.addEventListener('click', () => {
+    const btn = document.getElementById('btn-guardar');
+    btn.textContent = '✓ Guardado';
+    setTimeout(() => { btn.textContent = 'Guardar cambios'; }, 2000);
+  });
+});
+
+// ── Modal contraseña ─────────────────────────────────────────────────────
+function abrirModalPw() {
+  const overlay = document.getElementById('modal-pw-overlay');
+  if (overlay) { overlay.style.display = 'flex'; }
+  document.getElementById('pw-actual')?.focus();
+  document.getElementById('pw-error').style.display = 'none';
+  ['pw-actual','pw-nueva','pw-confirmar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function cerrarModalPw() {
+  const overlay = document.getElementById('modal-pw-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+async function guardarPassword() {
+  const actual     = document.getElementById('pw-actual')?.value;
+  const nueva      = document.getElementById('pw-nueva')?.value;
+  const confirmar  = document.getElementById('pw-confirmar')?.value;
+  const errorEl    = document.getElementById('pw-error');
+  const btn        = document.getElementById('btn-pw-guardar');
+
+  function mostrarError(msg) {
+    errorEl.textContent   = msg;
+    errorEl.style.display = 'block';
   }
 
-  // Botón guardar — por ahora solo feedback visual
-  const saveBtn = document.querySelector('.btn-green');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-      saveBtn.textContent = '✓ Guardado';
-      setTimeout(() => { saveBtn.textContent = 'Guardar cambios'; }, 2000);
-    });
+  errorEl.style.display = 'none';
+
+  if (!actual || !nueva || !confirmar) {
+    mostrarError('Por favor completa todos los campos.');
+    return;
   }
+  if (nueva.length < 8) {
+    mostrarError('La nueva contraseña debe tener al menos 8 caracteres.');
+    return;
+  }
+  if (!/[A-Z]/.test(nueva)) {
+    mostrarError('La nueva contraseña debe tener al menos una letra mayúscula.');
+    return;
+  }
+  if (!/[0-9]/.test(nueva)) {
+    mostrarError('La nueva contraseña debe tener al menos un número.');
+    return;
+  }
+  if (nueva !== confirmar) {
+    mostrarError('Las contraseñas nuevas no coinciden.');
+    return;
+  }
+
+  btn.textContent = 'Cambiando...';
+  btn.disabled    = true;
+
+  const { ok, data } = await MASCATE.cambiarPassword(actual, nueva);
+
+  btn.textContent = 'Cambiar contraseña';
+  btn.disabled    = false;
+
+  if (ok) {
+    cerrarModalPw();
+    // Toast visual
+    const toast = document.createElement('div');
+    toast.textContent = '✓ Contraseña actualizada correctamente';
+    toast.style.cssText = `position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;
+      background:var(--primary);color:#fff;padding:0.75rem 1.25rem;
+      border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2)`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  } else {
+    mostrarError(data.detail || 'Contraseña actual incorrecta.');
+  }
+}
+
+// Cerrar modal al click fuera
+document.getElementById('modal-pw-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-pw-overlay')) cerrarModalPw();
 });

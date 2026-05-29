@@ -10,127 +10,129 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-
+<div class="top-bar"></div>
 <div class="screen active">
-
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sb-brand">
-      <div class="sb-logo">🔐</div>
-      <div>
-        <div class="sb-name">MASCATE</div>
-        <div class="sb-role-tag">Administrador</div>
-      </div>
-    </div>
-    <span class="sb-section">Sistema</span>
-    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
-    <a class="sb-item active" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
-    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
-    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
-    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
-    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
-    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
-    <div class="sb-spacer"></div>
-    <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">JA</div>
-      <div>
-        <div class="sb-uname">Jhojan</div>
-        <div class="sb-uemail">admin@mascate.org</div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- MAIN -->
+  <nav class="sidebar"></nav>
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Gestión de usuarios</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <div class="notif-btn" id="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></div>
         <button class="btn btn-sm btn-mustard">+ Nuevo usuario</button>
       </div>
     </div>
-
     <div class="content">
-      <div class="page-header">
-        <h1>Usuarios registrados</h1>
-        <p>Administración de beneficiarios, prescriptores y dispositivos.</p>
+
+      <!-- PENDIENTES DE APROBACIÓN -->
+      <div id="panel-pendientes" style="display:none" class="panel" style="border:1.5px solid var(--error);background:var(--error-dim)">
+        <div class="panel-head">
+          <span class="panel-title">⚠️ Pendientes de aprobación</span>
+          <span id="pendientes-count" class="tag rust">0</span>
+        </div>
+        <div id="pendientes-list"></div>
       </div>
 
-      <!-- STATS -->
+      <div class="page-header"><h1>Usuarios registrados</h1><p>Administración de beneficiarixs, prescriptxres y dispositivos.</p></div>
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon mustard">👥</div><div class="stat-val">324</div><div class="stat-label">Usuarios registrados</div><div class="stat-delta">↑ +28 este mes</div></div>
-        <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-val">210</div><div class="stat-label">Beneficiarios</div></div>
-        <div class="stat-card"><div class="stat-icon blue">🧑‍🏫</div><div class="stat-val">42</div><div class="stat-label">Prescriptores</div></div>
-        <div class="stat-card"><div class="stat-icon rust">🏢</div><div class="stat-val">18</div><div class="stat-label">Dispositivos</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">👥</div><div class="stat-val" id="stat-0">—</div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-val" id="stat-1">—</div><div class="stat-label">Beneficiarixs</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🎯</div><div class="stat-val" id="stat-2">—</div><div class="stat-label">Prescriptxres</div></div>
+        <div class="stat-card"><div class="stat-icon rust">🏘️</div><div class="stat-val" id="stat-3">—</div><div class="stat-label">Dispositivos</div></div>
       </div>
 
-      <!-- BUSCADOR -->
       <div class="panel">
-        <div class="frow" style="gap:0.75rem;align-items:flex-end">
-          <div class="field-mini" style="flex:1"><label>Buscar</label><input type="text" placeholder="Nombre, correo o localidad..."></div>
-          <div class="field-mini"><label>Rol</label>
-            <select>
-              <option>Todos</option>
-              <option>Beneficiarios</option>
-              <option>Prescriptores</option>
-              <option>Dispositivos</option>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Buscar</label>
+            <input id="search-input" type="text" placeholder="Nombre, correo..." style="width:100%">
+          </div>
+          <div>
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Rol</label>
+            <select id="role-select">
+              <option value="todos">Todos</option>
+              <option value="beneficiario">Beneficiarixs</option>
+              <option value="prescriptor">Prescriptxres</option>
+              <option value="dispositivo">Dispositivos</option>
             </select>
           </div>
-          <button class="btn btn-sm btn-outline" style="margin-bottom:0">Filtrar</button>
+          <div>
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Estado</label>
+            <select id="status-select">
+              <option value="todos">Todos</option>
+              <option value="activo">Activos</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="inactivo">Inactivos</option>
+            </select>
+          </div>
+          <button id="btn-filtrar" class="btn btn-sm btn-outline">Filtrar</button>
         </div>
       </div>
 
-      <!-- TABLA -->
       <div class="panel">
         <div class="panel-head">
           <span class="panel-title">Lista de usuarios</span>
-          <div style="display:flex;gap:0.5rem">
-            <button class="btn btn-sm btn-outline">⬇ Exportar</button>
-            <button class="btn btn-sm btn-green">+ Nuevo</button>
-          </div>
         </div>
         <div style="overflow-x:auto">
           <table>
             <thead>
-              <tr><th>Usuario</th><th>Rol</th><th>Edad</th><th>Localidad</th><th>Estado</th><th>Actividad</th><th>Contacto</th><th></th></tr>
+              <tr>
+                <th>Usuario</th><th>Rol</th><th>Fecha nac.</th>
+                <th>Localidad</th><th>Género</th><th>Estado</th>
+                <th>Teléfono</th><th>Acciones</th>
+              </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">LM</div>Laura Martínez</div></td>
-                <td><span class="tag mustard">Beneficiario</span></td>
-                <td>19</td><td>Kennedy</td>
-                <td><span class="tag green">Activo</span></td>
-                <td>Taller artístico</td>
-                <td>3204441122</td>
-                <td><button class="btn btn-sm btn-outline">Editar</button></td>
-              </tr>
-              <tr>
-                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar blue" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">AR</div>Andrea Ruiz</div></td>
-                <td><span class="tag blue">Prescriptor</span></td>
-                <td>31</td><td>Suba</td>
-                <td><span class="tag green">Activo</span></td>
-                <td>Seguimiento comunitario</td>
-                <td>3109998821</td>
-                <td><button class="btn btn-sm btn-outline">Editar</button></td>
-              </tr>
-              <tr>
-                <td><div style="display:flex;align-items:center;gap:0.6rem"><div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.9rem;flex-shrink:0;background:var(--violet-dim,rgba(210,187,255,.15))">🏢</div>Casa Juvenil Kennedy</div></td>
-                <td><span class="tag purple">Dispositivo</span></td>
-                <td>—</td><td>Kennedy</td>
-                <td><span class="tag mustard">Pendiente</span></td>
-                <td>Actividades culturales</td>
-                <td>601223344</td>
-                <td><button class="btn btn-sm btn-outline">Editar</button></td>
-              </tr>
+            <tbody id="users-tbody">
+              <tr><td colspan="8" style="color:var(--on-bg-muted)">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<script src="/static/js/dashboard.js"></script>
+<!-- ══ MODAL EDITAR USUARIO ══ -->
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center">
+  <div class="panel" style="width:100%;max-width:480px;margin:1rem;position:relative">
+    <button onclick="cerrarModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head"><span class="panel-title" id="modal-titulo">Editar usuario</span></div>
+
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem">
+      <div class="list-avatar" id="modal-avatar" style="width:3rem;height:3rem;font-size:1rem;flex-shrink:0">—</div>
+      <div>
+        <div id="modal-nombre" style="font-weight:700;font-size:1rem">—</div>
+        <div id="modal-email" style="font-size:0.82rem;color:var(--on-bg-muted)">—</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
+      <div>
+        <label style="font-size:0.78rem;color:var(--on-bg-muted)">Rol</label>
+        <select id="modal-rol" style="width:100%">
+          <option value="beneficiario">Beneficiarix</option>
+          <option value="prescriptor">Prescriptxr</option>
+          <option value="dispositivo">Dispositivo CBC</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;color:var(--on-bg-muted)">Estado</label>
+        <select id="modal-estado" style="width:100%">
+          <option value="activo">Activo</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+      <button class="btn btn-sm btn-outline" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-sm btn-green" id="modal-btn-guardar" onclick="guardarCambiosUsuario()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/usuarios.js"></script>
 </body>
 </html>

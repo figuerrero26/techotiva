@@ -3,7 +3,7 @@ Schemas Pydantic para request / response de la API MASCATE.
 """
 
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, EmailStr
 
 
@@ -52,6 +52,7 @@ class RegisterResponse(BaseModel):
 
 class DispositivoOut(BaseModel):
     id: int
+    usuario_id: Optional[int] = None
     nombre: str
     lugar_actividades: Optional[str] = None
     ubicacion: Optional[str] = None
@@ -60,6 +61,8 @@ class DispositivoOut(BaseModel):
     hora_actividad: Optional[str] = None
     telefono: Optional[str] = None
     redes_sociales: Optional[str] = None
+    descripcion: Optional[str] = None
+    capacidad: Optional[int] = None
     activo: bool = True
 
     class Config:
@@ -75,6 +78,8 @@ class DispositivoUpdate(BaseModel):
     hora_actividad: Optional[str] = None
     telefono: Optional[str] = None
     redes_sociales: Optional[str] = None
+    descripcion: Optional[str] = None
+    capacidad: Optional[int] = None
 
 
 class DispositivoEstadisticas(BaseModel):
@@ -91,6 +96,23 @@ class BeneficiarioResumen(BaseModel):
         from_attributes = True
 
 
+# ════════════════════ BENEFICIARIO ════════════════════
+
+class BeneficiarioMe(BaseModel):
+    id: int
+    nombre_apodo: str
+    email: str
+    fecha_registro: datetime
+    fecha_nacimiento: Optional[date] = None
+    localidad:        Optional[str] = None
+    telefono:         Optional[str] = None
+    descripcion:      Optional[str] = None
+    genero:           Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 # ════════════════════ ACTIVIDAD ════════════════════
 
 class ActividadCreate(BaseModel):
@@ -100,7 +122,10 @@ class ActividadCreate(BaseModel):
     dia_semana: Optional[str] = None
     hora: Optional[str] = None
     emoji: Optional[str] = "📋"
-    dispositivo_id: Optional[int] = None  # se toma del token si no se envía
+    dispositivo_id: Optional[int] = None
+    descripcion: Optional[str] = None
+    cupo_maximo: Optional[int] = None
+    fecha_inicio: Optional[date] = None
 
 
 class ActividadUpdate(BaseModel):
@@ -111,6 +136,9 @@ class ActividadUpdate(BaseModel):
     hora: Optional[str] = None
     emoji: Optional[str] = None
     activa: Optional[bool] = None
+    descripcion: Optional[str] = None
+    cupo_maximo: Optional[int] = None
+    fecha_inicio: Optional[date] = None
 
 
 class ActividadOut(BaseModel):
@@ -123,6 +151,9 @@ class ActividadOut(BaseModel):
     hora: Optional[str] = None
     emoji: Optional[str] = None
     activa: bool = True
+    descripcion: Optional[str] = None
+    cupo_maximo: Optional[int] = None
+    fecha_inicio: Optional[date] = None
 
     class Config:
         from_attributes = True
@@ -136,11 +167,14 @@ class AsignadoOut(BaseModel):
     ultima_sesion: Optional[datetime] = None
     dias_sin_sesion: Optional[int] = None
     estado: str  # al_dia | revisar | urgente
+    localidad:        Optional[str] = None
+    telefono:         Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
 
 
 class SeguimientoCreate(BaseModel):
     beneficiario_id: int
-    tipo_registro: str   # sesión grupal / seguimiento individual / actividad especial
+    tipo_registro: str
     observaciones: Optional[str] = None
 
 
@@ -152,18 +186,6 @@ class SeguimientoOut(BaseModel):
     observaciones: Optional[str] = None
     fecha: datetime
     nombre_beneficiario: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-# ════════════════════ BENEFICIARIO ════════════════════
-
-class BeneficiarioMe(BaseModel):
-    id: int
-    nombre_apodo: str
-    email: str
-    fecha_registro: datetime
 
     class Config:
         from_attributes = True
@@ -183,16 +205,21 @@ class UsuarioAdmin(BaseModel):
     id: int
     email: str
     rol: str
-    activo: bool
+    status: str
     fecha_registro: datetime
     nombre: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    localidad:        Optional[str] = None
+    telefono:         Optional[str] = None
+    descripcion:      Optional[str] = None
+    genero:           Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
 class CambiarEstado(BaseModel):
-    activo: bool
+    status: Literal["pendiente", "activo", "inactivo"]
 
 
 class AlertaOut(BaseModel):
@@ -209,11 +236,17 @@ class AdminDispositivoOut(BaseModel):
     num_beneficiarios: int
     prescriptor: Optional[str] = None
     activo: bool
+    email: Optional[str] = None
+    fecha_registro: Optional[datetime] = None
+    num_actividades: Optional[int] = None
+    asistencia_pct: Optional[float] = None
+
+    class Config:
+        from_attributes = True
 
 
 class AdminDispositivoCreate(BaseModel):
     email: EmailStr
-    password: str
     nombre: str
     lugar_actividades: Optional[str] = None
     ubicacion: Optional[str] = None
@@ -222,3 +255,14 @@ class AdminDispositivoCreate(BaseModel):
     hora_actividad: Optional[str] = None
     telefono: Optional[str] = None
     redes_sociales: Optional[str] = None
+
+
+# ════════════════════ AUTH EXTRA ════════════════════
+
+class CambiarPasswordRequest(BaseModel):
+    password_actual: str
+    password_nueva: str
+
+
+class CambiarRolRequest(BaseModel):
+    rol: Literal["beneficiario", "prescriptor", "dispositivo", "admin"]

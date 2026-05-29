@@ -10,15 +10,8 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
+<div class="top-bar"></div>
 
-<!-- ══ DEMO SWITCHER ══ -->
-<div class="demo-bar">
-  <span class="demo-bar-label">Vista de rol →</span>
-  <button class="demo-btn active" onclick="showScreen('dispositivo')">🏘️ Dispositivo</button>
-  <button class="demo-btn" onclick="showScreen('prescriptor')">🎯 Prescriptxr</button>
-  <button class="demo-btn" onclick="showScreen('beneficiario')">🌱 Beneficiarix</button>
-  <button class="demo-btn" onclick="showScreen('admin')">🔐 Admin</button>
-</div>
 
 
 <!-- ═══════════ SCREEN 1 — DISPOSITIVO ═══════════ -->
@@ -36,7 +29,9 @@
     <a class="sb-item" href="/formularios"><span class="ic">🤝</span> Hoja de primer contacto</a>
     <span class="sb-section">Reportes</span>
     <a class="sb-item" href="/reportes"><span class="ic">📈</span> Estadísticas</a>
-    <a class="sb-item" href="/reportes"><span class="ic">📄</span> Reportar info</a>
+    <a class="sb-item" href="/reportar-info"><span class="ic">📄</span> Reportar info</a>
+    <span class="sb-section">Configuracion</span>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
       <div class="sb-avatar">AV</div>
@@ -47,7 +42,7 @@
     <div class="topbar">
       <span class="topbar-title">Panel general</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
         <button class="btn btn-sm btn-green">+ Registrar actividad</button>
       </div>
     </div>
@@ -89,18 +84,13 @@
         </div>
       </div>
       <div class="grid-2">
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Beneficiarixs recientes</span><button class="panel-action">Ver todos →</button></div>
-          <div class="list-row"><div class="list-avatar">SG</div><div class="list-info"><div class="list-name">Sofía G.</div><div class="list-sub">Desde ene 2025</div></div><span class="tag green">Activo</span></div>
-          <div class="list-row"><div class="list-avatar mustard">JM</div><div class="list-info"><div class="list-name">Julián M.</div><div class="list-sub">Desde feb 2025</div></div><span class="tag green">Activo</span></div>
-          <div class="list-row"><div class="list-avatar rust">LR</div><div class="list-info"><div class="list-name">Laura R.</div><div class="list-sub">Desde mar 2025</div></div><span class="tag gray">Inactivo</span></div>
-          <div class="list-row"><div class="list-avatar blue">DT</div><div class="list-info"><div class="list-name">Diego T.</div><div class="list-sub">Desde abr 2025</div></div><span class="tag green">Activo</span></div>
+        <div class="panel" id="disp-panel-beneficiarios">
+          <div class="panel-head"><span class="panel-title">Beneficiarixs recientes</span><button class="panel-action" onclick="window.location.href='/usuarios'">Ver todos →</button></div>
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
         </div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Próximas actividades</span><button class="panel-action">+ Nueva</button></div>
-          <div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">🎨</div><div class="list-info"><div class="list-name">Taller de grafiti</div><div class="list-sub">Lun 28 · 3:00 pm · Parque</div></div><span class="tag mustard">Hoy</span></div>
-          <div class="list-row"><div class="list-avatar" style="background:var(--error-dim);font-size:1.1rem">⚽</div><div class="list-info"><div class="list-name">Fútbol comunitario</div><div class="list-sub">Mié 30 · 4:00 pm · Cancha</div></div><span class="tag gray">3 días</span></div>
-          <div class="list-row"><div class="list-avatar" style="background:var(--tertiary-dim);font-size:1.1rem">🎵</div><div class="list-info"><div class="list-name">Círculo musical</div><div class="list-sub">Vie 2 · 5:00 pm · Salón</div></div><span class="tag gray">5 días</span></div>
+        <div class="panel" id="disp-panel-actividades">
+          <div class="panel-head"><span class="panel-title">Actividades</span><button class="panel-action" onclick="window.location.href='/actividades'">+ Nueva</button></div>
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
         </div>
       </div>
     </div>
@@ -123,48 +113,39 @@
     <span class="sb-section">Gestión</span>
     <a class="sb-item" href="/formularios"><span class="ic">📝</span> Ingresar información</a>
     <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <span class="sb-section">Configuracion</span>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--primary-dim);color:var(--primary)">MP</div>
-      <div><div class="sb-uname">María P.</div><div class="sb-uemail">maria@mascate.org</div></div>
+      <div class="sb-avatar" style="background:var(--primary-dim);color:var(--primary)" id="presc-sb-avatar">—</div>
+      <div><div class="sb-uname" id="presc-sb-uname">—</div><div class="sb-uemail" id="presc-sb-uemail">—</div></div>
     </div>
   </nav>
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Inicio</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔</div>
-        <button class="btn btn-sm btn-green">+ Ingresar info</button>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-green" id="presc-btn-info">+ Ingresar info</button>
       </div>
     </div>
     <div class="content">
-      <div class="page-header"><h1>Hola, María 🎯</h1><p>Facilitadxra · Arte Vivo Techotiva</p></div>
+      <div class="page-header"><h1 id="presc-h1">Hola 🎯</h1><p id="presc-sub">—</p></div>
       <div class="stats-row cols-3">
-        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">18</div><div class="stat-label">Personas a mi cargo</div></div>
-        <div class="stat-card"><div class="stat-icon mustard">📝</div><div class="stat-val">7</div><div class="stat-label">Registros este mes</div></div>
-        <div class="stat-card"><div class="stat-icon rust">⏳</div><div class="stat-val">3</div><div class="stat-label">Seguimientos pendientes</div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val" id="presc-stat-0">—</div><div class="stat-label">Personas a mi cargo</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📝</div><div class="stat-val" id="presc-stat-1">—</div><div class="stat-label">Registros este mes</div></div>
+        <div class="stat-card"><div class="stat-icon rust">⏳</div><div class="stat-val" id="presc-stat-2">—</div><div class="stat-label">Seguimientos pendientes</div></div>
       </div>
       <div class="grid-2">
         <div class="panel span-2">
           <div class="panel-head"><span class="panel-title">Personas asignadas</span><button class="panel-action">Ver todas →</button></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem">
-            <div>
-              <div class="list-row"><div class="list-avatar">AN</div><div class="list-info"><div class="list-name">Andrés N.</div><div class="list-sub">Última sesión: hace 2 días</div></div><span class="tag green">Al día</span></div>
-              <div class="list-row"><div class="list-avatar mustard">CM</div><div class="list-info"><div class="list-name">Camila M.</div><div class="list-sub">Última sesión: hace 5 días</div></div><span class="tag mustard">Revisar</span></div>
-              <div class="list-row"><div class="list-avatar rust">FR</div><div class="list-info"><div class="list-name">Felipe R.</div><div class="list-sub">Última sesión: hace 10 días</div></div><span class="tag rust">Urgente</span></div>
-            </div>
-            <div>
-              <div class="list-row"><div class="list-avatar blue">VL</div><div class="list-info"><div class="list-name">Valentina L.</div><div class="list-sub">Última sesión: ayer</div></div><span class="tag green">Al día</span></div>
-              <div class="list-row"><div class="list-avatar purple">OM</div><div class="list-info"><div class="list-name">Omar M.</div><div class="list-sub">Última sesión: hace 3 días</div></div><span class="tag green">Al día</span></div>
-              <div class="list-row"><div class="list-avatar">PT</div><div class="list-info"><div class="list-name">Paula T.</div><div class="list-sub">Última sesión: hace 7 días</div></div><span class="tag mustard">Revisar</span></div>
-            </div>
-          </div>
+          <div id="presc-asignados-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem"><div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div></div>
         </div>
       </div>
       <div class="panel">
         <div class="panel-head"><span class="panel-title">Ingresar nueva información</span></div>
         <div class="frow">
-          <div class="field-mini"><label>Persona</label><select><option>Andrés N.</option><option>Camila M.</option><option>Felipe R.</option></select></div>
+          <div class="field-mini"><label>Persona</label><select id="presc-select-persona"><option value="">Cargando...</option></select></div>
           <div class="field-mini"><label>Tipo de registro</label><select><option>Sesión grupal</option><option>Seguimiento individual</option><option>Actividad especial</option></select></div>
         </div>
         <div class="frow full">
@@ -185,22 +166,24 @@
       <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Beneficiarix</div></div>
     </div>
     <span class="sb-section">Explorar</span>
-    <a class="sb-item active" href="/actividades"><span class="ic">🔍</span> Buscar actividades</a>
-    <a class="sb-item" href="/actividades"><span class="ic">🗺️</span> Mapa de dispositivos</a>
+    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Inicio</a>
+    <a class="sb-item" href="/actividades"><span class="ic">🔍</span> Buscar actividades</a>
+    <a class="sb-item" href="/mapa"><span class="ic">🗺️</span> Mapa de dispositivos</a>
     <span class="sb-section">Mi espacio</span>
-    <a class="sb-item" href="/actividades"><span class="ic">📌</span> Mis actividades</a>
+    <a class="sb-item" href="/mis-actividades"><span class="ic">📌</span> Mis actividades</a>
     <a class="sb-item" href="/perfil"><span class="ic">👤</span> Mi perfil</a>
-    <a class="sb-item" href="/notificaciones"><span class="ic">💬</span> Contactar</a>
+    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">SK</div>
-      <div><div class="sb-uname">Skate</div><div class="sb-uemail">skate@mail.com</div></div>
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)" id="benef-sb-avatar">—</div>
+      <div><div class="sb-uname" id="benef-sb-uname">—</div><div class="sb-uemail" id="benef-sb-uemail">—</div></div>
     </div>
   </nav>
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Explorar actividades</span>
-      <div class="topbar-right"><div class="notif-btn">🔔<span class="notif-dot"></span></div></div>
+      <div class="topbar-right"><div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div></div>
     </div>
     <div class="content">
       <div class="search-bar"><span>🔍</span><input type="text" placeholder="Buscar actividad, lugar o dispositivo..."></div>
@@ -210,28 +193,23 @@
         <span class="chip">🎵 Cultural</span><span class="chip">🌿 Ambiental</span>
         <span class="chip">💬 Escucha</span><span class="chip">📚 Educativo</span>
       </div>
-      <div class="grid-3" style="margin-bottom:1.5rem">
-        <div class="act-card"><div class="act-card-emoji">🎨</div><div class="act-card-name">Taller de grafiti</div><div class="act-card-org">Arte Vivo · Parque Techotiva</div><div class="act-card-meta"><span class="tag green">Artístico</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Lun · 3pm</span></div></div>
-        <div class="act-card"><div class="act-card-emoji">⚽</div><div class="act-card-name">Fútbol comunitario</div><div class="act-card-org">Red Deportiva Sur · Cancha</div><div class="act-card-meta"><span class="tag mustard">Deportivo</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Mié · 4pm</span></div></div>
-        <div class="act-card"><div class="act-card-emoji">🎵</div><div class="act-card-name">Círculo musical</div><div class="act-card-org">Arte Vivo · Salón comunal</div><div class="act-card-meta"><span class="tag rust">Cultural</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Vie · 5pm</span></div></div>
-        <div class="act-card"><div class="act-card-emoji">🌿</div><div class="act-card-name">Huerta urbana</div><div class="act-card-org">EcoTechotiva · Reserva</div><div class="act-card-meta"><span class="tag green">Ambiental</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Sáb · 9am</span></div></div>
-        <div class="act-card"><div class="act-card-emoji">💬</div><div class="act-card-name">Centro de escucha</div><div class="act-card-org">MASCATE · Sede propia</div><div class="act-card-meta"><span class="tag blue">Escucha</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Jue · 2pm</span></div></div>
-        <div class="act-card"><div class="act-card-emoji">📚</div><div class="act-card-name">Taller de lectura</div><div class="act-card-org">Casa Cultural · Salón</div><div class="act-card-meta"><span class="tag purple">Educativo</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">Mar · 4pm</span></div></div>
+      <div class="grid-3" id="benef-acts-grid" style="margin-bottom:1.5rem">
+        <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando actividades...</div>
       </div>
       <div class="panel">
-        <div class="panel-head"><span class="panel-title">Detalle del dispositivo seleccionado</span><button class="panel-action">Ver en mapa</button></div>
+        <div class="panel-head"><span class="panel-title">Detalle del dispositivo seleccionado</span><button class="panel-action" onclick="window.location.href='/mapa'">Ver en mapa →</button></div>
         <div class="detail-hero">
-          <h2>Arte Vivo Techotiva</h2>
-          <p>📍 Parque El Tintal · Bogotá</p>
+          <h2 id="benef-disp-nombre">—</h2>
+          <p id="benef-disp-ubicacion">—</p>
           <div class="detail-tags"><span class="detail-tag">🎨 Artístico</span><span class="detail-tag">🎵 Cultural</span><span class="detail-tag">⚽ Deportivo</span></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
-          <div class="contact-card"><div class="contact-icon" style="background:var(--secondary-dim)">📞</div><div><div class="contact-val">+57 310 000 0001</div><div class="contact-lbl">Teléfono</div></div></div>
-          <div class="contact-card"><div class="contact-icon" style="background:var(--tertiary-dim)">📱</div><div><div class="contact-val">@artevivo_tec</div><div class="contact-lbl">Instagram</div></div></div>
-          <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val">Lun, Mié, Vie · 2–6pm</div><div class="contact-lbl">Horario</div></div></div>
-          <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val">María P.</div><div class="contact-lbl">Facilitadxra</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--secondary-dim)">📞</div><div><div class="contact-val" id="benef-disp-tel">—</div><div class="contact-lbl">Teléfono</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--tertiary-dim)">📱</div><div><div class="contact-val" id="benef-disp-redes">—</div><div class="contact-lbl">Instagram</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val" id="benef-disp-horario">—</div><div class="contact-lbl">Horario</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val" id="benef-facilitadora">—</div><div class="contact-lbl">Facilitadxra</div></div></div>
         </div>
-        <div style="margin-top:0.85rem"><button class="btn btn-md btn-green" style="width:100%">✉️ Contactar dispositivo</button></div>
+        <div style="margin-top:0.85rem"><button class="btn btn-md btn-green" style="width:100%" onclick="window.location.href='/notificaciones'">✉️ Contactar dispositivo</button></div>
       </div>
     </div>
   </div>
@@ -247,13 +225,13 @@
     </div>
     <span class="sb-section">Sistema</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">📊</span> Panel central</a>
-    <a class="sb-item" href="/usuarios"><span class="ic">🏘️</span> Dispositivos</a>
+    <a class="sb-item" href="/dispositivos-admin"><span class="ic">🏘️</span> Dispositivos</a>
     <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
     <a class="sb-item" href="/formularios"><span class="ic">📋</span> Formularios</a>
     <span class="sb-section">Config</span>
     <a class="sb-item" href="/configuracion"><span class="ic">🔧</span> Configuración</a>
     <a class="sb-item" href="/reportes"><span class="ic">📄</span> Reportes</a>
-    <a class="sb-item" href="/configuracion"><span class="ic">🛡️</span> Roles y permisos</a>
+    <a class="sb-item" href="/roles"><span class="ic">🛡️</span> Roles y permisos</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
       <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">AD</div>
@@ -264,7 +242,7 @@
     <div class="topbar">
       <span class="topbar-title">Panel central</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
         <button class="btn btn-sm btn-mustard">+ Nuevo dispositivo</button>
       </div>
     </div>
@@ -301,7 +279,7 @@
           <table>
             <thead><tr><th>Dispositivo</th><th>Tipo</th><th>Benef.</th><th>Prescriptxr</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              <tr><td>Arte Vivo Techotiva</td><td><span class="tag green">Artístico</span></td><td style="color:var(--primary);font-weight:700">34</td><td>María P.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
+              <tr><td colspan="6" style="color:var(--on-bg-muted);text-align:center">Cargando...</td></tr>
               <tr><td>Red Deportiva Sur</td><td><span class="tag mustard">Deportivo</span></td><td style="color:var(--primary);font-weight:700">28</td><td>Carlos R.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
               <tr><td>Casa Cultural Norte</td><td><span class="tag purple">Educativo</span></td><td style="color:var(--primary);font-weight:700">22</td><td>Ana L.</td><td><span class="tag mustard">En pausa</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
               <tr><td>EcoTechotiva</td><td><span class="tag green">Ambiental</span></td><td style="color:var(--primary);font-weight:700">18</td><td>Pedro G.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>

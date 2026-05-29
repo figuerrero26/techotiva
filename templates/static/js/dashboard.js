@@ -1,201 +1,327 @@
 /* ═══ MASCATE — DASHBOARD JS ═══ */
 
-const API    = 'http://127.0.0.1:8080';
+const API    = window.location.origin;
 const token  = localStorage.getItem('mascate_token');
 const rol    = localStorage.getItem('mascate_rol');
 const nombre = localStorage.getItem('mascate_nombre');
+const email  = localStorage.getItem('mascate_email');
 
 if (!token || !rol) { window.location.href = '/login'; }
 
-// ── Helpers de autenticación ──
 function authHeaders() { return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }; }
 function authGet()     { return { headers: { 'Authorization': 'Bearer ' + token } }; }
 
-// ── Navegación entre pantallas ──
-function showScreen(role) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.demo-btn').forEach(b => {
-    b.classList.toggle('active', b.textContent.toLowerCase().includes(role));
-  });
-  document.getElementById('screen-' + role)?.classList.add('active');
-}
-
 // ── Logout ──
 function doLogout() {
-  ['mascate_token', 'mascate_rol', 'mascate_nombre'].forEach(k => localStorage.removeItem(k));
+  ['mascate_token','mascate_rol','mascate_nombre','mascate_email'].forEach(k => localStorage.removeItem(k));
   window.location.href = '/login';
 }
 
-// Agregar botón logout a cada sidebar
 document.querySelectorAll('.sb-user').forEach(u => {
   const btn = document.createElement('button');
   btn.textContent = 'Cerrar sesion';
-  btn.className = 'btn btn-sm btn-outline';
+  btn.className   = 'btn btn-sm btn-outline';
   btn.style.cssText = 'margin-top:0.5rem;width:100%;font-size:0.72rem;';
   btn.onclick = doLogout;
   u.after(btn);
 });
 
-// ── Init ──
-window.addEventListener('DOMContentLoaded', async () => {
-  showScreen(rol);
-  if (rol !== 'admin') document.querySelector('.demo-bar')?.remove();
-  try {
-    if      (rol === 'dispositivo') await loadDispositivo();
-    else if (rol === 'prescriptor') await loadPrescriptor();
-    else if (rol === 'beneficiario') await loadBeneficiario();
-    else if (rol === 'admin')       await loadAdmin();
-  } catch(e) { console.error('Error cargando datos:', e); }
-});
+// ── Navegación ──
+function showScreen(role) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + role)?.classList.add('active');
+}
 
-// ── Helpers de UI ──
+// ── Helpers UI ──
 function setStatVal(screen, index, value) {
   const cards = document.querySelectorAll(`#screen-${screen} .stat-val`);
   if (cards[index] != null) cards[index].textContent = value;
 }
+function setHTML(el, html) { if (el) el.innerHTML = html; }
+function setText(id, val)  { const el = document.getElementById(id); if (el && val != null) el.textContent = val; }
 
-function setInnerHTML(el, html) { if (el) el.innerHTML = html; }
+// ── Init ──
+window.addEventListener('DOMContentLoaded', async () => {
+  showScreen(rol);
+  if (rol !== 'admin') document.querySelector('.demo-bar')?.remove();
+
+  // Notif badge
+  try {
+    let hay = false;
+    if (rol === 'admin') {
+      const [alertas, users] = await Promise.all([
+        fetch(API + '/admin/alertas',  authGet()).then(r => r.json()),
+        fetch(API + '/admin/usuarios', authGet()).then(r => r.json()),
+      ]);
+      hay = alertas.length > 0 || users.some(u => u.status === 'pendiente');
+    } else if (rol === 'prescriptor') {
+      const asignados = await fetch(API + '/prescriptores/mis-asignados', authGet()).then(r => r.json());
+      hay = asignados.some(a => a.estado === 'urgente' || a.estado === 'revisar');
+    } else if (rol === 'dispositivo') {
+      const disps = await fetch(API + '/dispositivos/', authGet()).then(r => r.json());
+      if (disps.length) {
+        const pend = await fetch(API + '/dispositivos/' + disps[0].id + '/prescriptores/pendientes', authGet()).then(r => r.json());
+        hay = pend.length > 0;
+      }
+    }
+    if (hay) document.querySelectorAll('.notif-dot').forEach(d => d.style.display = 'block');
+  } catch(e) {}
+
+  try {
+    if      (rol === 'dispositivo')  await loadDispositivo();
+    else if (rol === 'prescriptor')  await loadPrescriptor();
+    else if (rol === 'beneficiario') await loadBeneficiario();
+    else if (rol === 'admin')        await loadAdmin();
+  } catch(e) { console.error('Error cargando datos:', e); }
+});
 
 // ═══ DISPOSITIVO ═══
 async function loadDispositivo() {
-  const disps = await (await fetch(API + '/dispositivos/', authGet())).json();
+  const disps = await fetch(API + '/dispositivos/', authGet()).then(r => r.json());
   for (const d of disps) {
     try {
-      const stats = await (await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet())).json();
+      const stats = await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet()).then(r => r.json());
       setStatVal('dispositivo', 0, stats.beneficiarios_activos);
       setStatVal('dispositivo', 1, stats.actividades_registradas);
       setStatVal('dispositivo', 2, stats.valoracion_promedio ?? '—');
       setStatVal('dispositivo', 3, stats.seguimientos_semana);
 
-      // Header
       const h1 = document.querySelector('#screen-dispositivo .page-header h1');
       if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
-
-      // Sidebar user
       const sbName = document.querySelector('#screen-dispositivo .sb-uname');
       if (sbName) sbName.textContent = nombre;
 
+      // Botón registrar actividad → /actividades
+      const btnAct = document.querySelector('#screen-dispositivo .btn-green');
+      if (btnAct) btnAct.onclick = () => window.location.href = '/actividades';
+
+      // Prescriptores pendientes de aprobación
+      try {
+        const pendientes = await fetch(API + '/dispositivos/' + d.id + '/prescriptores/pendientes', authGet()).then(r => r.json());
+        if (pendientes.length > 0) {
+          const panel = document.querySelectorAll('#screen-dispositivo .panel')[1];
+          if (panel) {
+            let html = '<div class="panel-head"><span class="panel-title">⚠️ Prescriptxres pendientes</span><span class="tag rust">' + pendientes.length + '</span></div>';
+            pendientes.forEach(p => {
+              html += `<div class="list-row">
+                <div class="list-avatar" style="flex-shrink:0">${(p.nombre_completo||'??').substring(0,2).toUpperCase()}</div>
+                <div class="list-info"><div class="list-name">${p.nombre_completo||'—'}</div><div class="list-sub">${p.perfil_disciplina||'—'}</div></div>
+                <div style="display:flex;gap:0.4rem">
+                  <button class="btn btn-sm btn-green" onclick="aprobarPrescriptor(${d.id},${p.id})">✓ Aprobar</button>
+                </div>
+              </div>`;
+            });
+            setHTML(panel, html);
+          }
+        }
+      } catch(e) {}
+
       // Beneficiarios
-      const benefs = await (await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet())).json();
+      const benefs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json());
       const listPanel = document.querySelectorAll('#screen-dispositivo .panel')[2];
       if (listPanel && benefs.length > 0) {
         let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs</span></div>';
         benefs.forEach(b => {
-          const ini = b.nombre_apodo.substring(0, 2).toUpperCase();
-          html += `<div class="list-row"><div class="list-avatar">${ini}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
+          const i = b.nombre_apodo.substring(0,2).toUpperCase();
+          html += `<div class="list-row"><div class="list-avatar">${i}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
         });
-        setInnerHTML(listPanel, html);
+        setHTML(listPanel, html);
       }
 
       // Actividades
-      const acts = await (await fetch(API + '/actividades/?dispositivo_id=' + d.id)).json();
+      const acts = await fetch(API + '/actividades/?dispositivo_id=' + d.id).then(r => r.json());
       const actPanel = document.querySelectorAll('#screen-dispositivo .panel')[3];
       if (actPanel && acts.length > 0) {
         let html = '<div class="panel-head"><span class="panel-title">Actividades</span></div>';
         acts.forEach(a => {
-          html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
+          html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji||'📅'}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
         });
-        setInnerHTML(actPanel, html);
+        setHTML(actPanel, html);
       }
       break;
     } catch(e) { continue; }
   }
 }
 
+async function aprobarPrescriptor(dispId, prescId) {
+  try {
+    const res = await fetch(API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/aprobar',
+      { method: 'POST', headers: authHeaders() });
+    if (res.ok) { loadDispositivo(); }
+    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
+  } catch(e) { console.error(e); }
+}
+
 // ═══ PRESCRIPTOR ═══
 async function loadPrescriptor() {
+  setText('presc-sb-uname', nombre);
+  setText('presc-sb-uemail', email || '');
+
   const h1 = document.querySelector('#screen-prescriptor .page-header h1');
   if (h1) h1.textContent = 'Hola, ' + nombre + ' 🎯';
-  const sbName = document.querySelector('#screen-prescriptor .sb-uname');
-  if (sbName) sbName.textContent = nombre;
+
+  // Botón + Ingresar info → /reportar-info
+  const btnInfo = document.getElementById('presc-btn-info');
+  if (btnInfo) btnInfo.onclick = () => window.location.href = '/reportar-info';
+
+  // Ver todas → /usuarios (asignados)
+  const btnVerTodas = document.querySelector('#screen-prescriptor .panel-action');
+  if (btnVerTodas) btnVerTodas.onclick = () => window.location.href = '/usuarios';
 
   try {
-    const asignados = await (await fetch(API + '/prescriptores/mis-asignados', authGet())).json();
+    const asignados = await fetch(API + '/prescriptores/mis-asignados', authGet()).then(r => r.json());
     setStatVal('prescriptor', 0, asignados.length);
     setStatVal('prescriptor', 2, asignados.filter(a => a.estado === 'urgente').length);
 
-    // Panel de asignados
-    const panel = document.querySelector('#screen-prescriptor .panel.span-2');
-    if (panel && asignados.length > 0) {
-      let html = '<div class="panel-head"><span class="panel-title">Personas asignadas</span></div><div>';
-      asignados.forEach(a => {
-        const ini      = a.nombre_apodo.substring(0, 2).toUpperCase();
-        const tagClass = a.estado === 'urgente' ? 'rust' : (a.estado === 'revisar' ? 'mustard' : 'green');
-        const label    = a.estado === 'urgente' ? 'Urgente' : (a.estado === 'revisar' ? 'Revisar' : 'Al dia');
-        const dias     = a.dias_sin_sesion != null ? 'Hace ' + a.dias_sin_sesion + ' dias' : 'Sin sesiones';
-        html += `<div class="list-row"><div class="list-avatar ${tagClass}">${ini}</div><div class="list-info"><div class="list-name">${a.nombre_apodo}</div><div class="list-sub">${dias}</div></div><span class="tag ${tagClass}">${label}</span></div>`;
-      });
-      html += '</div>';
-      setInnerHTML(panel, html);
+    // Sub header
+    setText('presc-sub', 'Prescriptxr · ' + asignados.length + ' personas asignadas');
+
+    // Panel asignados — 2 columnas
+    const grid = document.getElementById('presc-asignados-grid');
+    if (grid && asignados.length > 0) {
+      const mitad = Math.ceil(asignados.length / 2);
+      const col1  = asignados.slice(0, mitad);
+      const col2  = asignados.slice(mitad);
+      const renderCol = arr => arr.map(a => {
+        const tagClass = a.estado==='urgente'?'rust':a.estado==='revisar'?'mustard':'green';
+        const label    = a.estado==='urgente'?'Urgente':a.estado==='revisar'?'Revisar':'Al día';
+        const dias     = a.dias_sin_sesion != null ? 'Hace ' + a.dias_sin_sesion + ' días' : 'Sin sesiones';
+        return `<div class="list-row"><div class="list-avatar ${tagClass}">${a.nombre_apodo.substring(0,2).toUpperCase()}</div><div class="list-info"><div class="list-name">${a.nombre_apodo}</div><div class="list-sub">${dias}${a.localidad?' · '+a.localidad:''}</div></div><span class="tag ${tagClass}">${label}</span></div>`;
+      }).join('');
+      grid.innerHTML = `<div>${renderCol(col1)}</div><div>${renderCol(col2)}</div>`;
+    } else if (grid) {
+      grid.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin personas asignadas aún.</div>';
     }
 
-    // Formulario de seguimiento: poblar select y conectar botón
-    const formPanels = document.querySelectorAll('#screen-prescriptor .panel:not(.span-2)');
-    const fp = formPanels[formPanels.length - 1];
-    if (fp) {
-      const selects = fp.querySelectorAll('select');
-      if (selects[0] && asignados.length > 0) {
-        selects[0].innerHTML = asignados.map(a => `<option value="${a.id}">${a.nombre_apodo}</option>`).join('');
-      }
-      const btn = fp.querySelector('.btn');
-      if (btn) {
-        btn.onclick = async () => {
-          const payload = {
-            beneficiario_id: parseInt(selects[0].value),
-            tipo_registro:   selects[1]?.value ?? 'Sesion grupal',
-            observaciones:   fp.querySelector('textarea')?.value ?? '',
-          };
-          try {
-            const res = await fetch(API + '/prescriptores/seguimientos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
-            if (res.ok) {
-              btn.textContent = 'Guardado!';
-              if (fp.querySelector('textarea')) fp.querySelector('textarea').value = '';
-              setTimeout(() => { btn.textContent = 'Guardar registro'; loadPrescriptor(); }, 1500);
-            }
-          } catch(e) { console.error(e); }
+    // Select personas en formulario
+    const sel = document.getElementById('presc-select-persona');
+    if (sel && asignados.length > 0) {
+      sel.innerHTML = asignados.map(a => `<option value="${a.id}">${a.nombre_apodo}</option>`).join('');
+    }
+
+    // Botón guardar registro
+    const btn = document.querySelector('#screen-prescriptor .btn-green:last-of-type');
+    if (btn && btn.textContent.includes('Guardar')) {
+      btn.onclick = async () => {
+        const selects = document.querySelectorAll('#screen-prescriptor .frow select');
+        const textarea = document.querySelector('#screen-prescriptor textarea');
+        const payload = {
+          beneficiario_id: parseInt(selects[0]?.value),
+          tipo_registro:   selects[1]?.value ?? 'Sesion grupal',
+          observaciones:   textarea?.value ?? '',
         };
-      }
+        if (!payload.beneficiario_id) { alert('Selecciona una persona.'); return; }
+        try {
+          const res = await fetch(API + '/prescriptores/seguimientos',
+            { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+          if (res.ok) {
+            btn.textContent = '¡Guardado!';
+            if (textarea) textarea.value = '';
+            setTimeout(() => { btn.textContent = 'Guardar registro'; loadPrescriptor(); }, 1500);
+          }
+        } catch(e) { console.error(e); }
+      };
     }
   } catch(e) { console.error('Error cargando asignados:', e); }
 
   try {
-    const segs = await (await fetch(API + '/prescriptores/seguimientos', authGet())).json();
+    const segs = await fetch(API + '/prescriptores/seguimientos', authGet()).then(r => r.json());
     setStatVal('prescriptor', 1, segs.length);
   } catch(e) {}
 }
 
 // ═══ BENEFICIARIO ═══
 async function loadBeneficiario() {
-  const sbName = document.querySelector('#screen-beneficiario .sb-uname');
-  if (sbName) sbName.textContent = nombre;
+  setText('benef-sb-uname', nombre);
+  setText('benef-sb-uemail', email || '');
+  const bAvatar = document.getElementById('benef-sb-avatar');
+  if (bAvatar && nombre) bAvatar.textContent = nombre.substring(0,2).toUpperCase();
+
+  // Chips de filtro
+  document.querySelectorAll('#screen-beneficiario .chip').forEach(chip => {
+    chip.style.cursor = 'pointer';
+    chip.onclick = () => {
+      document.querySelectorAll('#screen-beneficiario .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const tipo = chip.textContent.trim();
+      filtrarActsBenef(tipo === 'Todos' ? null : tipo.split(' ').slice(1).join(' '));
+    };
+  });
+
+  // Buscador
+  const searchInput = document.querySelector('#screen-beneficiario .search-bar input');
+  if (searchInput) {
+    searchInput.oninput = () => filtrarActsBenef(null, searchInput.value);
+  }
 
   try {
-    const acts = await (await fetch(API + '/actividades/')).json();
-    const grid = document.querySelector('#screen-beneficiario .grid-3');
-    if (grid && acts.length > 0) {
-      grid.innerHTML = acts.map(a =>
-        `<div class="act-card"><div class="act-card-emoji">${a.emoji || ''}</div><div class="act-card-name">${a.nombre}</div><div class="act-card-org">${a.lugar}</div><div class="act-card-meta"><span class="tag green">${a.tipo || ''}</span><span style="font-size:0.72rem;color:var(--on-bg-muted)">${a.dia_semana || ''} - ${a.hora || ''}</span></div></div>`
-      ).join('');
-    }
-  } catch(e) {}
+    // Cargar todas las actividades disponibles
+    const acts = await fetch(API + '/actividades/').then(r => r.json());
+    window._benef_acts = acts;
+    renderActsBenef(acts);
 
-  try {
-    const disps = await (await fetch(API + '/dispositivos/')).json();
-    if (disps.length > 0) {
-      const d    = disps[0];
-      const hero = document.querySelector('#screen-beneficiario .detail-hero');
-      if (hero) {
-        hero.querySelector('h2').textContent = d.nombre;
-        hero.querySelector('p').textContent  = '📍 ' + (d.ubicacion || '');
-      }
+    // Cargar dispositivos para el detalle
+    const disps = await fetch(API + '/dispositivos/').then(r => r.json());
+    if (disps.length) {
+      const d = disps[0];
+      setText('benef-disp-nombre',  d.nombre);
+      setText('benef-disp-ubicacion', d.ubicacion ? '📍 ' + d.ubicacion : '—');
+      setText('benef-disp-tel',     d.telefono      || '—');
+      setText('benef-disp-redes',   d.redes_sociales || '—');
+      const horario = d.dia_actividad ? (d.dia_actividad + (d.hora_actividad ? ' · ' + d.hora_actividad : '')) : '—';
+      setText('benef-disp-horario', horario);
+
+      // Facilitadora
+      const prescs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json()).catch(() => []);
+      // No hay endpoint de prescriptor por dispositivo público, dejar como —
     }
-  } catch(e) {}
+  } catch(e) { console.error('Error beneficiario:', e); }
+}
+
+function renderActsBenef(acts) {
+  const grid = document.getElementById('benef-acts-grid');
+  if (!grid) return;
+  if (!acts.length) {
+    grid.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin actividades disponibles.</div>';
+    return;
+  }
+  const TAG_COLOR = { Artístico:'green', Deportivo:'mustard', Cultural:'rust', Ambiental:'green', Educativo:'purple', Escucha:'blue' };
+  grid.innerHTML = acts.map(a => `
+    <div class="act-card">
+      <div class="act-card-emoji">${a.emoji||'📅'}</div>
+      <div class="act-card-name">${a.nombre}</div>
+      <div class="act-card-org">${a.lugar||'—'}</div>
+      <div class="act-card-meta">
+        <span class="tag ${TAG_COLOR[a.tipo]||'mustard'}">${a.tipo||''}</span>
+        <span style="font-size:0.72rem;color:var(--on-bg-muted)">${a.dia_semana||''} · ${a.hora||''}</span>
+      </div>
+    </div>`).join('');
+}
+
+function filtrarActsBenef(tipo, q) {
+  let acts = window._benef_acts || [];
+  if (tipo) acts = acts.filter(a => a.tipo === tipo);
+  if (q)    acts = acts.filter(a => (a.nombre+a.lugar+a.tipo).toLowerCase().includes(q.toLowerCase()));
+  renderActsBenef(acts);
 }
 
 // ═══ ADMIN ═══
 async function loadAdmin() {
+  setText('admin-sb-uname', nombre);
+  setText('admin-sb-uemail', email || '');
+
+  // Botones topbar
+  document.querySelector('#screen-admin .topbar-right .btn-mustard')?.addEventListener('click', () => {
+    window.location.href = '/dispositivos-admin';
+  });
+
+  // Gestionar →
+  document.querySelector('#screen-admin .panel-action')?.addEventListener('click', () => {
+    window.location.href = '/usuarios';
+  });
+
   try {
-    const stats = await (await fetch(API + '/admin/stats', authGet())).json();
+    const stats = await fetch(API + '/admin/stats', authGet()).then(r => r.json());
     setStatVal('admin', 0, stats.total_dispositivos);
     setStatVal('admin', 1, stats.total_usuarios);
     setStatVal('admin', 2, stats.total_prescriptores);
@@ -203,44 +329,77 @@ async function loadAdmin() {
   } catch(e) { console.error(e); }
 
   try {
-    const alertas   = await (await fetch(API + '/admin/alertas', authGet())).json();
+    const alertas    = await fetch(API + '/admin/alertas', authGet()).then(r => r.json());
     const alertPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[1];
-    if (alertPanel && alertas.length > 0) {
-      let html = '<div class="panel-head"><span class="panel-title">Alertas del sistema</span></div>';
-      alertas.forEach(a => {
-        html += `<div class="list-row"><div class="list-avatar rust" style="border-radius:8px;font-size:1rem">⚠️</div><div class="list-info"><div class="list-name">${a.mensaje}</div><div class="list-sub">${a.dispositivo}</div></div><span class="tag rust">Urgente</span></div>`;
-      });
-      setInnerHTML(alertPanel, html);
+    if (alertPanel) {
+      let html = '<div class="panel-head"><span class="panel-title">Alertas del sistema</span><button class="panel-action" onclick="window.location.href=\'/notificaciones\'">Ver todas →</button></div>';
+      if (alertas.length) {
+        alertas.forEach(a => {
+          html += `<div class="list-row"><div class="list-avatar rust" style="border-radius:8px;font-size:1rem">⚠️</div><div class="list-info"><div class="list-name">${a.mensaje}</div><div class="list-sub">${a.dispositivo}</div></div><span class="tag rust">Urgente</span></div>`;
+        });
+      } else {
+        html += '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin alertas activas.</div>';
+      }
+
+      // Mostrar también dispositivos pendientes de aprobación
+      try {
+        const users = await fetch(API + '/admin/usuarios', authGet()).then(r => r.json());
+        const pendDisps = users.filter(u => u.rol === 'dispositivo' && u.status === 'pendiente');
+        if (pendDisps.length) {
+          html += `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)"><div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">Dispositivos pendientes de aprobación</div>`;
+          pendDisps.forEach(u => {
+            html += `<div class="list-row"><div class="list-avatar mustard" style="font-size:1rem">🏘️</div><div class="list-info"><div class="list-name">${u.nombre||u.email}</div><div class="list-sub">${u.email}</div></div><button class="btn btn-sm btn-green" onclick="aprobarDisp(${u.id})">✓ Aprobar</button></div>`;
+          });
+          html += '</div>';
+        }
+      } catch(e) {}
+
+      setHTML(alertPanel, html);
     }
   } catch(e) {}
 
   try {
-    const disps = await (await fetch(API + '/admin/dispositivos', authGet())).json();
+    const disps = await fetch(API + '/admin/dispositivos', authGet()).then(r => r.json());
     const tbody = document.querySelector('#screen-admin table tbody');
     if (tbody) {
-      tbody.innerHTML = disps.map(d => {
-        const estado = d.activo ? '<span class="tag green">Activo</span>' : '<span class="tag rust">Inactivo</span>';
-        return `<tr><td>${d.nombre}</td><td><span class="tag green">${d.tipo_servicio || '-'}</span></td><td style="color:var(--primary);font-weight:700">${d.num_beneficiarios}</td><td>${d.prescriptor || '-'}</td><td>${estado}</td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>`;
-      }).join('');
+      tbody.innerHTML = disps.length
+        ? disps.map(d => `<tr>
+            <td>${d.nombre}</td>
+            <td>${d.tipo_servicio ? `<span class="tag green">${d.tipo_servicio}</span>` : '—'}</td>
+            <td style="color:var(--primary);font-weight:700">${d.num_beneficiarios}</td>
+            <td>${d.prescriptor||'—'}</td>
+            <td>${d.activo?'<span class="tag green">Activo</span>':'<span class="tag rust">Inactivo</span>'}</td>
+            <td><button class="btn btn-sm btn-outline" onclick="window.location.href='/dispositivos-admin'">Editar</button></td>
+          </tr>`).join('')
+        : '<tr><td colspan="6" style="color:var(--on-bg-muted);text-align:center">Sin dispositivos.</td></tr>';
     }
   } catch(e) {}
 
   try {
-    const users  = await (await fetch(API + '/admin/usuarios', authGet())).json();
+    const users    = await fetch(API + '/admin/usuarios', authGet()).then(r => r.json());
     const rolPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[0];
     if (rolPanel) {
-      const disps2 = users.filter(u => u.rol === 'dispositivo').length;
-      const prescs = users.filter(u => u.rol === 'prescriptor').length;
-      const benefs = users.filter(u => u.rol === 'beneficiario').length;
-      const total  = Math.max(disps2, prescs, benefs, 1);
-      const fills  = rolPanel.querySelectorAll('.seed-fill');
-      const nums   = rolPanel.querySelectorAll('div[style*="font-weight:700"]');
-      if (fills[0]) fills[0].style.width = Math.round(disps2 / total * 100) + '%';
-      if (fills[1]) fills[1].style.width = Math.round(prescs  / total * 100) + '%';
-      if (fills[2]) fills[2].style.width = Math.round(benefs  / total * 100) + '%';
-      if (nums[0])  nums[0].textContent  = disps2;
-      if (nums[1])  nums[1].textContent  = prescs;
-      if (nums[2])  nums[2].textContent  = benefs;
+      const d2 = users.filter(u => u.rol==='dispositivo').length;
+      const pr = users.filter(u => u.rol==='prescriptor').length;
+      const be = users.filter(u => u.rol==='beneficiario').length;
+      const tot = Math.max(d2, pr, be, 1);
+      const fills = rolPanel.querySelectorAll('.seed-fill');
+      const nums  = rolPanel.querySelectorAll('div[style*="font-weight:700"]');
+      if (fills[0]) fills[0].style.width = Math.round(d2/tot*100)+'%';
+      if (fills[1]) fills[1].style.width = Math.round(pr/tot*100)+'%';
+      if (fills[2]) fills[2].style.width = Math.round(be/tot*100)+'%';
+      if (nums[0])  nums[0].textContent  = d2;
+      if (nums[1])  nums[1].textContent  = pr;
+      if (nums[2])  nums[2].textContent  = be;
     }
   } catch(e) {}
+}
+
+async function aprobarDisp(usuarioId) {
+  try {
+    const res = await fetch(API + '/admin/usuarios/' + usuarioId + '/aprobar',
+      { method: 'POST', headers: authHeaders() });
+    if (res.ok) { loadAdmin(); }
+    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
+  } catch(e) { console.error(e); }
 }

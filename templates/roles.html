@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roles y permisos | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="screen active">
+  <nav class="sidebar"></nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Roles y permisos</span>
+      <div class="topbar-right">
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h1>Gestión de roles</h1>
+        <p>Visualiza y modifica los roles de los usuarios del sistema.</p>
+      </div>
+
+      <!-- RESUMEN POR ROL -->
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon green">🌱</div><div class="stat-val" id="stat-benef">—</div><div class="stat-label">Beneficiarixs</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🎯</div><div class="stat-val" id="stat-presc">—</div><div class="stat-label">Prescriptxres</div></div>
+        <div class="stat-card"><div class="stat-icon purple">🏘️</div><div class="stat-val" id="stat-disp">—</div><div class="stat-label">Dispositivos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">🔐</div><div class="stat-val" id="stat-admin">—</div><div class="stat-label">Administradores</div></div>
+      </div>
+
+      <!-- DESCRIPCIÓN DE ROLES -->
+      <div class="grid-2" style="margin-bottom:1.5rem">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Permisos por rol</span></div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <div class="list-row">
+              <div class="list-avatar" style="background:var(--secondary-dim);font-size:1rem">🌱</div>
+              <div class="list-info">
+                <div class="list-name">Beneficiarix</div>
+                <div class="list-sub">Ver actividades, perfil propio, contactar prescriptxr</div>
+              </div>
+              <span class="tag green">Básico</span>
+            </div>
+            <div class="list-row">
+              <div class="list-avatar" style="background:rgba(100,160,255,0.12);font-size:1rem">🎯</div>
+              <div class="list-info">
+                <div class="list-name">Prescriptxr</div>
+                <div class="list-sub">Gestionar asignados, registrar seguimientos, ingresar info</div>
+              </div>
+              <span class="tag blue">Medio</span>
+            </div>
+            <div class="list-row">
+              <div class="list-avatar" style="background:rgba(210,187,255,0.15);font-size:1rem">🏘️</div>
+              <div class="list-info">
+                <div class="list-name">Dispositivo CBC</div>
+                <div class="list-sub">Gestionar actividades, beneficiarixs, reportar estadísticas</div>
+              </div>
+              <span class="tag purple">Medio</span>
+            </div>
+            <div class="list-row">
+              <div class="list-avatar" style="background:var(--error-dim);font-size:1rem">🔐</div>
+              <div class="list-info">
+                <div class="list-name">Administrador</div>
+                <div class="list-sub">Acceso total: usuarios, dispositivos, roles, configuración</div>
+              </div>
+              <span class="tag rust">Total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- USUARIOS PENDIENTES -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">⚠️ Pendientes de aprobación</span>
+            <span class="tag rust" id="pendientes-count" style="display:none">0</span>
+          </div>
+          <div id="pendientes-list">
+            <div style="color:var(--on-bg-muted);font-size:0.85rem">Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA USUARIOS -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Todos los usuarios</span>
+          <div style="display:flex;gap:0.5rem">
+            <input id="search-input" type="text" placeholder="Buscar..." style="font-size:0.82rem;padding:0.3rem 0.6rem">
+            <select id="role-select" style="font-size:0.82rem">
+              <option value="todos">Todos los roles</option>
+              <option value="beneficiario">Beneficiarixs</option>
+              <option value="prescriptor">Prescriptxres</option>
+              <option value="dispositivo">Dispositivos</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Usuario</th><th>Email</th><th>Rol actual</th><th>Estado</th><th>Desde</th><th>Cambiar rol</th></tr>
+            </thead>
+            <tbody id="roles-tbody">
+              <tr><td colspan="6" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/roles.js"></script>
+</body>
+</html>

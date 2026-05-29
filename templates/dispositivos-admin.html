@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dispositivos | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="screen active">
+  <nav class="sidebar"></nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Dispositivos CBC</span>
+      <div class="topbar-right">
+        <div class="notif-btn" id="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></div>
+        <button class="btn btn-sm btn-outline" id="btn-exportar">⬇ Exportar CSV</button>
+        <button class="btn btn-sm btn-green" id="btn-nuevo">+ Nuevo dispositivo</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header"><h1>Dispositivos CBC</h1><p>Gestión de bases comunitarias y clubes del sistema MASCATE.</p></div>
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val" id="stat-0">—</div><div class="stat-label">Total dispositivos</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">✅</div><div class="stat-val" id="stat-1">—</div><div class="stat-label">Activos</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🌱</div><div class="stat-val" id="stat-2">—</div><div class="stat-label">Beneficiarixs</div></div>
+        <div class="stat-card"><div class="stat-icon rust">📅</div><div class="stat-val" id="stat-3">—</div><div class="stat-label">Actividades</div></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Buscar</label>
+            <input id="search-input" type="text" placeholder="Nombre, tipo..." style="width:100%">
+          </div>
+          <div>
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Tipo</label>
+            <select id="tipo-select">
+              <option value="todos">Todos</option>
+              <option value="Artístico">Artístico</option>
+              <option value="Deportivo">Deportivo</option>
+              <option value="Cultural">Cultural</option>
+              <option value="Ambiental">Ambiental</option>
+              <option value="Educativo">Educativo</option>
+            </select>
+          </div>
+          <button id="btn-filtrar" class="btn btn-sm btn-outline">Filtrar</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Lista de dispositivos</span></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Dispositivo</th><th>Tipo</th><th>Beneficiarixs</th><th>Actividades</th><th>Prescriptxr</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="disp-tbody">
+              <tr><td colspan="7" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO/EDITAR DISPOSITIVO ══ -->
+<div id="modal-disp-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+            z-index:1000;align-items:center;justify-content:center;overflow-y:auto">
+  <div class="panel" style="width:100%;max-width:520px;margin:2rem auto;position:relative">
+    <button onclick="cerrarModal()"
+            style="position:absolute;top:1rem;right:1rem;background:none;border:none;
+                   font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head"><span class="panel-title" id="modal-titulo">Nuevo dispositivo</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div class="field" style="grid-column:1/-1">
+        <label>Email de acceso *</label>
+        <input type="email" id="m-email" placeholder="dispositivo@mascate.org" style="width:100%">
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Nombre del dispositivo *</label>
+        <input type="text" id="m-nombre" placeholder="Ej: Arte Vivo Techotiva" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Tipo de servicio</label>
+        <select id="m-tipo" style="width:100%">
+          <option value="">Selecciona...</option>
+          <option>Artístico</option><option>Cultural</option><option>Deportivo</option>
+          <option>Centro de escucha</option><option>Psicoterapia</option>
+          <option>Educativo</option><option>Ambiental</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lugar de actividades</label>
+        <select id="m-lugar" style="width:100%">
+          <option value="">Selecciona...</option>
+          <option>Parque</option><option>Salón comunal</option>
+          <option>Sede propia</option><option>Espacio de reserva natural</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Ubicación / Dirección</label>
+        <input type="text" id="m-ubicacion" placeholder="Barrio, localidad o dirección" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Día de actividad</label>
+        <input type="text" id="m-dia" placeholder="Ej: Lunes, Miércoles" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Hora</label>
+        <input type="time" id="m-hora" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Teléfono</label>
+        <input type="tel" id="m-telefono" placeholder="+57 300 000 0000" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Redes sociales</label>
+        <input type="text" id="m-redes" placeholder="@usuario o enlace" style="width:100%">
+      </div>
+    </div>
+    <div id="modal-error"
+         style="display:none;color:var(--error);font-size:0.82rem;margin:0.75rem 0;
+                background:var(--error-dim);padding:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem">
+      <button class="btn btn-sm btn-outline" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-sm btn-green" id="modal-btn-guardar" onclick="guardarDispositivo()">Crear dispositivo</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/dispositivos-admin.js"></script>
+</body>
+</html>

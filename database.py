@@ -1,25 +1,26 @@
-"""
-Configuración de SQLAlchemy para SQLite.
-"""
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-from app.core.config import DATABASE_URL
+from app.core.config import settings
 
+# ─── Engine PostgreSQL ────────────────────────────────────────────────────────
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},  # necesario para SQLite
-    echo=False,
+    settings.database_url,
+    pool_pre_ping=True,       # verifica conexión antes de usarla
+    pool_size=10,             # conexiones en pool
+    max_overflow=20,          # conexiones extra bajo demanda
+    echo=settings.app_env == "development",  # muestra SQL solo en dev
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
+# ─── Dependencia FastAPI ──────────────────────────────────────────────────────
 def get_db():
-    """Dependencia de FastAPI que provee una sesión de BD por request."""
     db = SessionLocal()
     try:
         yield db

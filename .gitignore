@@ -10,3 +10,4 @@ templates/THEMES
 baca/
 *.db
 *.sql
+lista_pendientes.html

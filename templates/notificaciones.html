@@ -10,19 +10,11 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-
+<div class="top-bar"></div>
 <div class="screen active">
-
-  <!-- SIDEBAR -->
   <nav class="sidebar">
-    <div class="sb-brand">
-      <div class="sb-logo">🔐</div>
-      <div>
-        <div class="sb-name">MASCATE</div>
-        <div class="sb-role-tag">Administrador</div>
-      </div>
-    </div>
-    <span class="sb-section">Sistema</span>
+    <div class="sb-brand"><div class="sb-logo">🔔</div><div><div class="sb-name">MASCATE</div><div class="sb-role-tag" id="sb-role-tag">—</div></div></div>
+    <span class="sb-section">Principal</span>
     <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
     <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
     <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
@@ -32,87 +24,27 @@
     <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">AD</div>
-      <div>
-        <div class="sb-uname">Admin MASCATE</div>
-        <div class="sb-uemail">admin@mascate.org</div>
-      </div>
+      <div class="sb-avatar" id="sb-avatar" style="background:var(--error-dim);color:var(--error)">—</div>
+      <div><div class="sb-uname" id="sb-uname">—</div><div class="sb-uemail" id="sb-uemail">—</div></div>
     </div>
   </nav>
-
-  <!-- MAIN -->
   <div class="main">
     <div class="topbar">
-      <span class="topbar-title">Centro de notificaciones</span>
+      <span class="topbar-title">Notificaciones</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
-        <button class="btn btn-sm btn-outline">Marcar todo leído</button>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-outline" id="btn-marcar-leido">Marcar todo leído</button>
       </div>
     </div>
-
     <div class="content">
-      <div class="page-header">
-        <h1>Notificaciones</h1>
-        <p>2 notificaciones sin leer</p>
+      <div class="page-header"><h1>Centro de notificaciones</h1><p id="notif-subtitle">Cargando...</p></div>
+      <div class="panel" style="padding:0;overflow:hidden" id="notif-list">
+        <div style="padding:1rem;color:var(--on-bg-muted)">Cargando notificaciones...</div>
       </div>
-
-      <!-- NOTIFICACIONES -->
-      <div class="panel" style="padding:0;overflow:hidden">
-
-        <!-- UNREAD -->
-        <div class="list-row" style="padding:1rem 1.25rem;background:var(--primary-dim);border-bottom:1px solid var(--border)">
-          <div class="contact-icon" style="background:var(--primary-dim);flex-shrink:0">📅</div>
-          <div class="list-info">
-            <div class="list-name">Nueva actividad programada</div>
-            <div class="list-sub">Se creó el taller "Arte y liderazgo juvenil" para el sábado.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;flex-shrink:0">
-            <span class="tag green">Nueva</span>
-            <span style="font-size:0.72rem;color:var(--on-bg-muted)">Hace 10 min</span>
-          </div>
-        </div>
-
-        <div class="list-row" style="padding:1rem 1.25rem;background:var(--primary-dim);border-bottom:1px solid var(--border)">
-          <div class="contact-icon" style="background:var(--secondary-dim);flex-shrink:0">👥</div>
-          <div class="list-info">
-            <div class="list-name">Nuevo beneficiario registrado</div>
-            <div class="list-sub">Laura Martínez fue añadida al programa cultural.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;flex-shrink:0">
-            <span class="tag green">Nueva</span>
-            <span style="font-size:0.72rem;color:var(--on-bg-muted)">Hace 30 min</span>
-          </div>
-        </div>
-
-        <!-- READ -->
-        <div class="list-row" style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
-          <div class="contact-icon" style="background:var(--surface-2,rgba(255,255,255,0.04));flex-shrink:0">📊</div>
-          <div class="list-info">
-            <div class="list-name">Reporte mensual generado</div>
-            <div class="list-sub">El reporte estadístico de abril ya está disponible.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;flex-shrink:0">
-            <span style="font-size:0.72rem;color:var(--on-bg-muted)">Ayer</span>
-          </div>
-        </div>
-
-        <div class="list-row" style="padding:1rem 1.25rem">
-          <div class="contact-icon" style="background:var(--surface-2,rgba(255,255,255,0.04));flex-shrink:0">🏢</div>
-          <div class="list-info">
-            <div class="list-name">Organización vinculada</div>
-            <div class="list-sub">Casa Juvenil Kennedy ahora hace parte del sistema.</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;flex-shrink:0">
-            <span style="font-size:0.72rem;color:var(--on-bg-muted)">Hace 2 días</span>
-          </div>
-        </div>
-
-      </div>
-
     </div>
   </div>
 </div>
-
-<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/notificaciones.js"></script>
 </body>
 </html>

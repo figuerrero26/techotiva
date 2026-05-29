@@ -1,11 +1,36 @@
-"""
-Configuración global del proyecto MASCATE.
-"""
+from pydantic_settings import BaseSettings
+from functools import lru_cache
 
-# ── JWT ──
-SECRET_KEY = "mascate-secreto-super-seguro-techotiva-2026-cambiame-en-produccion"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas
 
-# ── Base de datos ──
-DATABASE_URL = "sqlite:///./mascate.db"
+class Settings(BaseSettings):
+    # Base de datos
+    database_url: str
+
+    # JWT
+    secret_key: str = "cambia_esto_en_produccion"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 480
+
+    # Admin por defecto
+    admin_email: str = "admin@mascate.org"
+    admin_password: str = "admin123"
+
+    # App
+    app_env: str = "development"
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        
+    # Email
+    mail_username: str = ""
+    mail_password: str = ""
+    mail_from: str = ""
+    app_base_url: str = "http://127.0.0.1:8080"
+
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

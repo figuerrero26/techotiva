@@ -10,42 +10,19 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
+<div class="top-bar"></div>
 
 <div class="screen active">
 
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sb-brand">
-      <div class="sb-logo">🌱</div>
-      <div>
-        <div class="sb-name">MASCATE</div>
-        <div class="sb-role-tag">Beneficiarix</div>
-      </div>
-    </div>
-    <span class="sb-section">Principal</span>
-    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
-    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
-    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
-    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
-    <a class="sb-item active" href="/perfil"><span class="ic">👤</span> Perfil</a>
-    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
-    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
-    <div class="sb-spacer"></div>
-    <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">LM</div>
-      <div>
-        <div class="sb-uname">Laura Martínez</div>
-        <div class="sb-uemail">laura@mascate.org</div>
-      </div>
-    </div>
-  </nav>
+    <!-- SIDEBAR — inyectado por mascate-utils.js renderSidebar() -->
+  <nav class="sidebar"></nav>
 
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Perfil de usuario</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
         <button class="btn btn-sm btn-mustard">Editar perfil</button>
       </div>
     </div>
@@ -55,12 +32,12 @@
       <!-- HERO -->
       <div class="panel" style="margin-bottom:1.5rem">
         <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
-          <div class="list-avatar" style="width:3.5rem;height:3.5rem;font-size:1.1rem;flex-shrink:0;background:var(--error-dim);color:var(--error)">LM</div>
+          <div id="hero-avatar" class="list-avatar" style="width:3.5rem;height:3.5rem;font-size:1.1rem;flex-shrink:0;background:var(--error-dim);color:var(--error)">—</div>
           <div style="flex:1">
-            <h1 style="margin:0 0 0.25rem;font-size:1.4rem">Laura Martínez</h1>
+            <h1 id="hero-nombre" style="margin:0 0 0.25rem;font-size:1.4rem">—</h1>
             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
-              <span class="tag mustard">Beneficiario</span>
-              <span style="font-size:0.82rem;color:var(--on-bg-muted)">Participante activa de actividades culturales, deportivas y comunitarias.</span>
+              <span class="tag mustard" id="hero-rol">—</span>
+              <span id="hero-desc" style="font-size:0.82rem;color:var(--on-bg-muted)"></span>
             </div>
           </div>
         </div>
@@ -68,41 +45,26 @@
 
       <!-- STATS -->
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val">12</div><div class="stat-label">Actividades</div></div>
-        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-val">89%</div><div class="stat-label">Asistencia</div></div>
-        <div class="stat-card"><div class="stat-icon blue">⭐</div><div class="stat-val">4</div><div class="stat-label">Eventos activos</div></div>
-        <div class="stat-card"><div class="stat-icon rust">🎯</div><div class="stat-val">72%</div><div class="stat-label">Progreso</div></div>
+        <div class="stat-card"><div class="stat-icon mustard" id="stat-icon-0">📅</div><div class="stat-val" id="stat-0">—</div><div class="stat-label" id="stat-lbl-0">Actividades</div></div>
+        <div class="stat-card"><div class="stat-icon green"  id="stat-icon-1">✅</div><div class="stat-val" id="stat-1">—</div><div class="stat-label" id="stat-lbl-1">Asistencia</div></div>
+        <div class="stat-card"><div class="stat-icon blue"   id="stat-icon-2">⭐</div><div class="stat-val" id="stat-2">—</div><div class="stat-label" id="stat-lbl-2">Eventos activos</div></div>
+        <div class="stat-card"><div class="stat-icon rust"   id="stat-icon-3">🎯</div><div class="stat-val" id="stat-3">—</div><div class="stat-label" id="stat-lbl-3">Progreso</div></div>
       </div>
 
       <!-- INFO + CONTACTO -->
       <div class="grid-2">
 
-        <div class="panel">
+        <div class="panel" id="panel-info">
           <div class="panel-head"><span class="panel-title">Información personal</span></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
-            <div class="contact-card"><div><div class="contact-lbl">Fecha nacimiento</div><div class="contact-val">12 ago 2004</div></div></div>
-            <div class="contact-card"><div><div class="contact-lbl">Localidad</div><div class="contact-val">Kennedy</div></div></div>
-            <div class="contact-card"><div><div class="contact-lbl">Correo</div><div class="contact-val">laura@gmail.com</div></div></div>
-            <div class="contact-card"><div><div class="contact-lbl">Teléfono</div><div class="contact-val">320 555 8821</div></div></div>
-          </div>
-          <div class="contact-card" style="margin-top:0.75rem">
-            <div><div class="contact-lbl">Descripción</div><div class="contact-val" style="font-size:0.85rem">Participa constantemente en procesos comunitarios, talleres culturales y actividades preventivas.</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem" id="info-grid">
+            <!-- llenado por JS -->
           </div>
         </div>
 
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Contactos y seguimiento</span></div>
-          <div class="list-row">
-            <div class="contact-icon" style="background:var(--primary-dim)">👩‍🏫</div>
-            <div class="list-info"><div class="list-name">Andrea Ruiz</div><div class="list-sub">Prescriptor asignado</div></div>
-          </div>
-          <div class="list-row">
-            <div class="contact-icon" style="background:var(--secondary-dim)">📞</div>
-            <div class="list-info"><div class="list-name">310 444 2211</div><div class="list-sub">Número principal</div></div>
-          </div>
-          <div class="list-row">
-            <div class="contact-icon" style="background:var(--tertiary-dim)">🏢</div>
-            <div class="list-info"><div class="list-name">Casa Juvenil Kennedy</div><div class="list-sub">Organización vinculada</div></div>
+        <div class="panel" id="panel-contacto">
+          <div class="panel-head"><span class="panel-title" id="contacto-titulo">Contactos y seguimiento</span></div>
+          <div id="contacto-list">
+            <!-- llenado por JS -->
           </div>
         </div>
 
@@ -114,10 +76,8 @@
           <span class="panel-title">Actividades recientes</span>
           <button class="panel-action">Ver todas →</button>
         </div>
-        <div class="grid-3">
-          <div class="act-card"><div class="act-card-emoji">🎨</div><div class="act-card-name">Taller artístico</div><div class="act-card-org">Casa Juvenil Kennedy</div><div class="act-card-meta"><span class="tag mustard">Activo</span></div></div>
-          <div class="act-card"><div class="act-card-emoji">⚽</div><div class="act-card-name">Escuela deportiva</div><div class="act-card-org">Fundación Impulso</div><div class="act-card-meta"><span class="tag green">Asistiendo</span></div></div>
-          <div class="act-card"><div class="act-card-emoji">🎭</div><div class="act-card-name">Integración cultural</div><div class="act-card-org">Centro comunitario</div><div class="act-card-meta"><span class="tag blue">Próxima</span></div></div>
+        <div class="grid-3" id="acts-grid">
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
         </div>
       </div>
 
@@ -125,6 +85,7 @@
   </div>
 </div>
 
-<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/perfil.js"></script>
 </body>
 </html>

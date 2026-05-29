@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from app.core.security import decode_access_token
-from app.models.models import Usuario
+# IMPORTANTE: Asegúrate de importar Usuario y Estados
+from app.models.models import Usuario, Estados 
 
 security_scheme = HTTPBearer()
-
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
@@ -27,10 +27,18 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Token sin subject")
 
     user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
+    
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
-    if not user.activo:
-        raise HTTPException(status_code=403, detail="Cuenta desactivada")
+
+    # NUEVA LÓGICA DE ESTADOS:
+    # Verificamos si tiene un estado y si ese estado es diferente de ACTIVO
+    if not user.estado_actual or user.estado_actual.estado != Estados.ACTIVO:
+        raise HTTPException(
+            status_code=403, 
+            detail="Cuenta desactivada o pendiente de aprobación"
+        )
+        
     return user
 
 

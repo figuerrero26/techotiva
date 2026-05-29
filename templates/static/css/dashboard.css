@@ -540,3 +540,9 @@ tr:hover td { background: var(--surface-mid); }
   transition: all 0.15s;
 }
 .sb-logout:hover { background: var(--pink-dim); color: var(--pink-dark); }
+
+.top-bar {
+  position: fixed; top:0; left:0; right:0; z-index:200;
+  height: 40px;
+  background: var(--black-bar);
+}

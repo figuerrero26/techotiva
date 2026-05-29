@@ -10,43 +10,19 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 </head>
 <body>
-
+<div class="top-bar"></div>
 <div class="screen active">
 
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sb-brand">
-      <div class="sb-logo">🌱</div>
-      <div>
-        <div class="sb-name">MASCATE</div>
-        <div class="sb-role-tag">Beneficiarix</div>
-      </div>
-    </div>
-    <span class="sb-section">Principal</span>
-    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
-    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
-    <a class="sb-item active" href="/actividades"><span class="ic">📅</span> Actividades</a>
-    <a class="sb-item" href="/reportes"><span class="ic">📊</span> Reportes</a>
-    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
-    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
-    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
-    <div class="sb-spacer"></div>
-    <div class="sb-user">
-      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">LM</div>
-      <div>
-        <div class="sb-uname">Laura Martínez</div>
-        <div class="sb-uemail">laura@mascate.org</div>
-      </div>
-    </div>
-  </nav>
+    <!-- SIDEBAR — inyectado por mascate-utils.js renderSidebar() -->
+  <nav class="sidebar"></nav>
 
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Actividades</span>
       <div class="topbar-right">
-        <div class="notif-btn">🔔<span class="notif-dot"></span></div>
-        <button class="btn btn-sm btn-mustard">+ Nueva actividad</button>
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-mustard" id="btn-nueva">+ Nueva actividad</button>
       </div>
     </div>
 
@@ -58,83 +34,30 @@
 
       <!-- STATS -->
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val">18</div><div class="stat-label">Actividades activas</div></div>
-        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">240</div><div class="stat-label">Participantes</div></div>
-        <div class="stat-card"><div class="stat-icon blue">⭐</div><div class="stat-val">9</div><div class="stat-label">Próximas</div></div>
-        <div class="stat-card"><div class="stat-icon rust">📈</div><div class="stat-val">87%</div><div class="stat-label">Participación</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total actividades</div></div>
+        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val" id="stat-dispositivos">—</div><div class="stat-label">Dispositivos</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🎨</div><div class="stat-val" id="stat-tipos">—</div><div class="stat-label">Tipos distintos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">📍</div><div class="stat-val" id="stat-lugares">—</div><div class="stat-label">Lugares</div></div>
       </div>
 
       <!-- CARDS -->
-      <div class="grid-3">
-
-        <div class="panel">
-          <div style="height:5rem;background:var(--primary-dim);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem">🎨</div>
-          <div class="panel-head">
-            <span class="panel-title">Taller artístico juvenil</span>
-            <span class="tag mustard">Activo</span>
-          </div>
-          <p style="font-size:0.83rem;color:var(--on-bg-muted);margin:0.5rem 0 0.75rem">Espacio de integración y creatividad enfocado en pintura y expresión artística.</p>
-          <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.75rem">
-            <span>📍 Kennedy</span><span>👥 32</span><span>🕓 Mar 4PM</span>
-          </div>
-          <div class="seed-track"><div class="seed-fill" style="width:78%"></div></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.6rem">
-            <span style="font-size:0.78rem;color:var(--on-bg-muted)">78% asistencia</span>
-            <button class="btn btn-sm btn-outline">Ver detalle</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div style="height:5rem;background:var(--secondary-dim);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem">⚽</div>
-          <div class="panel-head">
-            <span class="panel-title">Escuela deportiva</span>
-            <span class="tag green">En curso</span>
-          </div>
-          <p style="font-size:0.83rem;color:var(--on-bg-muted);margin:0.5rem 0 0.75rem">Formación deportiva y acompañamiento para jóvenes y adolescentes.</p>
-          <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.75rem">
-            <span>📍 Bosa</span><span>👥 45</span><span>🕓 Vie 2PM</span>
-          </div>
-          <div class="seed-track"><div class="seed-fill" style="width:92%"></div></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.6rem">
-            <span style="font-size:0.78rem;color:var(--on-bg-muted)">92% asistencia</span>
-            <button class="btn btn-sm btn-outline">Ver detalle</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div style="height:5rem;background:var(--violet-dim,rgba(210,187,255,0.15));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem">🎭</div>
-          <div class="panel-head">
-            <span class="panel-title">Integración cultural</span>
-            <span class="tag blue">Próxima</span>
-          </div>
-          <p style="font-size:0.83rem;color:var(--on-bg-muted);margin:0.5rem 0 0.75rem">Evento de participación artística, música y cultura comunitaria.</p>
-          <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.75rem">
-            <span>📍 Suba</span><span>👥 60</span><span>🕓 Sáb 5PM</span>
-          </div>
-          <div class="seed-track"><div class="seed-fill" style="width:54%"></div></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.6rem">
-            <span style="font-size:0.78rem;color:var(--on-bg-muted)">54% inscritos</span>
-            <button class="btn btn-sm btn-outline">Ver detalle</button>
-          </div>
-        </div>
-
+      <div class="grid-3" id="acts-cards">
+        <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
       </div>
 
       <!-- TABLA -->
       <div class="panel">
         <div class="panel-head">
-          <span class="panel-title">Próximas actividades</span>
+          <span class="panel-title">Todas las actividades</span>
           <button class="panel-action">Ver todas →</button>
         </div>
         <div style="overflow-x:auto">
           <table>
             <thead>
-              <tr><th>Actividad</th><th>Localidad</th><th>Fecha</th><th>Participantes</th><th>Estado</th></tr>
+              <tr><th>Actividad</th><th>Tipo</th><th>Lugar</th><th>Día</th><th>Hora</th></tr>
             </thead>
-            <tbody>
-              <tr><td>Taller musical</td><td>Engativá</td><td>12 Mayo</td><td>22</td><td><span class="tag green">Confirmada</span></td></tr>
-              <tr><td>Actividad comunitaria</td><td>Kennedy</td><td>14 Mayo</td><td>41</td><td><span class="tag mustard">Pendiente</span></td></tr>
-              <tr><td>Evento cultural</td><td>Suba</td><td>18 Mayo</td><td>58</td><td><span class="tag blue">Próxima</span></td></tr>
+            <tbody id="acts-tbody">
+              <tr><td colspan="5" style="color:var(--on-bg-muted)">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -143,7 +66,7 @@
     </div>
   </div>
 </div>
-
-<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/actividades.js"></script>
 </body>
 </html>

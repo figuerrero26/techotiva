@@ -3,7 +3,7 @@ Router de dispositivos: CRUD y estadísticas.
 """
 
 from datetime import datetime, timedelta, timezone
-
+from sqlalchemy import or_
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -12,11 +12,13 @@ from app.models.models import (
     Usuario, Dispositivo, Beneficiario, Actividad,
     Seguimiento, Prescriptor, PrimerContacto, Inscripcion,
 )
+from app.models.models import Estados, EstadoRegistro
 from app.schemas.schemas import (
     DispositivoOut, DispositivoUpdate, DispositivoEstadisticas,
     BeneficiarioResumen, ActividadOut,
 )
 from app.routers._deps import get_current_user, require_role
+from app.services.estado_service import EstadoService
 
 router = APIRouter(prefix="/dispositivos", tags=["Dispositivos"])
 
@@ -179,3 +181,81 @@ def estadisticas_dispositivo(
         actividades_registradas=num_actividades,
         seguimientos_semana=seg_semana,
     )
+
+
+# ────────────────────────── APROBAR PRESCRIPTOR (POR DISPOSITIVO) 
+# 
+# ──────────────────────────
+
+@router.get("/{dispositivo_id}/prescriptores/pendientes")
+def listar_prescriptores_pendientes(
+    dispositivo_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    # Solo admin o propietario del dispositivo pueden ver pendientes
+    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para ver prescriptores pendientes")
+
+    prescs = (
+    db.query(Prescriptor)
+    .filter(
+        Prescriptor.dispositivo_id == dispositivo_id,
+            or_(
+                Prescriptor.estado_actual_id == None,
+                Prescriptor.estado_actual.has(EstadoRegistro.estado == Estados.PENDIENTE)
+            )
+        )
+        .all()  # 
+    )
+
+    result = []
+    for p in prescs:
+        result.append({
+            "id": p.id,
+            "nombre_completo": p.nombre_completo,
+            "telefono": p.telefono,
+            "usuario_id": p.usuario_id,
+            "estado": p.estado,
+        })
+
+    return result
+
+
+@router.post("/{dispositivo_id}/prescriptores/{prescriptor_id}/aprobar")
+def aprobar_prescriptor(
+    dispositivo_id: int,
+    prescriptor_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    # Solo el admin o el propietario del dispositivo pueden aprobar
+    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para aprobar prescriptores de este dispositivo")
+
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
+
+    if presc.dispositivo_id != dispositivo_id:
+        raise HTTPException(status_code=400, detail="El prescriptor no está asignado a este dispositivo")
+
+    service = EstadoService(db)
+
+    # Activar usuario y perfil del prescriptor
+    if presc.usuario:
+        service.cambiar_estado(entidad_obj=presc.usuario, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Aprobado por dispositivo")
+
+    service.cambiar_estado(entidad_obj=presc, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Aprobado por dispositivo")
+
+    return {"msg": "Prescriptor aprobado"}
+
+
