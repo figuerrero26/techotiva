@@ -1,0 +1,134 @@
+/* ═══ MASCATE — DESIGN TOKENS LIGHT (Multicolor) ═══ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── Superficies (Tu versión original intacta) ── */
+  --surface:            #f7f5ff;
+  --surface-low:        #ffffff;
+  --surface-mid:        #f0ecff;
+  --surface-high:       #e8e2ff;
+  --surface-highest:    #d9d0ff;
+
+  /* ── Primary — Gold #F2BB05 ── */
+  --primary:            #e8a800;
+  --primary-dark:       #b07e00;
+  --primary-container:  #fff8e1;
+  --on-primary:         #ffffff;
+  --primary-dim:        rgba(242,187,5,0.12);
+  --primary-a06:        rgba(242,187,5,0.06);
+  --primary-a08:        rgba(242,187,5,0.08);
+  --primary-a10:        rgba(242,187,5,0.10);
+  --primary-a12:        rgba(242,187,5,0.12);
+  --primary-a20:        rgba(242,187,5,0.20);
+  --primary-a22:        rgba(242,187,5,0.22);
+  --primary-a25:        rgba(242,187,5,0.25);
+  --primary-a28:        rgba(242,187,5,0.28);
+  --primary-a30:        rgba(242,187,5,0.30);
+  --primary-a40:        rgba(242,187,5,0.40);
+  --primary-a45:        rgba(242,187,5,0.45);
+
+  /* ── Secondary — Integración del Teal de malspa.png ── */
+  /* Este color ahora es el "contrapunto" frío del rosa */
+  --secondary:           #2a7f62; 
+  --secondary-solid:     #2a7f62;
+  --secondary-container: #e0f5ee;
+  --secondary-dim:       rgba(42,127,98,0.10);
+  --secondary-a04:       rgba(42,127,98,0.04);
+  --secondary-a06:       rgba(42,127,98,0.06);
+  --secondary-a08:       rgba(42,127,98,0.08);
+  --secondary-a09:       rgba(42,127,98,0.09);
+  --secondary-a10:       rgba(42,127,98,0.10);
+  --secondary-a15:       rgba(42,127,98,0.15);
+  --secondary-a18:       rgba(42,127,98,0.18);
+  --secondary-a22:       rgba(42,127,98,0.22);
+  --secondary-a28:       rgba(42,127,98,0.28);
+  --secondary-a35:       rgba(42,127,98,0.35);
+  --secondary-a45:       rgba(42,127,98,0.45);
+
+  /* ── PINK — Restaurado a tu Rosa original ── */
+  --pink:                #ff6b9e;
+  --pink-dark:           #d94d80;
+  --pink-dim:            rgba(255,107,158,0.12);
+  --pink-a10:            rgba(255,107,158,0.10);
+  --pink-a20:            rgba(255,107,158,0.20);
+
+  /* ── VIOLET — Tu Violeta original ── */
+  --violet:              #7c5cbf;
+  --violet-light:        #ada3ff;
+  --violet-dim:          rgba(124,92,191,0.10);
+
+  /* ── Tertiary — Slate original ── */
+  --tertiary:            #4a4560;
+  --tertiary-container:  #eeecf7;
+  --tertiary-dim:        rgba(74,69,96,0.08);
+  --tertiary-a18:        rgba(74,69,96,0.18);
+  --tertiary-a20:        rgba(74,69,96,0.20);
+
+  /* ── Purple alpha (Sombras y bordes morados originales) ── */
+  --purple-a10:          rgba(93,49,132,0.08);
+  --purple-a12:          rgba(93,49,132,0.10);
+  --purple-a18:          rgba(93,49,132,0.14);
+  --purple-a22:          rgba(93,49,132,0.16);
+  --purple-a25:          rgba(93,49,132,0.20);
+  --purple-a35:          rgba(93,49,132,0.26);
+  --purple-a55:          rgba(93,49,132,0.40);
+  --purple-tint-soft:    #f3eefa;
+  --purple-tint-mid:     #ede0fa;
+  --shadow-surface:      rgba(93,49,132,0.08);
+  --shadow-surface-lg:   rgba(93,49,132,0.18);
+
+  /* ── Black ── */
+  --black-bar:           rgba(30,18,50,0.95);
+  --black-topbar:        rgba(255,255,255,0.95);
+  --black-toast:         rgba(30,18,50,0.92);
+  --black-panel:         rgba(255,255,255,0.85);
+
+  /* ── Error ── */
+  --error:               #d63b1a;
+  --error-container:     #ffeee9;
+  --error-dim:           rgba(214,59,26,0.10);
+
+  /* ── Texto ── */
+  --on-surface:          #1a0e36;
+  --on-bg:               #2d2650;
+  --on-bg-muted:         #7a7098;
+
+  /* ── Bordes ── */
+  --outline-variant:     rgba(93,49,132,0.12);
+  --outline-gold:        rgba(232,168,0,0.30);
+  --outline-teal:        rgba(42,127,98,0.22); /* Usando el teal de malspa.png */
+  --outline-purple:      rgba(124,92,191,0.22);
+
+  /* ── Radios ── */
+  --radius-sm:   8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+}
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: var(--surface);
+  color: var(--on-bg);
+}
+
+/* grain texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+/* hoja decorativa — teal de la paleta */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 8 C28 20 16 26 18 40 C20 54 34 57 40 72 C46 57 60 54 62 40 C64 26 52 20 40 8Z' fill='%232a7f62' opacity='0.022'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}

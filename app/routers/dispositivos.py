@@ -15,7 +15,7 @@ from app.models.models import (
 from app.models.models import Estados, EstadoRegistro
 from app.schemas.schemas import (
     DispositivoOut, DispositivoUpdate, DispositivoEstadisticas,
-    BeneficiarioResumen, ActividadOut,
+    BeneficiarioResumen, PrescriptorResumen,
 )
 from app.routers._deps import get_current_user, require_role
 from app.services.estado_service import EstadoService
@@ -169,8 +169,41 @@ def estadisticas_dispositivo(
 
 
 # ────────────────────────── APROBAR PRESCRIPTOR (POR DISPOSITIVO) 
-# 
-# ──────────────────────────
+
+# ────────────────────────── PRESCRIPTORES ACTIVOS DEL DISPOSITIVO ──────────────────────────
+@router.get("/{dispositivo_id}/prescriptores", response_model=list[PrescriptorResumen])
+def listar_prescriptores_dispositivo(
+    dispositivo_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+
+    prescs = (
+        db.query(Prescriptor)
+        .filter(
+            Prescriptor.dispositivo_id == dispositivo_id,
+            Prescriptor.estado_actual.has(EstadoRegistro.estado == Estados.ACTIVO)
+        )
+        .all()
+    )
+
+    result = []
+    for p in prescs:
+        result.append(PrescriptorResumen(
+            id=p.id,
+            nombre_completo=p.nombre_completo,
+            perfil_disciplina=p.perfil_disciplina,
+            telefono=p.telefono,
+            email=p.usuario.email if p.usuario else "",
+            status=p.estado,
+        ))
+    return result
 
 @router.get("/{dispositivo_id}/prescriptores/pendientes")
 def listar_prescriptores_pendientes(

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actividades | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="screen active">
+
+    <!-- SIDEBAR — inyectado por mascate-utils.js renderSidebar() -->
+  <nav class="sidebar"></nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Actividades</span>
+      <div class="topbar-right">
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
+        <button class="btn btn-sm btn-mustard" id="btn-nueva">+ Nueva actividad</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-header">
+        <h1>Actividades comunitarias</h1>
+        <p>Consulta eventos, talleres y procesos activos.</p>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row cols-4">
+        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total actividades</div></div>
+        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val" id="stat-dispositivos">—</div><div class="stat-label">Dispositivos</div></div>
+        <div class="stat-card"><div class="stat-icon blue">🎨</div><div class="stat-val" id="stat-tipos">—</div><div class="stat-label">Tipos distintos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">📍</div><div class="stat-val" id="stat-lugares">—</div><div class="stat-label">Lugares</div></div>
+      </div>
+
+      <!-- CARDS -->
+      <div class="grid-3" id="acts-cards">
+        <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Todas las actividades</span>
+          <button class="panel-action">Ver todas →</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Actividad</th><th>Tipo</th><th>Lugar</th><th>Día</th><th>Hora</th></tr>
+            </thead>
+            <tbody id="acts-tbody">
+              <tr><td colspan="5" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/actividades.js"></script>
+</body>
+</html>

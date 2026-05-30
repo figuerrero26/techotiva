@@ -304,3 +304,14 @@ class CambiarPasswordRequest(BaseModel):
 
 class CambiarRolRequest(BaseModel):
     rol: Literal["beneficiario", "prescriptor", "dispositivo", "admin"]
+    
+class PrescriptorResumen(BaseModel):
+    id: int
+    nombre_completo: str
+    perfil_disciplina: Optional[str] = None
+    telefono: Optional[str] = None
+    email: str
+    status: str
+
+    class Config:
+        from_attributes = True

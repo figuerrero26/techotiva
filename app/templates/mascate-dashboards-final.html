@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cuida Tu Techo — Dashboards</title>
+<title>MASCATE — Dashboards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/tokens.css">
@@ -18,14 +18,13 @@
   <nav class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo">🏘️</div>
-      <div><div class="sb-name"id="dispo-sb-name"></div><div class="sb-role-tag">Dispositivo CBC</div></div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Dispositivo CBC</div></div>
     </div>
     <span class="sb-section">Principal</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">📊</span> Panel general</a>
     <a class="sb-item" href="/perfil"><span class="ic">👤</span> Mi perfil</a>
     <a class="sb-item" href="/actividades"><span class="ic">📋</span> Actividades</a>
     <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Beneficiarixs</a>
-    <a class="sb-item" href="/mis-prescriptores"><span class="ic">🎯</span> Prescriptorxs</a>
     <a class="sb-item" href="/formularios"><span class="ic">🤝</span> Hoja de primer contacto</a>
     <span class="sb-section">Reportes</span>
     <a class="sb-item" href="/reportes"><span class="ic">📈</span> Estadísticas</a>
@@ -34,8 +33,8 @@
     <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" id="dispo-sb-avatar">—</div>
-      <div><div class="sb-uname" id="dispo-sb-uname">—</div><div class="sb-uemail" id="dispo-sb-uemail">—</div></div>
+      <div class="sb-avatar">AV</div>
+      <div><div class="sb-uname">Arte Vivo</div><div class="sb-uemail">artevivo@mascate.org</div></div>
     </div>
   </nav>
   <div class="main">
@@ -49,8 +48,8 @@
     <div class="content">
       <div class="page-header"><h1>Bienvenidx, Arte Vivo 👋</h1><p>Resumen de tu dispositivo esta semana</p></div>
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">—</div><div class="stat-label">Beneficiarixs activos</div></div>
-        <div class="stat-card"><div class="stat-icon mustard">📋</div><div class="stat-val">—</div><div class="stat-label">Actividades realizadas</div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">34</div><div class="stat-label">Beneficiarixs activos</div><div class="stat-delta">↑ +3 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📋</div><div class="stat-val">12</div><div class="stat-label">Actividades realizadas</div><div class="stat-delta">↑ +2 esta semana</div></div>
         <div class="stat-card"><div class="stat-icon rust">⭐</div><div class="stat-val">4.8</div><div class="stat-label">Valoración promedio</div></div>
         <div class="stat-card"><div class="stat-icon blue">📍</div><div class="stat-val">2</div><div class="stat-label">Seguimientos esta semana</div></div>
       </div>
@@ -83,10 +82,6 @@
           </div>
         </div>
       </div>
-      <div class="panel" id="disp-panel-pendientes" style="display:none;border:1.5px solid var(--error);background:var(--error-dim)">
-        <div class="panel-head"><span class="panel-title">⚠️ Prescriptxres pendientes de aprobación</span></div>
-        <div id="disp-pendientes-list"></div>
-      </div>
       <div class="grid-2">
         <div class="panel" id="disp-panel-beneficiarios">
           <div class="panel-head"><span class="panel-title">Beneficiarixs recientes</span><button class="panel-action" onclick="window.location.href='/usuarios'">Ver todos →</button></div>
@@ -107,7 +102,7 @@
   <nav class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo">🎯</div>
-      <div><div class="sb-name"id="sb-name">—</div><div class="sb-role-tag">Prescriptxr</div></div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Prescriptxr</div></div>
     </div>
     <span class="sb-section">Principal</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">🏠</span> Inicio</a>
@@ -121,7 +116,7 @@
     <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar" id="sb-avatar">—</div>
+      <div class="sb-avatar" style="background:var(--primary-dim);color:var(--primary)" id="presc-sb-avatar">—</div>
       <div><div class="sb-uname" id="presc-sb-uname">—</div><div class="sb-uemail" id="presc-sb-uemail">—</div></div>
     </div>
   </nav>
@@ -167,7 +162,7 @@
   <nav class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo">🌱</div>
-      <div><div class="sb-name"id="benef-sb-name">—</div><div class="sb-role-tag">Beneficiarix</div></div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Beneficiarix</div></div>
     </div>
     <span class="sb-section">Explorar</span>
     <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Inicio</a>
@@ -180,7 +175,7 @@
     <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar"id="benef-sb-avatar">—</div>
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)" id="benef-sb-avatar">—</div>
       <div><div class="sb-uname" id="benef-sb-uname">—</div><div class="sb-uemail" id="benef-sb-uemail">—</div></div>
     </div>
   </nav>
@@ -225,7 +220,7 @@
   <nav class="sidebar">
     <div class="sb-brand">
       <div class="sb-logo">🔐</div>
-      <div><div class="sb-name"id="admin-sb-name">—</div><div class="sb-role-tag">Administrador</div></div>
+      <div><div class="sb-name">MASCATE</div><div class="sb-role-tag">Administrador</div></div>
     </div>
     <span class="sb-section">Sistema</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">📊</span> Panel central</a>
@@ -238,8 +233,8 @@
     <a class="sb-item" href="/roles"><span class="ic">🛡️</span> Roles y permisos</a>
     <div class="sb-spacer"></div>
     <div class="sb-user">
-      <div class="sb-avatar"id="admin-sb-avatar" >AD</div>
-      <div><div class="sb-uname"id="admin-sb-uname">—</div><div class="sb-uemail" id="admin-sb-uemail">—</div></div>
+      <div class="sb-avatar" style="background:var(--error-dim);color:var(--error)">AD</div>
+      <div><div class="sb-uname">Admin MASCATE</div><div class="sb-uemail">admin@mascate.org</div></div>
     </div>
   </nav>
   <div class="main">
@@ -251,10 +246,10 @@
       </div>
     </div>
     <div class="content">
-      <div class="page-header"><h1>Panel de Administración</h1><p>Control total del sistema Cuida Tu Techo · Seguimiento Piloto 1</p></div>
+      <div class="page-header"><h1>Panel de Administración</h1><p>Control total del sistema MASCATE · Seguimiento Piloto 1</p></div>
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val">—</div><div class="stat-label">Dispositivos totales</div></div>
-        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-val">—</div><div class="stat-label">Usuarixs registradxs</div></div>
+        <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val">8</div><div class="stat-label">Dispositivos totales</div><div class="stat-delta">↑ +1 este mes</div></div>
+        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-val">214</div><div class="stat-label">Usuarixs registradxs</div><div class="stat-delta">↑ +28 este mes</div></div>
         <div class="stat-card"><div class="stat-icon mustard">🎯</div><div class="stat-val">12</div><div class="stat-label">Prescriptxrs activos</div></div>
         <div class="stat-card"><div class="stat-icon rust">⚠️</div><div class="stat-val">5</div><div class="stat-label">Alertas pendientes</div></div>
       </div>
@@ -294,6 +289,7 @@
     </div>
   </div>
 </div>
+
 <script src="/static/js/dashboard.js"></script>
 </body>
 </html>
