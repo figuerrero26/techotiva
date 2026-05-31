@@ -25,10 +25,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     let acts = [];
     if (rol === 'beneficiario') {
-      acts = await (await fetch(API + '/beneficiarios/mis-actividades', MASCATE.authGet())).json();
+      // Buscar muestra TODAS las actividades disponibles para inscribirse
+      acts = await (await fetch(API + '/actividades/')).json();
     } else if (rol === 'dispositivo') {
-      const disps = await (await fetch(API + '/dispositivos/', MASCATE.authGet())).json();
-      if (disps.length) acts = await (await fetch(API + '/actividades/?dispositivo_id=' + disps[0].id)).json();
+      const me = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
+      if (me?.id) acts = await (await fetch(API + '/actividades/?dispositivo_id=' + me.id)).json();
     } else {
       acts = await (await fetch(API + '/actividades/')).json();
     }
@@ -45,9 +46,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         set('stat-dispositivos', disps.length);
       } catch(e) {}
     } else {
-      set('stat-dispositivos', '—');
+      // Ocultar stat dispositivos para roles no admin
+      const cardDisp = document.getElementById('stat-dispositivos')?.closest('.stat-card');
+      if (cardDisp) cardDisp.style.display = 'none';
     }
 
+    window._actsCache = acts;
     renderActCards('acts-cards', acts);
     renderActTabla('acts-tbody', acts);
 
@@ -154,3 +158,80 @@ async function guardarActividad() {
 document.getElementById('modal-act-overlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-act-overlay')) cerrarModalAct();
 });
+
+window.verDetalleAct = function verDetalleAct(act) {
+  const TAG_COLOR = { Artístico:'mustard', Deportivo:'green', Cultural:'blue', Ambiental:'green', Educativo:'blue', Escucha:'purple' };
+  document.getElementById('det-nombre').textContent    = campo(act.nombre);
+  document.getElementById('det-tipo').textContent      = campo(act.tipo);
+  document.getElementById('det-tipo').className        = 'tag ' + (TAG_COLOR[act.tipo] ?? 'mustard');
+  document.getElementById('det-descripcion').textContent = act.descripcion ?? '';
+
+  const grid = document.getElementById('det-grid');
+  grid.innerHTML = [
+    { lbl:'📍 Lugar',    val: act.lugar },
+    { lbl:'🕓 Día',      val: act.dia_semana },
+    { lbl:'⏰ Hora',     val: act.hora },
+    { lbl:'👥 Cupo',     val: act.cupo_maximo ? act.cupo_maximo + ' personas' : null },
+    { lbl:'🗓 Desde',    val: act.fecha_inicio ? new Date(act.fecha_inicio).toLocaleDateString('es-CO') : null },
+  ].filter(f => f.val).map(f => `
+    <div class="contact-card"><div>
+      <div class="contact-lbl">${f.lbl}</div>
+      <div class="contact-val">${f.val}</div>
+    </div></div>`).join('');
+
+  // Acciones según rol
+  const acciones = document.getElementById('det-acciones');
+  const { rol } = MASCATE;
+  let btns = '';
+  if (rol === 'beneficiario') {
+    btns = `<button class="btn btn-sm btn-green" onclick="inscribirse(${act.id})">✓ Inscribirme</button>`;
+  } else if (rol !== 'beneficiario') {
+    btns = `<button class="btn btn-sm btn-outline" onclick="document.getElementById('modal-det-overlay').style.display='none';abrirModalAct(${JSON.stringify(act).replace(/"/g,'&quot;')})">✏️ Editar</button>`;
+  }
+  acciones.innerHTML = btns;
+
+  document.getElementById('modal-det-overlay').style.display = 'flex';
+}
+
+async function inscribirse(actividadId) {
+  try {
+    const res = await fetch(API + '/beneficiarios/inscribirse', {
+      method: 'POST',
+      headers: MASCATE.authHeaders(),
+      body: JSON.stringify({ actividad_id: actividadId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('modal-det-overlay').style.display = 'none';
+      const t = document.createElement('div');
+      t.textContent = '✓ Inscripción exitosa';
+      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    } else {
+      alert('Error: ' + (data.detail || 'No se pudo inscribir.'));
+    }
+  } catch(e) { console.error(e); }
+}
+
+document.getElementById('modal-det-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-det-overlay'))
+    document.getElementById('modal-det-overlay').style.display = 'none';
+});
+
+async function eliminarAct(actId) {
+  if (!confirm('¿Eliminar esta actividad? Esta acción no se puede deshacer.')) return;
+  try {
+    const res = await fetch(API + '/actividades/' + actId, {
+      method: 'DELETE',
+      headers: MASCATE.authHeaders()
+    });
+    if (res.ok) {
+      document.getElementById('modal-det-overlay').style.display = 'none';
+      window.location.reload();
+    } else {
+      const d = await res.json();
+      alert('Error: ' + (d.detail || 'No se pudo eliminar.'));
+    }
+  } catch(e) { console.error(e); }
+}

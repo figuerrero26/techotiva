@@ -167,7 +167,7 @@ function renderActCards(containerId, acts, max = 3) {
       ${a.fecha_inicio ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">🗓 Desde: ${a.fecha_inicio}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.6rem">
         <span style="font-size:0.78rem;color:var(--on-bg-muted)">${campo(a.dia_semana)} · ${campo(a.hora)}</span>
-        <button class="btn btn-sm btn-outline">Ver detalle</button>
+        <button class="btn btn-sm btn-outline" onclick="window.verDetalleAct&&window.verDetalleAct(window._actsCache?.find(x=>x.id===${a.id}))">Ver detalle</button>
       </div>
     </div>`;
   }).join('');

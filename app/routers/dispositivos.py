@@ -277,3 +277,43 @@ def aprobar_prescriptor(
     return {"msg": "Prescriptor aprobado"}
 
 
+# ────────────────────────── RECHAZAR PRESCRIPTOR (POR DISPOSITIVO) ──────────────────────────
+@router.put("/{dispositivo_id}/prescriptores/{prescriptor_id}/rechazar")
+def rechazar_prescriptor(
+    dispositivo_id: int,
+    prescriptor_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para rechazar prescriptores de este dispositivo")
+
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
+
+    if presc.dispositivo_id != dispositivo_id:
+        raise HTTPException(status_code=403, detail="El prescriptor no pertenece a este dispositivo")
+
+    service = EstadoService(db)
+
+    service.cambiar_estado(
+        entidad_obj=presc,
+        nuevo_estado=Estados.RECHAZADO,
+        admin_id=current_user.id,
+        motivo="Rechazado por el dispositivo"
+    )
+
+    if presc.usuario:
+        service.cambiar_estado(
+            entidad_obj=presc.usuario,
+            nuevo_estado=Estados.RECHAZADO,
+            admin_id=current_user.id,
+            motivo="Rechazado por el dispositivo"
+        )
+
+    return {"mensaje": "Prescriptxr rechazado"}

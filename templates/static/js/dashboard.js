@@ -440,3 +440,23 @@ window.rechazarDisp = async function(usuarioId) {
     else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
   } catch(e) { console.error(e); }
 };
+
+async function inscribirseDesdeDB(actividadId) {
+  try {
+    const res = await fetch(API + '/beneficiarios/inscribirse', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ actividad_id: actividadId })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      const t = document.createElement('div');
+      t.textContent = '✓ Inscripción exitosa';
+      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
+      document.body.appendChild(t);
+      setTimeout(() => { t.remove(); loadBeneficiario(); }, 2000);
+    } else {
+      alert('Error: ' + (data.detail || 'No se pudo inscribir.'));
+    }
+  } catch(e) { console.error(e); }
+}
