@@ -8,12 +8,26 @@ let usuarioEditando  = null;
 window.addEventListener('DOMContentLoaded', async () => {
   const { rol, nombre, email } = MASCATE;
   renderSidebar(nombre, email);
+
+  if (rol === 'prescriptor') {
+    await cargarAsignados();
+    initFiltros();
+    return;
+  }
+
+  if (rol === 'dispositivo') {
+    await cargarBeneficiariosDispositivo();
+    initFiltros();
+    return;
+  }
+
+  // admin
   await cargarUsuarios();
   await cargarPendientes();
   initFiltros();
 });
 
-// ── Cargar usuarios ──────────────────────────────────────────────────────
+// ── Cargar usuarios (admin) ──────────────────────────────────────────────
 async function cargarUsuarios() {
   try {
     todosLosUsuarios = await (await fetch(API + '/admin/usuarios', MASCATE.authGet())).json();
@@ -31,6 +45,54 @@ async function cargarUsuarios() {
 
     renderTabla(todosLosUsuarios);
   } catch(e) { console.error('Error cargando usuarios:', e); }
+}
+
+// ── Cargar beneficiarios del dispositivo ────────────────────────────────
+async function cargarBeneficiariosDispositivo() {
+  try {
+    // Obtener el dispositivo_id del perfil propio
+    const reMe = await fetch(API + '/dispositivos/me', MASCATE.authGet());
+    console.log('[dispositivo] GET /dispositivos/me →', reMe.status);
+    const me = await reMe.json();
+    console.log('[dispositivo] /dispositivos/me payload:', me);
+    const dispositivoId = me.id;
+
+    // Traer beneficiarios del dispositivo
+    const reBen = await fetch(API + '/dispositivos/' + dispositivoId + '/beneficiarios', MASCATE.authGet());
+    console.log('[dispositivo] GET /dispositivos/' + dispositivoId + '/beneficiarios →', reBen.status);
+    const beneficiarios = await reBen.json();
+    console.log('[dispositivo] beneficiarios payload:', beneficiarios);
+
+    todosLosUsuarios = beneficiarios;
+
+    // Adaptar encabezado
+    const h1 = document.querySelector('h1');
+    if (h1) h1.textContent = 'Beneficiarixs del dispositivo';
+    const p = document.querySelector('.page-header p');
+    if (p) p.textContent = 'Personas registradas y vinculadas a este dispositivo.';
+
+    // Ocultar stats de prescriptores y dispositivos — no aplica
+    document.querySelectorAll('.stat-card')[2]?.remove();
+    document.querySelectorAll('.stat-card')[2]?.remove(); // el 3ro pasa a ser [2] tras el primero
+
+    const urgentes = beneficiarios.filter(u => u.estado === 'urgente').length;
+    setStats([
+      { id:'stat-0', val: beneficiarios.length },
+      { id:'stat-1', val: beneficiarios.length },
+      { id:'stat-2', val: urgentes },
+    ]);
+
+    const labels = document.querySelectorAll('.stat-label');
+    if (labels[0]) labels[0].textContent = 'Total';
+    if (labels[1]) labels[1].textContent = 'Beneficiarixs';
+    if (labels[2]) labels[2].textContent = 'Urgentes';
+
+    // Ocultar panel pendientes y botón nuevo usuario — dispositivo no los gestiona
+    document.getElementById('panel-pendientes')?.remove();
+    document.querySelector('.btn-mustard')?.remove();
+
+    renderTabla(todosLosUsuarios);
+  } catch(e) { console.error('Error cargando beneficiarios del dispositivo:', e); }
 }
 
 // ── Cargar pendientes de aprobación ──────────────────────────────────────
@@ -143,6 +205,12 @@ function initFiltros() {
   const searchInput  = document.getElementById('search-input');
   const roleSelect   = document.getElementById('role-select');
   const statusSelect = document.getElementById('status-select');
+  const rol          = MASCATE.rol;
+
+  // Para prescriptor y dispositivo el rol es siempre beneficiario → ocultar filtro rol
+  if (rol === 'prescriptor' || rol === 'dispositivo') {
+    roleSelect?.closest('div')?.remove();
+  }
 
   function filtrar() {
     const q  = (searchInput?.value  ?? '').toLowerCase();
@@ -156,7 +224,12 @@ function initFiltros() {
       const matchS = st === 'todos' || u.status === st;
       return matchQ && matchR && matchS;
     });
-    renderTabla(filtrados);
+
+    if (rol === 'prescriptor') {
+      renderTablaAsignados(filtrados);
+    } else {
+      renderTabla(filtrados);
+    }
   }
 
   searchInput?.addEventListener('input', filtrar);
@@ -242,3 +315,78 @@ async function guardarCambiosUsuario() {
 document.getElementById('modal-overlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-overlay')) cerrarModal();
 });
+
+async function cargarAsignados() {
+  try {
+    const reAs = await fetch(API + '/prescriptores/mis-asignados', MASCATE.authGet());
+    console.log('[prescriptor] GET /prescriptores/mis-asignados →', reAs.status);
+    const asignados = await reAs.json();
+    console.log('[prescriptor] mis-asignados payload:', asignados);
+
+    // Normalizar para que initFiltros y renderTabla funcionen igual
+    // El endpoint devuelve nombre_apodo en vez de nombre; aplanamos aquí
+    todosLosUsuarios = asignados.map(a => ({
+      ...a,
+      nombre: a.nombre_apodo ?? a.nombre,
+      rol:    'beneficiario',
+      status: a.status ?? 'activo',   // puede que el endpoint devuelva 'estado' en vez de 'status'
+      _dias:  a.dias_sin_sesion,
+      _estado_seguimiento: a.estado,  // 'urgente' | 'revisar' | 'al_dia'
+    }));
+
+    // Adaptar encabezado
+    const h1 = document.querySelector('h1');
+    if (h1) h1.textContent = 'Mis personas asignadas';
+    const p = document.querySelector('.page-header p');
+    if (p) p.textContent = 'Personas bajo tu seguimiento y acompañamiento.';
+
+    // Ocultar stats de prescriptores y dispositivos — no aplica
+    document.querySelectorAll('.stat-card')[2]?.remove();
+    document.querySelectorAll('.stat-card')[2]?.remove();
+
+    setStats([
+      { id:'stat-0', val: asignados.length },
+      { id:'stat-1', val: asignados.length },
+      { id:'stat-2', val: asignados.filter(a => a.estado === 'urgente').length },
+    ]);
+
+    const labels = document.querySelectorAll('.stat-label');
+    if (labels[0]) labels[0].textContent = 'Asignados';
+    if (labels[1]) labels[1].textContent = 'Total';
+    if (labels[2]) labels[2].textContent = 'Urgentes';
+
+    // Ocultar panel pendientes y botón nuevo usuario
+    document.getElementById('panel-pendientes')?.remove();
+    document.querySelector('.btn-mustard')?.remove();
+
+    renderTablaAsignados(todosLosUsuarios);
+  } catch(e) { console.error('Error cargando asignados:', e); }
+}
+
+function renderTablaAsignados(lista) {
+  const tbody = document.getElementById('users-tbody');
+  if (!tbody) return;
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--on-bg-muted);text-align:center;padding:1rem">Sin personas asignadas aún.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(a => {
+    const est      = a._estado_seguimiento;
+    const tagClass = est === 'urgente' ? 'rust' : est === 'revisar' ? 'mustard' : 'green';
+    const label    = est === 'urgente' ? 'Urgente' : est === 'revisar' ? 'Revisar' : 'Al día';
+    const dias     = a._dias != null ? 'Hace ' + a._dias + ' días' : '—';
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:0.6rem">
+        <div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">${ini(a.nombre)}</div>
+        ${campo(a.nombre)}
+      </div></td>
+      <td><span class="tag mustard">Beneficiarix</span></td>
+      <td>${campo(a.fecha_nacimiento ? new Date(a.fecha_nacimiento).toLocaleDateString('es-CO') : null)}</td>
+      <td>${campo(a.localidad)}</td>
+      <td>${campo(a.genero)}</td>
+      <td><span class="tag ${tagClass}">${label}</span></td>
+      <td>${dias}</td>
+      <td><button class="btn btn-sm btn-green" onclick="window.location.href='/reportar-info'">+ Registro</button></td>
+    </tr>`;
+  }).join('');
+}

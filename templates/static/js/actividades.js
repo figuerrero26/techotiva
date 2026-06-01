@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Ocultar btn nueva actividad si no tiene permiso
   await cargarMiDispositivo();
   const btnNueva = document.getElementById('btn-nueva');
-  if (rol === 'beneficiario') {
+  if (rol === 'beneficiario' || rol === 'prescriptor') {
     btnNueva?.remove();
   } else {
     btnNueva?.addEventListener('click', () => abrirModalAct());
@@ -18,18 +18,23 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // "Ver todas →" en tabla
   document.querySelector('.panel-action')?.addEventListener('click', () => {
-    // scroll a la tabla
-    document.querySelector('table')?.scrollIntoView({ behavior:'smooth' });
+    document.querySelector('table')?.scrollIntoView({ behavior: 'smooth' });
   });
 
   try {
     let acts = [];
     if (rol === 'beneficiario') {
-      // Buscar muestra TODAS las actividades disponibles para inscribirse
+      // Beneficiario ve TODAS las actividades disponibles para inscribirse
       acts = await (await fetch(API + '/actividades/')).json();
     } else if (rol === 'dispositivo') {
       const me = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
       if (me?.id) acts = await (await fetch(API + '/actividades/?dispositivo_id=' + me.id)).json();
+    } else if (rol === 'prescriptor') {
+      // Prescriptor ve solo actividades de su dispositivo, sin poder modificarlas
+      const me = await (await fetch(API + '/prescriptores/me', MASCATE.authGet())).json();
+      if (me?.dispositivo_id) {
+        acts = await (await fetch(API + '/actividades/?dispositivo_id=' + me.dispositivo_id)).json();
+      }
     } else {
       acts = await (await fetch(API + '/actividades/')).json();
     }
@@ -44,7 +49,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       try {
         const disps = await (await fetch(API + '/admin/dispositivos', MASCATE.authGet())).json();
         set('stat-dispositivos', disps.length);
-      } catch(e) {}
+      } catch (e) {}
     } else {
       // Ocultar stat dispositivos para roles no admin
       const cardDisp = document.getElementById('stat-dispositivos')?.closest('.stat-card');
@@ -55,7 +60,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderActCards('acts-cards', acts);
     renderActTabla('acts-tbody', acts);
 
-  } catch(e) {
+  } catch (e) {
     console.error('Error cargando actividades:', e);
     const g = document.getElementById('acts-cards');
     if (g) g.innerHTML = '<div style="color:var(--error);padding:1rem">Error al cargar actividades.</div>';
@@ -71,7 +76,7 @@ async function cargarMiDispositivo() {
   if (MASCATE.rol === 'dispositivo') {
     try {
       miDispositivo = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
-    } catch(e) {}
+    } catch (e) {}
   }
 }
 
@@ -82,13 +87,13 @@ function abrirModalAct(act = null) {
   if (titulo) titulo.textContent = act ? 'Editar actividad' : 'Nueva actividad';
   if (btn)    btn.textContent    = act ? 'Guardar cambios'  : 'Crear actividad';
 
-  document.getElementById('act-nombre').value      = act?.nombre      ?? '';
-  document.getElementById('act-tipo').value        = act?.tipo        ?? '';
-  document.getElementById('act-emoji').value       = act?.emoji       ?? '';
-  document.getElementById('act-lugar').value       = act?.lugar       ?? '';
-  document.getElementById('act-dia').value         = act?.dia_semana  ?? '';
-  document.getElementById('act-hora').value        = act?.hora        ?? '';
-  document.getElementById('act-cupo').value        = act?.cupo_maximo ?? '';
+  document.getElementById('act-nombre').value      = act?.nombre       ?? '';
+  document.getElementById('act-tipo').value        = act?.tipo         ?? '';
+  document.getElementById('act-emoji').value       = act?.emoji        ?? '';
+  document.getElementById('act-lugar').value       = act?.lugar        ?? '';
+  document.getElementById('act-dia').value         = act?.dia_semana   ?? '';
+  document.getElementById('act-hora').value        = act?.hora         ?? '';
+  document.getElementById('act-cupo').value        = act?.cupo_maximo  ?? '';
   document.getElementById('act-fecha').value       = act?.fecha_inicio ?? '';
   document.getElementById('act-descripcion').value = act?.descripcion  ?? '';
   document.getElementById('act-error').style.display = 'none';
@@ -108,7 +113,8 @@ async function guardarActividad() {
   const nombre = document.getElementById('act-nombre').value.trim();
   if (!nombre) {
     errorEl.textContent = 'El nombre es obligatorio.';
-    errorEl.style.display = 'block'; return;
+    errorEl.style.display = 'block';
+    return;
   }
 
   const payload = {
@@ -128,7 +134,8 @@ async function guardarActividad() {
     payload.dispositivo_id = miDispositivo.id;
   }
 
-  btn.textContent = 'Guardando...'; btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
 
   try {
     let res;
@@ -147,10 +154,11 @@ async function guardarActividad() {
       errorEl.textContent = data.detail || 'Error al guardar.';
       errorEl.style.display = 'block';
     }
-  } catch(e) {
+  } catch (e) {
     errorEl.textContent = 'Error de conexión.';
     errorEl.style.display = 'block';
   }
+
   btn.textContent = actEditando ? 'Guardar cambios' : 'Crear actividad';
   btn.disabled = false;
 }
@@ -159,20 +167,27 @@ document.getElementById('modal-act-overlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-act-overlay')) cerrarModalAct();
 });
 
+// ── Detalle de actividad ─────────────────────────────────────────────────
+// CORRECCIÓN: bloque if/else if mal anidado, if duplicado, faltaba
+//             asignar acciones.innerHTML y cerrar llaves correctamente.
 window.verDetalleAct = function verDetalleAct(act) {
-  const TAG_COLOR = { Artístico:'mustard', Deportivo:'green', Cultural:'blue', Ambiental:'green', Educativo:'blue', Escucha:'purple' };
-  document.getElementById('det-nombre').textContent    = campo(act.nombre);
-  document.getElementById('det-tipo').textContent      = campo(act.tipo);
-  document.getElementById('det-tipo').className        = 'tag ' + (TAG_COLOR[act.tipo] ?? 'mustard');
+  const TAG_COLOR = {
+    Artístico: 'mustard', Deportivo: 'green', Cultural: 'blue',
+    Ambiental: 'green',   Educativo: 'blue',  Escucha:  'purple'
+  };
+
+  document.getElementById('det-nombre').textContent      = campo(act.nombre);
+  document.getElementById('det-tipo').textContent        = campo(act.tipo);
+  document.getElementById('det-tipo').className          = 'tag ' + (TAG_COLOR[act.tipo] ?? 'mustard');
   document.getElementById('det-descripcion').textContent = act.descripcion ?? '';
 
   const grid = document.getElementById('det-grid');
   grid.innerHTML = [
-    { lbl:'📍 Lugar',    val: act.lugar },
-    { lbl:'🕓 Día',      val: act.dia_semana },
-    { lbl:'⏰ Hora',     val: act.hora },
-    { lbl:'👥 Cupo',     val: act.cupo_maximo ? act.cupo_maximo + ' personas' : null },
-    { lbl:'🗓 Desde',    val: act.fecha_inicio ? new Date(act.fecha_inicio).toLocaleDateString('es-CO') : null },
+    { lbl: '📍 Lugar', val: act.lugar },
+    { lbl: '🕓 Día',   val: act.dia_semana },
+    { lbl: '⏰ Hora',  val: act.hora },
+    { lbl: '👥 Cupo',  val: act.cupo_maximo ? act.cupo_maximo + ' personas' : null },
+    { lbl: '🗓 Desde', val: act.fecha_inicio ? new Date(act.fecha_inicio).toLocaleDateString('es-CO') : null },
   ].filter(f => f.val).map(f => `
     <div class="contact-card"><div>
       <div class="contact-lbl">${f.lbl}</div>
@@ -183,16 +198,30 @@ window.verDetalleAct = function verDetalleAct(act) {
   const acciones = document.getElementById('det-acciones');
   const { rol } = MASCATE;
   let btns = '';
+
   if (rol === 'beneficiario') {
     btns = `<button class="btn btn-sm btn-green" onclick="inscribirse(${act.id})">✓ Inscribirme</button>`;
-  } else if (rol !== 'beneficiario') {
-    btns = `<button class="btn btn-sm btn-outline" onclick="document.getElementById('modal-det-overlay').style.display='none';abrirModalAct(${JSON.stringify(act).replace(/"/g,'&quot;')})">✏️ Editar</button>`;
+  } else if (rol === 'dispositivo' || rol === 'admin') {
+    btns = `
+      <button class="btn btn-sm btn-outline"
+        onclick="document.getElementById('modal-det-overlay').style.display='none';
+                 abrirModalAct(window._actsCache?.find(x=>x.id===${act.id}))">
+        ✏️ Editar
+      </button>
+      <button class="btn btn-sm btn-outline"
+        style="color:var(--error);border-color:var(--error)"
+        onclick="eliminarAct(${act.id})">
+        🗑 Eliminar
+      </button>`;
   }
-  acciones.innerHTML = btns;
+
+  // CORRECCIÓN: asignar los botones al contenedor
+  if (acciones) acciones.innerHTML = btns;
 
   document.getElementById('modal-det-overlay').style.display = 'flex';
-}
+};
 
+// ── Inscripción ──────────────────────────────────────────────────────────
 async function inscribirse(actividadId) {
   try {
     const res = await fetch(API + '/beneficiarios/inscribirse', {
@@ -211,7 +240,9 @@ async function inscribirse(actividadId) {
     } else {
       alert('Error: ' + (data.detail || 'No se pudo inscribir.'));
     }
-  } catch(e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 document.getElementById('modal-det-overlay')?.addEventListener('click', e => {
@@ -219,6 +250,7 @@ document.getElementById('modal-det-overlay')?.addEventListener('click', e => {
     document.getElementById('modal-det-overlay').style.display = 'none';
 });
 
+// ── Eliminar actividad ───────────────────────────────────────────────────
 async function eliminarAct(actId) {
   if (!confirm('¿Eliminar esta actividad? Esta acción no se puede deshacer.')) return;
   try {
@@ -233,5 +265,7 @@ async function eliminarAct(actId) {
       const d = await res.json();
       alert('Error: ' + (d.detail || 'No se pudo eliminar.'));
     }
-  } catch(e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 }

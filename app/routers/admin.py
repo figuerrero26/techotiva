@@ -140,7 +140,6 @@ def listar_usuarios(
         db.query(Usuario)
         .outerjoin(EstadoRegistro, Usuario.estado_actual_id == EstadoRegistro.id)
         .filter(Usuario.rol != "admin")
-        .filter(Usuario.rol != "prescriptor")
         .order_by(
             case(
                 (EstadoRegistro.estado == Estados.PENDIENTE, 0),

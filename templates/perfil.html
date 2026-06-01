@@ -12,12 +12,9 @@
 </head>
 <body>
 <div class="top-bar"></div>
-
 <div class="screen active">
-
-    <!-- SIDEBAR — inyectado por mascate-utils.js renderSidebar() -->
+  <!-- SIDEBAR — inyectado por mascate-utils.js renderSidebar() -->
   <nav class="sidebar"></nav>
-
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
@@ -27,9 +24,7 @@
         <button class="btn btn-sm btn-mustard">Editar perfil</button>
       </div>
     </div>
-
     <div class="content">
-
       <!-- HERO -->
       <div class="panel" style="margin-bottom:1.5rem">
         <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
@@ -43,34 +38,24 @@
           </div>
         </div>
       </div>
-
       <!-- STATS -->
       <div class="stats-row cols-4">
         <div class="stat-card"><div class="stat-icon mustard" id="stat-icon-0">📅</div><div class="stat-val" id="stat-0">—</div><div class="stat-label" id="stat-lbl-0">Actividades</div></div>
-        <div class="stat-card"><div class="stat-icon green"  id="stat-icon-1">✅</div><div class="stat-val" id="stat-1">—</div><div class="stat-label" id="stat-lbl-1">Asistencia</div></div>
-        <div class="stat-card"><div class="stat-icon blue"   id="stat-icon-2">⭐</div><div class="stat-val" id="stat-2">—</div><div class="stat-label" id="stat-lbl-2">Eventos activos</div></div>
-        <div class="stat-card"><div class="stat-icon rust"   id="stat-icon-3">🎯</div><div class="stat-val" id="stat-3">—</div><div class="stat-label" id="stat-lbl-3">Progreso</div></div>
+        <div class="stat-card"><div class="stat-icon green"   id="stat-icon-1">✅</div><div class="stat-val" id="stat-1">—</div><div class="stat-label" id="stat-lbl-1">Asistencia</div></div>
+        <div class="stat-card"><div class="stat-icon blue"    id="stat-icon-2">⭐</div><div class="stat-val" id="stat-2">—</div><div class="stat-label" id="stat-lbl-2">Eventos activos</div></div>
+        <div class="stat-card"><div class="stat-icon rust"    id="stat-icon-3">🎯</div><div class="stat-val" id="stat-3">—</div><div class="stat-label" id="stat-lbl-3">Progreso</div></div>
       </div>
-
       <!-- INFO + CONTACTO -->
       <div class="grid-2">
-
         <div class="panel" id="panel-info">
           <div class="panel-head"><span class="panel-title">Información personal</span></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem" id="info-grid">
-            <!-- llenado por JS -->
-          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem" id="info-grid"></div>
         </div>
-
         <div class="panel" id="panel-contacto">
           <div class="panel-head"><span class="panel-title" id="contacto-titulo">Contactos y seguimiento</span></div>
-          <div id="contacto-list">
-            <!-- llenado por JS -->
-          </div>
+          <div id="contacto-list"></div>
         </div>
-
       </div>
-
       <!-- ACTIVIDADES RECIENTES -->
       <div class="panel">
         <div class="panel-head">
@@ -81,8 +66,22 @@
           <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
         </div>
       </div>
-
     </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL DETALLE ACTIVIDAD ═══ -->
+<div id="modal-det-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:2rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('modal-det-overlay').style.display='none'"
+      style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+      <h2 id="det-nombre" style="margin:0;font-size:1.2rem;flex:1">—</h2>
+      <span id="det-tipo" class="tag mustard">—</span>
+    </div>
+    <p id="det-descripcion" style="font-size:0.88rem;color:var(--on-bg-muted);margin:0 0 1.25rem"></p>
+    <div id="det-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem"></div>
+    <div id="det-acciones" style="display:flex;gap:0.75rem;flex-wrap:wrap"></div>
   </div>
 </div>
 

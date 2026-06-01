@@ -4,6 +4,48 @@
 const API = window.location.origin;
 MASCATE.guardAuth();
 
+// ── Modal de detalle de actividad (disponible en todas las vistas) ────────
+// verDetalleAct vive en actividades.js pero perfil.js lo necesita también.
+// Lo definimos aquí sin botones de editar/eliminar (el prescriptor solo lee).
+window.verDetalleAct = function verDetalleAct(act) {
+  if (!act) return;
+
+  document.getElementById('det-nombre').textContent      = campo(act.nombre);
+  document.getElementById('det-tipo').textContent        = campo(act.tipo);
+  document.getElementById('det-tipo').className          = 'tag ' + (TAG_COLOR[act.tipo] ?? 'mustard');
+  document.getElementById('det-descripcion').textContent = act.descripcion ?? '';
+
+  const grid = document.getElementById('det-grid');
+  if (grid) {
+    grid.innerHTML = [
+      { lbl: '📍 Lugar', val: act.lugar },
+      { lbl: '🕓 Día',   val: act.dia_semana },
+      { lbl: '⏰ Hora',  val: act.hora },
+      { lbl: '👥 Cupo',  val: act.cupo_maximo ? act.cupo_maximo + ' personas' : null },
+      { lbl: '🗓 Desde', val: act.fecha_inicio
+          ? new Date(act.fecha_inicio).toLocaleDateString('es-CO') : null },
+    ].filter(f => f.val).map(f => `
+      <div class="contact-card"><div>
+        <div class="contact-lbl">${f.lbl}</div>
+        <div class="contact-val">${f.val}</div>
+      </div></div>`).join('');
+  }
+
+  // Prescriptor: solo lectura, sin acciones de editar/eliminar
+  const acciones = document.getElementById('det-acciones');
+  if (acciones) acciones.innerHTML = '';
+
+  document.getElementById('modal-det-overlay').style.display = 'flex';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('modal-det-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-det-overlay'))
+      document.getElementById('modal-det-overlay').style.display = 'none';
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   const { rol, nombre, email } = MASCATE;
 
@@ -16,16 +58,16 @@ window.addEventListener('DOMContentLoaded', async () => {
       const acts = await (await fetch(API + '/beneficiarios/mis-actividades', MASCATE.authGet())).json();
 
       renderSidebar(me.nombre_apodo, me.email);
-      set('hero-avatar',  ini(me.nombre_apodo));
-      set('hero-nombre',  me.nombre_apodo);
-      set('hero-rol',     ROL_LABELS[rol]);
-      set('hero-desc',    campo(me.descripcion, 'Participante del colectivo MASCATE.'));
+      set('hero-avatar', ini(me.nombre_apodo));
+      set('hero-nombre', me.nombre_apodo);
+      set('hero-rol',    ROL_LABELS[rol]);
+      set('hero-desc',   campo(me.descripcion, 'Participante del colectivo MASCATE.'));
 
       setStats([
-        { id:'stat-0', val: acts.length,                          lbl:'Actividades',  icon:'📅' },
-        { id:'stat-1', val: campo(me.asistencia_pct, '—'),        lbl:'Asistencia',   icon:'✅' },
-        { id:'stat-2', val: acts.filter(a=>a.activa).length||'—', lbl:'Activas',      icon:'⭐' },
-        { id:'stat-3', val: campo(me.progreso, '—'),              lbl:'Progreso',     icon:'🎯' },
+        { id:'stat-0', val: acts.length,                          lbl:'Actividades', icon:'📅' },
+        { id:'stat-1', val: campo(me.asistencia_pct, '—'),        lbl:'Asistencia',  icon:'✅' },
+        { id:'stat-2', val: acts.filter(a=>a.activa).length||'—', lbl:'Activas',     icon:'⭐' },
+        { id:'stat-3', val: campo(me.progreso, '—'),              lbl:'Progreso',    icon:'🎯' },
       ]);
 
       renderInfoGrid('info-grid', me, rol, rol);
@@ -44,6 +86,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         contactoList.innerHTML = html || '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin contactos asignados aún.</div>';
       }
 
+      window._actsCache = acts;
       renderActCards('acts-grid', acts);
     } catch(e) { console.error('Error perfil beneficiario:', e); }
   }
@@ -53,23 +96,44 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
       const asignados = await (await fetch(API + '/prescriptores/mis-asignados', MASCATE.authGet())).json();
       const segs      = await (await fetch(API + '/prescriptores/seguimientos',   MASCATE.authGet())).json();
-      const acts      = await (await fetch(API + '/actividades/')).json();
 
       set('hero-avatar', ini(nombre)); set('hero-nombre', nombre);
       set('hero-rol', ROL_LABELS[rol]); set('hero-desc', '');
 
       setStats([
-        { id:'stat-0', val: asignados.length,                                  lbl:'Asignados',    icon:'👥' },
-        { id:'stat-1', val: segs.length,                                        lbl:'Seguimientos', icon:'📋' },
-        { id:'stat-2', val: asignados.filter(a=>a.estado==='urgente').length,  lbl:'Urgentes',     icon:'⚠️' },
-        { id:'stat-3', val: asignados.filter(a=>a.estado==='al_dia').length,   lbl:'Al día',       icon:'✅' },
+        { id:'stat-0', val: asignados.length,                                 lbl:'Asignados',    icon:'👥' },
+        { id:'stat-1', val: segs.length,                                       lbl:'Seguimientos', icon:'📋' },
+        { id:'stat-2', val: asignados.filter(a=>a.estado==='urgente').length, lbl:'Urgentes',     icon:'⚠️' },
+        { id:'stat-3', val: asignados.filter(a=>a.estado==='al_dia').length,  lbl:'Al día',       icon:'✅' },
       ]);
 
-      renderInfoGrid('info-grid', { nombre_completo: nombre, email }, rol, rol);
+      // Cargar perfil propio para obtener dispositivo_id y filtrar actividades
+      let acts = [];
+      try {
+        const me = await (await fetch(API + '/prescriptores/me', MASCATE.authGet())).json();
+        renderInfoGrid('info-grid', me, rol, rol);
+
+        const cl = document.getElementById('contacto-list');
+        if (cl && me.dispositivo_nombre) {
+          cl.innerHTML = `<div class="list-row">
+            <div class="contact-icon" style="background:var(--primary-dim)">🏘️</div>
+            <div class="list-info">
+              <div class="list-name">${me.dispositivo_nombre}</div>
+              <div class="list-sub">Dispositivo asignado</div>
+            </div></div>`;
+        }
+
+        // Solo actividades del dispositivo del prescriptor
+        if (me?.dispositivo_id) {
+          acts = await (await fetch(API + '/actividades/?dispositivo_id=' + me.dispositivo_id)).json();
+        }
+      } catch(e) {
+        renderInfoGrid('info-grid', { nombre_completo: nombre, email }, rol, rol);
+      }
 
       const contactoList = document.getElementById('contacto-list');
       if (contactoList) {
-        contactoList.innerHTML = asignados.slice(0,3).map(a => `
+        contactoList.innerHTML = asignados.slice(0, 3).map(a => `
           <div class="list-row">
             <div class="contact-icon" style="background:var(--secondary-dim)">🌱</div>
             <div class="list-info">
@@ -80,6 +144,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           </div>`).join('') || '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin asignados.</div>';
       }
       set('contacto-titulo', 'Personas asignadas');
+
+      window._actsCache = acts;
       renderActCards('acts-grid', acts);
     } catch(e) { console.error('Error perfil prescriptor:', e); }
   }
@@ -118,6 +184,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div class="list-info"><div class="list-name">${d.redes_sociales}</div><div class="list-sub">Redes sociales</div></div></div>` : ''}`;
       }
       set('contacto-titulo', 'Información de contacto');
+
+      window._actsCache = acts;
       renderActCards('acts-grid', acts);
     } catch(e) { console.error('Error perfil dispositivo:', e); }
   }
@@ -149,7 +217,14 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div class="list-info"><div class="list-name">${stats.alertas_pendientes} alertas pendientes</div><div class="list-sub">Requieren atención</div></div></div>`;
       }
       set('contacto-titulo', 'Estado del sistema');
+
+      window._actsCache = acts;
       renderActCards('acts-grid', acts);
     } catch(e) { console.error('Error perfil admin:', e); }
   }
+
+  // ── Botón "Ver todas" → vista de actividades ────────────────────────────
+  document.querySelector('.panel-action')?.addEventListener('click', () => {
+    window.location.href = '/actividades';
+  });
 });
