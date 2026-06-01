@@ -34,14 +34,37 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.querySelector(".panel.span-2:last-of-type")?.remove();
   }
 
-  // Ping estado sistema
+  // Apariencia oculta hasta implementar modo oscuro y compacto
+  document.querySelectorAll(".panel").forEach(p => {
+    if (p.querySelector(".panel-title")?.textContent.trim() === "Apariencia") {
+      p.style.display = "none";
+    }
+  });
+
+  // Health check — consume GET /health (endpoint público, sin auth)
+  const elDb  = document.getElementById('status-db');
+  const elSrv = document.getElementById('status-srv');
   try {
-    await fetch(API + '/admin/stats', MASCATE.authGet());
+    const res    = await fetch(API + '/health');
+    const health = await res.json();
+
+    // API / servidor
+    if (elSrv) {
+      const apiOk = health.api === 'ok';
+      elSrv.className   = 'tag ' + (apiOk ? 'green' : 'rust');
+      elSrv.textContent = apiOk ? 'Estable' : 'Error';
+    }
+
+    // Base de datos
+    if (elDb) {
+      const dbOk = health.db === 'ok';
+      elDb.className   = 'tag ' + (dbOk ? 'green' : 'rust');
+      elDb.textContent = dbOk ? 'Activa' : 'Error';
+    }
   } catch(e) {
-    ['status-db','status-srv'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.className = 'tag rust'; el.textContent = 'Error'; }
-    });
+    // Si el fetch falla del todo, el servidor no responde
+    if (elSrv) { elSrv.className = 'tag rust'; elSrv.textContent = 'Sin respuesta'; }
+    if (elDb)  { elDb.className  = 'tag rust'; elDb.textContent  = 'Desconocido'; }
   }
 
   // Tema

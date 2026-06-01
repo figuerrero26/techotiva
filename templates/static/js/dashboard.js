@@ -254,26 +254,84 @@ async function loadBeneficiario() {
   }
 
   try {
-    // Cargar todas las actividades disponibles
-    const acts = await fetch(API + '/actividades/').then(r => r.json());
-    window._benef_acts = acts;
-    renderActsBenef(acts);
+    // Solo actividades a las que el beneficiario está inscrito
+    const misActs = await fetch(API + '/beneficiarios/mis-actividades', authGet()).then(r => r.json());
+    window._benef_acts = misActs;
+    renderActsBenef(misActs);
 
-    // Cargar dispositivos para el detalle
-    const disps = await fetch(API + '/dispositivos/').then(r => r.json());
-    if (disps.length) {
-      const d = disps[0];
-      setText('benef-disp-nombre',  d.nombre);
-      setText('benef-disp-ubicacion', d.ubicacion ? '📍 ' + d.ubicacion : '—');
-      setText('benef-disp-tel',     d.telefono      || '—');
-      setText('benef-disp-redes',   d.redes_sociales || '—');
-      const horario = d.dia_actividad ? (d.dia_actividad + (d.hora_actividad ? ' · ' + d.hora_actividad : '')) : '—';
-      setText('benef-disp-horario', horario);
-
-      // Facilitadora
-      const prescs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json()).catch(() => []);
-      // No hay endpoint de prescriptor por dispositivo público, dejar como —
+    // Panel dispositivo: derivar los dispositivos únicos de sus actividades
+    const dispPanel = document.querySelector('#screen-beneficiario .panel');
+    if (!misActs.length) {
+      // Sin inscripciones — ocultar panel dispositivo y mostrar CTA
+      if (dispPanel) {
+        dispPanel.innerHTML = `
+          <div class="panel-head"><span class="panel-title">Sin actividades inscritas</span></div>
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem 0 0.25rem">
+            Aún no estás inscritx en ninguna actividad.
+          </div>
+          <div style="margin-top:0.85rem">
+            <button class="btn btn-md btn-green" style="width:100%"
+              onclick="window.location.href='/actividades'">🔍 Explorar actividades</button>
+          </div>`;
+      }
+      return;
     }
+
+    // Obtener dispositivos únicos de las actividades inscritas
+    const dispIds = [...new Set(misActs.map(a => a.dispositivo_id).filter(Boolean))];
+    if (!dispIds.length || !dispPanel) return;
+
+    // Cargar datos del primer dispositivo y listar los demás como chips
+    const dispsData = await Promise.all(
+      dispIds.map(id => fetch(API + '/dispositivos/' + id).then(r => r.json()).catch(() => null))
+    ).then(res => res.filter(Boolean));
+
+    if (!dispsData.length) return;
+
+    // Renderizar selector si hay más de un dispositivo
+    let dispActual = dispsData[0];
+
+    function renderDispPanel(d) {
+      const horario = d.dia_actividad
+        ? d.dia_actividad + (d.hora_actividad ? ' · ' + d.hora_actividad : '')
+        : '—';
+      dispPanel.innerHTML = `
+        <div class="panel-head">
+          <span class="panel-title">Detalle del dispositivo</span>
+          <button class="panel-action" onclick="window.location.href='/mapa'">Ver en mapa →</button>
+        </div>
+        ${dispsData.length > 1 ? `
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.85rem">
+          ${dispsData.map(dd => `
+            <span class="chip${dd.id === d.id ? ' active' : ''}"
+              style="cursor:pointer"
+              onclick="renderDispPanel_${d.id}(window._benef_disps.find(x=>x.id===${dd.id}))">
+              ${dd.nombre}
+            </span>`).join('')}
+        </div>` : ''}
+        <div class="detail-hero">
+          <h2>${d.nombre}</h2>
+          <p>${d.ubicacion ? '📍 ' + d.ubicacion : '—'}</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+          <div class="contact-card"><div class="contact-icon" style="background:var(--secondary-dim)">📞</div><div><div class="contact-val">${d.telefono||'—'}</div><div class="contact-lbl">Teléfono</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--tertiary-dim)">📱</div><div><div class="contact-val">${d.redes_sociales||'—'}</div><div class="contact-lbl">Instagram</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val">${horario}</div><div class="contact-lbl">Horario</div></div></div>
+          <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val" id="benef-facilitadora">—</div><div class="contact-lbl">Facilitadxra</div></div></div>
+        </div>
+        <div style="margin-top:0.85rem">
+          <button class="btn btn-md btn-green" style="width:100%"
+            onclick="window.location.href='/notificaciones'">✉️ Contactar dispositivo</button>
+        </div>`;
+    }
+
+    // Exponer para los chips dinámicos
+    window._benef_disps = dispsData;
+    window[`renderDispPanel_${dispsData[0].id}`] = renderDispPanel;
+    dispsData.forEach(d => { window[`renderDispPanel_${d.id}`] = renderDispPanel; });
+
+    renderDispPanel(dispActual);
+
   } catch(e) { console.error('Error beneficiario:', e); }
 }
 
@@ -281,7 +339,7 @@ function renderActsBenef(acts) {
   const grid = document.getElementById('benef-acts-grid');
   if (!grid) return;
   if (!acts.length) {
-    grid.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin actividades disponibles.</div>';
+    grid.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">No estás inscritx en ninguna actividad aún. <a href="/actividades" style="color:var(--primary);font-weight:600">Explorar →</a></div>';
     return;
   }
   const TAG_COLOR = { Artístico:'green', Deportivo:'mustard', Cultural:'rust', Ambiental:'green', Educativo:'purple', Escucha:'blue' };

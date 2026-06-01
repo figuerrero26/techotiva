@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     window._actsCache = acts;
-    renderActCards('acts-cards', acts);
+    renderActCards('acts-cards', acts, MASCATE.rol === 'beneficiario');
     renderActTabla('acts-tbody', acts);
 
   } catch (e) {
@@ -249,6 +249,51 @@ document.getElementById('modal-det-overlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-det-overlay'))
     document.getElementById('modal-det-overlay').style.display = 'none';
 });
+
+// ── Render tabla con acción según rol ────────────────────────────────────
+// Sobreescribe el renderActTabla de mascate-utils para agregar columna Acción
+function renderActTabla(tbodyId, acts) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const esBenef = MASCATE.rol === 'beneficiario';
+
+  // Asegurar que el thead tenga columna Acción
+  const thead = tbody.closest('table')?.querySelector('thead tr');
+  if (thead && esBenef && !thead.querySelector('th[data-accion]')) {
+    const th = document.createElement('th');
+    th.setAttribute('data-accion', '1');
+    th.textContent = 'Acción';
+    thead.appendChild(th);
+  }
+
+  if (!acts.length) {
+    tbody.innerHTML = `<tr><td colspan="${esBenef ? 6 : 5}" style="color:var(--on-bg-muted);text-align:center;padding:1rem">Sin actividades.</td></tr>`;
+    return;
+  }
+
+  const TAG_COLOR = {
+    Artístico: 'mustard', Deportivo: 'green', Cultural: 'blue',
+    Ambiental: 'green',   Educativo: 'blue',  Escucha:  'purple'
+  };
+
+  tbody.innerHTML = acts.map(a => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span style="font-size:1.1rem">${a.emoji||'📅'}</span>
+          <span style="font-weight:600;cursor:pointer;color:var(--primary)"
+            onclick='verDetalleAct(${JSON.stringify(a).replace(/'/g,"\\'")})'>${a.nombre}</span>
+        </div>
+      </td>
+      <td><span class="tag ${TAG_COLOR[a.tipo]||'mustard'}">${a.tipo||'—'}</span></td>
+      <td>${a.lugar||'—'}</td>
+      <td>${a.dia_semana||'—'}</td>
+      <td>${a.hora||'—'}</td>
+      ${esBenef ? `<td>
+        <button class="btn btn-sm btn-green" onclick="inscribirse(${a.id})">✓ Inscribirme</button>
+      </td>` : ''}
+    </tr>`).join('');
+}
 
 // ── Eliminar actividad ───────────────────────────────────────────────────
 async function eliminarAct(actId) {
