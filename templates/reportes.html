@@ -13,28 +13,12 @@
 <body>
 <div class="top-bar"></div>
 <div class="screen active">
-  <nav class="sidebar">
-    <div class="sb-brand"><div class="sb-logo">📊</div><div><div class="sb-name">Cuida Tu Techo</div><div class="sb-role-tag" id="sb-role-tag">—</div></div></div>
-    <span class="sb-section">Sistema</span>
-    <a class="sb-item" href="/dashboard"><span class="ic">🏠</span> Dashboard</a>
-    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Usuarios</a>
-    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
-    <a class="sb-item active" href="/reportes"><span class="ic">📊</span> Reportes</a>
-    <a class="sb-item" href="/perfil"><span class="ic">👤</span> Perfil</a>
-    <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
-    <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
-    <div class="sb-spacer"></div>
-    <div class="sb-user">
-      <div class="sb-avatar" id="sb-avatar" style="background:var(--error-dim);color:var(--error)">—</div>
-      <div><div class="sb-uname" id="sb-uname">—</div><div class="sb-uemail" id="sb-uemail">—</div></div>
-    </div>
-  </nav>
+  <nav class="sidebar"></nav>
   <div class="main">
     <div class="topbar">
       <span class="topbar-title">Reportes</span>
       <div class="topbar-right">
         <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot"></span></div>
-        <button class="btn btn-sm btn-outline">⬇ Exportar</button>
       </div>
     </div>
     <div class="content">
@@ -45,16 +29,8 @@
         <div class="stat-card"><div class="stat-icon blue">🏘️</div><div class="stat-val" id="stat-2">—</div><div class="stat-label">Organizaciones</div></div>
         <div class="stat-card"><div class="stat-icon rust">📅</div><div class="stat-val" id="stat-3">—</div><div class="stat-label">Actividades</div></div>
       </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Participación mensual</span></div>
-          <div class="chart-bars">
-            <div class="bar active" style="height:80%"></div>
-            <div class="bar" style="height:60%"></div>
-            <div class="bar" style="height:95%"></div>
-            <div class="bar" style="height:75%"></div>
-            <div class="bar" style="height:50%"></div>
-          </div>
+      <div class="grid-1">
+        
           <div class="chart-labels"><span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span></div>
         </div>
         <div class="panel">
@@ -62,9 +38,9 @@
           <div class="donut-wrap">
             <svg width="80" height="80" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="105 71" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="38 138" stroke-dashoffset="-105" stroke-linecap="round" transform="rotate(-90 40 40)"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#d2bbff" stroke-width="14" stroke-dasharray="33 143" stroke-dashoffset="-143" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle id="donut-benef" cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="0 176" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle id="donut-presc" cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="0 176" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              <circle id="donut-disp"  cx="40" cy="40" r="28" fill="none" stroke="#d2bbff" stroke-width="14" stroke-dasharray="0 176" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
             </svg>
             <div class="donut-legend">
               <div class="legend-item"><div class="legend-dot" style="background:#95d4b3"></div>Beneficiarixs</div>
@@ -75,7 +51,7 @@
         </div>
       </div>
       <div class="panel">
-        <div class="panel-head"><span class="panel-title">Actividad por dispositivo</span><button class="panel-action">Exportar →</button></div>
+        <div class="panel-head"><span class="panel-title">Actividad por dispositivo</span></div>
         <div style="overflow-x:auto">
           <table>
             <thead><tr><th>Dispositivo</th><th>Beneficiarixs</th><th>Actividades</th><th>Asistencia</th><th>Estado</th></tr></thead>

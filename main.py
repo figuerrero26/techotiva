@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
+from datetime import datetime, timezone
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from database import get_db
 
 from app.core.config import settings
 from app.core.security import hash_password
@@ -125,10 +128,6 @@ def mapa_page():
 def reportar_info_page():
     return FileResponse("templates/reportar-info.html")
 
-@app.get("/dispositivos-admin", include_in_schema=False)
-def dispositivos_admin_page():
-    return FileResponse("templates/dispositivos-admin.html")
-
 @app.get("/roles", include_in_schema=False)
 def roles_page():
     return FileResponse("templates/roles.html")
@@ -142,14 +141,28 @@ def root():
 def dispositivos_admin_page():
     return FileResponse("templates/dispositivos-admin.html")
 
-@app.get("/roles", include_in_schema=False)
-def roles_page():
-    return FileResponse("templates/roles.html")
-
 @app.get("/mis-prescriptores", include_in_schema=False)
 def mis_prescriptores_page():
     return FileResponse("templates/mis-prescriptores.html")
 
 @app.get("/health", tags=["Health"])
-def health_check():
-    return {"status": "ok", "app": "MASCATE API", "version": "1.0.0"}
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "ok"
+    except Exception:
+        db_status = "error"
+    
+    return {
+        "status": "healthy",
+        "api": {
+            "name": "MASCATE API",
+            "version": "1.0.0",
+            "status": "ok"
+        },
+        "database": {
+            "status": db_status,
+            "engine": "postgresql"
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }

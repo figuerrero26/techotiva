@@ -253,7 +253,7 @@ const SIDEBARS = {
         { href:'/dashboard',     ic:'📊', txt:'Panel central' },
         { href:'/dispositivos-admin', ic:'🏘️', txt:'Dispositivos' },
         { href:'/usuarios',      ic:'👥', txt:'Usuarios' },
-        { href:'/formularios',   ic:'📋', txt:'Formularios' },
+        { href:'/reportar-info',   ic:'📋', txt:'Formularios' },
       ]},
       { label: 'Config', items: [
         { href:'/configuracion', ic:'🔧', txt:'Configuración' },
@@ -273,7 +273,6 @@ const SIDEBARS = {
         { href:'/formularios', ic:'🤝', txt:'Hoja de primer contacto' },
       ]},
       { label: 'Reportes', items: [
-        { href:'/reportes', ic:'📈', txt:'Estadísticas' },
         { href:'/reportar-info', ic:'📄', txt:'Reportar info' },
       ]},
       { label: 'Configuracion', items: [

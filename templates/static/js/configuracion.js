@@ -48,16 +48,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     const res    = await fetch(API + '/health');
     const health = await res.json();
 
-    // API / servidor
+    // API / servidor — soporta {api:'ok'} y {api:{status:'ok'}}
     if (elSrv) {
-      const apiOk = health.api === 'ok';
+      const apiOk = (health.api === 'ok') || (health.api?.status === 'ok');
       elSrv.className   = 'tag ' + (apiOk ? 'green' : 'rust');
       elSrv.textContent = apiOk ? 'Estable' : 'Error';
     }
 
-    // Base de datos
+    // Base de datos — soporta {db:'ok'} y {database:{status:'ok'}}
     if (elDb) {
-      const dbOk = health.db === 'ok';
+      const dbOk = (health.db === 'ok') || (health.database?.status === 'ok');
       elDb.className   = 'tag ' + (dbOk ? 'green' : 'rust');
       elDb.textContent = dbOk ? 'Activa' : 'Error';
     }

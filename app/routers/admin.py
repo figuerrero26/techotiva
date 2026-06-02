@@ -315,7 +315,7 @@ def admin_crear_dispositivo(
         nombre=disp.nombre,
         tipo_servicio=disp.tipo_servicio,
         num_beneficiarios=0,
-        prescriptor=None,
+        prescriptores=[],
         activo=True,
         email=data.email,
         fecha_registro=user.fecha_registro,
@@ -358,7 +358,7 @@ def admin_listar_dispositivos(
             benef_ids.update(b[0] for b in seg)
 
         num_actividades = db.query(Actividad).filter(Actividad.dispositivo_id == d.id).count()
-        presc_name = d.prescriptores[0].nombre_completo if d.prescriptores else None
+        presc_names = [p.nombre_completo for p in d.prescriptores] if d.prescriptores else []
         email_disp = d.usuario.email if d.usuario else None
         fecha_registro = d.usuario.fecha_registro if d.usuario else None
 
@@ -367,7 +367,7 @@ def admin_listar_dispositivos(
             nombre=d.nombre,
             tipo_servicio=d.tipo_servicio,
             num_beneficiarios=len(benef_ids),
-            prescriptor=presc_name,
+            prescriptores=presc_names,
             activo=d.usuario.estado == Estados.ACTIVO if d.usuario else False,
             email=email_disp,
             fecha_registro=fecha_registro,

@@ -65,6 +65,9 @@ async function cargarDatos() {
               <div class="list-sub">${campo(s.tipo_registro)} · ${fecha}</div>
               ${s.observaciones ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-top:0.2rem">${s.observaciones.substring(0,80)}${s.observaciones.length>80?'…':''}</div>` : ''}
             </div>
+            <button class="btn btn-sm btn-outline"
+              style="flex-shrink:0;color:var(--error);border-color:var(--error)"
+              onclick="eliminarRegistro(${s.id})">🗑</button>
           </div>`;
         }).join('');
       }
@@ -127,3 +130,56 @@ function limpiarFormulario() {
   if (obs) obs.value = '';
   document.getElementById('form-error').style.display = 'none';
 }
+
+// ── Eliminar registro ────────────────────────────────────────────────────
+let _delId = null;
+
+function eliminarRegistro(id) {
+  _delId = id;
+  document.getElementById('modal-del-overlay').style.display = 'flex';
+}
+
+function cerrarModalDel() {
+  _delId = null;
+  document.getElementById('modal-del-overlay').style.display = 'none';
+}
+
+async function confirmarEliminar() {
+  if (!_delId) return;
+  const btn = document.getElementById('btn-confirmar-del');
+  btn.textContent = 'Eliminando...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API + '/prescriptores/seguimientos/' + _delId, {
+      method: 'DELETE',
+      headers: MASCATE.authHeaders(),
+    });
+    if (res.ok || res.status === 204) {
+      cerrarModalDel();
+      await cargarDatos();
+      const t = document.createElement('div');
+      t.textContent = '✓ Registro eliminado';
+      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--error);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    } else {
+      const d = await res.json().catch(() => ({}));
+      cerrarModalDel();
+      // Mostrar error en el form-error
+      const errorEl = document.getElementById('form-error');
+      errorEl.textContent = d.detail || 'No se pudo eliminar.';
+      errorEl.style.display = 'block';
+    }
+  } catch(e) {
+    console.error(e);
+    cerrarModalDel();
+  }
+
+  btn.textContent = 'Sí, eliminar';
+  btn.disabled = false;
+}
+
+document.getElementById('modal-del-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-del-overlay')) cerrarModalDel();
+});

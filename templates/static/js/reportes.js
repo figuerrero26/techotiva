@@ -16,17 +16,35 @@ window.addEventListener('DOMContentLoaded', async () => {
                            (await (await fetch(API + '/actividades/')).json()).length) },
     ]);
 
-    // Distribución por rol
+    // Distribución por rol — donut dinámico
     const users  = await (await fetch(API + '/admin/usuarios', MASCATE.authGet())).json();
     const disps  = users.filter(u => u.rol === 'dispositivo').length;
     const prescs = users.filter(u => u.rol === 'prescriptor').length;
     const benefs = users.filter(u => u.rol === 'beneficiario').length;
     const total  = Math.max(disps + prescs + benefs, 1);
 
+    // Circunferencia = 2π × 28 ≈ 176
+    const CIRC = 176;
+    const bPct = benefs / total;
+    const pPct = prescs / total;
+    const dPct = disps  / total;
+
+    const bLen = Math.round(bPct * CIRC);
+    const pLen = Math.round(pPct * CIRC);
+    const dLen = Math.round(dPct * CIRC);
+
+    const elB = document.getElementById('donut-benef');
+    const elP = document.getElementById('donut-presc');
+    const elD = document.getElementById('donut-disp');
+
+    if (elB) { elB.setAttribute('stroke-dasharray', `${bLen} ${CIRC - bLen}`); elB.setAttribute('stroke-dashoffset', '0'); }
+    if (elP) { elP.setAttribute('stroke-dasharray', `${pLen} ${CIRC - pLen}`); elP.setAttribute('stroke-dashoffset', `-${bLen}`); }
+    if (elD) { elD.setAttribute('stroke-dasharray', `${dLen} ${CIRC - dLen}`); elD.setAttribute('stroke-dashoffset', `-${bLen + pLen}`); }
+
     const legendItems = document.querySelectorAll('.legend-item');
-    if (legendItems[0]) legendItems[0].lastChild.textContent = ` Beneficiarixs (${Math.round(benefs/total*100)}%)`;
-    if (legendItems[1]) legendItems[1].lastChild.textContent = ` Prescriptxres (${Math.round(prescs/total*100)}%)`;
-    if (legendItems[2]) legendItems[2].lastChild.textContent = ` Dispositivos (${Math.round(disps/total*100)}%)`;
+    if (legendItems[0]) legendItems[0].lastChild.textContent = ` Beneficiarixs (${Math.round(bPct*100)}%)`;
+    if (legendItems[1]) legendItems[1].lastChild.textContent = ` Prescriptxres (${Math.round(pPct*100)}%)`;
+    if (legendItems[2]) legendItems[2].lastChild.textContent = ` Dispositivos (${Math.round(dPct*100)}%)`;
 
     // Tabla dispositivos — con campos nuevos del backend
     const dispositivos = await (await fetch(API + '/admin/dispositivos', MASCATE.authGet())).json();
@@ -49,6 +67,4 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   } catch(e) { console.error('Error cargando reportes:', e); }
 
-  // Botón exportar
-  document.querySelector('.btn-outline')?.addEventListener('click', () => exportarDispositivos('csv'));
 });

@@ -51,6 +51,15 @@ function showToast(msg, isError) {
 
 function val(id) { return document.getElementById(id)?.value?.trim() ?? ''; }
 
+// Enter en los campos de login dispara doLogin()
+window.addEventListener('DOMContentLoaded', () => {
+  ['loginEmail', 'loginPw'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+});
+
 async function doLogin() {
   const email = val('loginEmail');
   const pw    = document.getElementById('loginPw').value;

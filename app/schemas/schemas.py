@@ -235,12 +235,15 @@ class AdminDispositivoOut(BaseModel):
     nombre: str
     tipo_servicio: Optional[str] = None
     num_beneficiarios: int
-    prescriptor: Optional[str] = None
+    prescriptores: List[str] = []
     activo: bool
     email: Optional[str] = None
     fecha_registro: Optional[datetime] = None
     num_actividades: Optional[int] = None
     asistencia_pct: Optional[float] = None
+
+    class Config:
+        from_attributes = True
 
     class Config:
         from_attributes = True

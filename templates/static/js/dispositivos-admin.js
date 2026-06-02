@@ -52,7 +52,7 @@ function renderTabla(lista) {
     <td>${d.tipo_servicio ? `<span class="tag ${TAG_COLOR[d.tipo_servicio]??'mustard'}">${d.tipo_servicio}</span>` : '—'}</td>
     <td style="color:var(--primary);font-weight:700">${campo(d.num_beneficiarios, 0)}</td>
     <td>${campo(d.num_actividades, '—')}</td>
-    <td>${campo(d.prescriptor)}</td>
+    <td>${renderPrescriptores(d)}</td>
     <td>${d.activo ? '<span class="tag green">Activo</span>' : '<span class="tag rust">Inactivo</span>'}</td>
     <td><button class="btn btn-sm btn-outline" onclick="abrirModal(${d.id})">Editar</button></td>
   </tr>`).join('');
@@ -147,6 +147,19 @@ async function guardarDispositivo() {
   }
   btn.textContent = dispEditando ? 'Guardar cambios' : 'Crear dispositivo';
   btn.disabled = false;
+}
+
+
+function renderPrescriptores(d) {
+  // Soporta tanto array (nuevo backend) como string único (legacy)
+  const lista = Array.isArray(d.prescriptores) ? d.prescriptores
+              : d.prescriptor                  ? [d.prescriptor]
+              : [];
+  if (!lista.length) return '<span style="color:var(--on-bg-muted)">—</span>';
+  if (lista.length === 1) return lista[0];
+  return lista.map(p =>
+    `<span class="tag blue" style="margin:0.1rem;font-size:0.72rem">${p}</span>`
+  ).join('');
 }
 
 function mostrarToast(msg) {

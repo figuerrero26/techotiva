@@ -103,7 +103,10 @@ def beneficiarios_dispositivo(
 
     benefs = (
         db.query(Beneficiario)
-        .filter(Beneficiario.dispositivo_id == dispositivo_id)
+        .join(Inscripcion, Inscripcion.beneficiario_id == Beneficiario.id)
+        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
+        .filter(Actividad.dispositivo_id == dispositivo_id)
+        .distinct()
         .all()
     )
     return [BeneficiarioResumen.model_validate(b) for b in benefs]

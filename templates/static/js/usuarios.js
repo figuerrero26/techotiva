@@ -63,7 +63,19 @@ async function cargarBeneficiariosDispositivo() {
     const beneficiarios = await reBen.json();
     console.log('[dispositivo] beneficiarios payload:', beneficiarios);
 
-    todosLosUsuarios = beneficiarios;
+    // Normalizar campos — el endpoint actualmente solo devuelve id y nombre_apodo
+    // Cuando el backend enriquezca el response, esto seguirá funcionando sin cambios
+    todosLosUsuarios = beneficiarios.map(b => ({
+      id:               b.id,
+      nombre:           b.nombre_apodo ?? b.nombre ?? null,
+      email:            b.email        ?? null,
+      rol:              'beneficiario',
+      status:           b.status       ?? b.estado ?? 'activo',
+      fecha_nacimiento: b.fecha_nacimiento ?? null,
+      localidad:        b.localidad    ?? null,
+      genero:           b.genero       ?? null,
+      telefono:         b.telefono     ?? null,
+    }));
 
     // Adaptar encabezado
     const h1 = document.querySelector('h1');
@@ -89,7 +101,6 @@ async function cargarBeneficiariosDispositivo() {
 
     // Ocultar panel pendientes y botón nuevo usuario — dispositivo no los gestiona
     document.getElementById('panel-pendientes')?.remove();
-    document.querySelector('.btn-mustard')?.remove();
 
     renderTabla(todosLosUsuarios);
   } catch(e) { console.error('Error cargando beneficiarios del dispositivo:', e); }
@@ -357,7 +368,6 @@ async function cargarAsignados() {
 
     // Ocultar panel pendientes y botón nuevo usuario
     document.getElementById('panel-pendientes')?.remove();
-    document.querySelector('.btn-mustard')?.remove();
 
     renderTablaAsignados(todosLosUsuarios);
   } catch(e) { console.error('Error cargando asignados:', e); }
