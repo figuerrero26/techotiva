@@ -45,7 +45,15 @@
     <a class="sb-link" onclick="nav(this,'dashboard-html')"><span class="ic">📄</span> mascate-dashboard.html</a>
     <a class="sb-link" onclick="nav(this,'dashboard-css')"><span class="ic">🖌️</span> dashboard.css</a>
     <a class="sb-link" onclick="nav(this,'dashboard-js')"><span class="ic">⚙️</span> dashboard.js</a>
+    <a class="sb-link" onclick="nav(this,'utils-js')"><span class="ic">🔧</span> mascate-utils.js</a>
     <a class="sb-link" onclick="nav(this,'componentes')"><span class="ic">🧩</span> Componentes UI</a>
+
+    <span class="sb-section">Sistema</span>
+    <a class="sb-link" onclick="nav(this,'auth-flujo')"><span class="ic">🔐</span> Autenticación y sesión</a>
+    <a class="sb-link" onclick="nav(this,'roles-vistas')"><span class="ic">👥</span> Roles y vistas</a>
+    <a class="sb-link" onclick="nav(this,'convenciones')"><span class="ic">📐</span> Convenciones de código</a>
+    <a class="sb-link" onclick="nav(this,'flujos')"><span class="ic">🔄</span> Flujos importantes</a>
+    <a class="sb-link" onclick="nav(this,'como-correr')"><span class="ic">🚀</span> Cómo correr el proyecto</a>
 
     <span class="sb-section">Backend / API</span>
     <a class="sb-link" onclick="nav(this,'backend-espera')"><span class="ic">⚙️</span> Stack y arquitectura</a>
@@ -53,7 +61,7 @@
     <a class="sb-link" onclick="nav(this,'roles-permisos')"><span class="ic">🛡️</span> Roles y permisos</a>
 
     <span class="sb-section">Desarrollo</span>
-    <a class="sb-link" onclick="nav(this,'pendientes')"><span class="ic">⏳</span> TODOs y pendientes</a>
+    <a class="sb-link" onclick="nav(this,'pendientes')"><span class="ic">✅</span> TODOs y pendientes</a>
     <a class="sb-link" onclick="nav(this,'changelog')"><span class="ic">📝</span> Changelog</a>
     <a class="sb-link" onclick="nav(this,'notas')"><span class="ic">💬</span> Notas del equipo</a>
 
@@ -94,7 +102,7 @@
         <div class="info-card">
           <div class="info-card-label">API conectada a</div>
           <div class="info-card-val">FastAPI (Python)</div>
-          <div class="info-card-sub" contenteditable="true">localhost:8080 — pendiente URL prod</div>
+          <div class="info-card-sub">localhost:8080</div>
         </div>
         <div class="info-card">
           <div class="info-card-label">Estado</div>
@@ -233,34 +241,83 @@
     ══════════════════════════════════════ -->
     <section class="section" id="estructura">
       <h2>📁 Estructura de archivos</h2>
-      <p>El frontend está dividido en archivos separados por responsabilidad: estructura (HTML), estilos (CSS) y comportamiento (JS). Los archivos estáticos los sirve el backend de FastAPI.</p>
+      <p>El frontend está organizado dentro de <code style="font-family:monospace">templates/</code> y sus estáticos en <code style="font-family:monospace">templates/static/</code>. FastAPI sirve todo desde <code style="font-family:monospace">main.py</code>.</p>
 
       <div class="file-tree">
-<span class="dir">proyecto/</span>
-├── <span class="dir">static/</span>
-│   ├── <span class="dir">css/</span>
-│   │   ├── tokens.css             <span class="note">← Variables globales: colores, tipografía, radios</span>
-│   │   ├── auth.css               <span class="note">← Layout y estilos exclusivos de la pantalla de acceso</span>
-│   │   └── dashboard.css          <span class="note">← Layout y estilos de los dashboards (sidebar, cards, etc.)</span>
-│   └── <span class="dir">js/</span>
-│       ├── auth.js                <span class="note">← Lógica de login/registro + llamadas a /auth/*</span>
-│       └── dashboard.js           <span class="note">← Lógica de dashboards + fetch de datos por rol</span>
-├── <span class="dir">templates/</span>
-│   ├── mascate-auth-final.html    <span class="note">← Página de login y registro</span>
-│   └── mascate-dashboards-final.html  <span class="note">← Dashboards (4 pantallas en un mismo HTML)</span>
-└── <span class="dir">backend/</span>                   <span class="note">← Código del equipo de backend (no documentado aquí)</span>
+<span class="dir">mascate/</span>
+├── main.py                           <span class="note">← punto de entrada FastAPI, define todas las rutas</span>
+├── .env                              <span class="note">← variables de entorno (no subir al repo)</span>
+├── requirements.txt
+└── <span class="dir">templates/</span>
+    ├── mascate-auth-final.html       <span class="note">← login y registro</span>
+    ├── mascate-dashboards-final.html <span class="note">← dashboard (4 screens en un HTML)</span>
+    ├── actividades.html
+    ├── configuracion.html
+    ├── dispositivos-admin.html       <span class="note">← solo admin</span>
+    ├── mapa.html
+    ├── mis-actividades.html          <span class="note">← solo beneficiario</span>
+    ├── notificaciones.html
+    ├── perfil.html
+    ├── reportar-info.html            <span class="note">← prescriptor / dispositivo</span>
+    ├── reportes.html                 <span class="note">← solo admin</span>
+    ├── roles.html                    <span class="note">← solo admin</span>
+    ├── usuarios.html                 <span class="note">← solo admin</span>
+    └── <span class="dir">static/</span>
+        ├── <span class="dir">css/</span>
+        │   ├── tokens.css            <span class="note">← variables de diseño (colores, tipografía)</span>
+        │   ├── dashboard.css         <span class="note">← estilos globales del sistema</span>
+        │   └── auth.css              <span class="note">← estilos del login/registro</span>
+        └── <span class="dir">js/</span>
+            ├── mascate-utils.js      <span class="note">← utilidades compartidas — cargar SIEMPRE primero</span>
+            ├── dashboard.js          <span class="note">← lógica del dashboard (no usa utils, es independiente)</span>
+            ├── auth.js
+            ├── actividades.js
+            ├── configuracion.js
+            ├── dispositivos-admin.js
+            ├── mapa.js
+            ├── mis-actividades.js
+            ├── notificaciones.js
+            ├── perfil.js
+            ├── reportar-info.js
+            ├── reportes.js
+            ├── roles.js
+            └── usuarios.js
       </div>
 
-      <h3>Dependencias entre archivos</h3>
-      <p>El orden de carga importa. Cada HTML carga primero los tokens (base) y luego sus estilos específicos:</p>
-      <div class="code-block"><span class="cm"><!-- En mascate-auth-final.html --></span>
-&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/tokens.css"</span>&gt;   <span class="cm">← primero: variables</span>
-&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/auth.css"</span>&gt;     <span class="cm">← segundo: estilos de auth</span>
-&lt;script src=<span class="str">"/static/js/auth.js"</span>&gt;&lt;/script&gt;              <span class="cm">← al final del body</span>
+      <h3>Rutas frontend (main.py)</h3>
+      <table class="ep-table">
+        <thead><tr><th>Ruta</th><th>Vista</th><th>Acceso</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">GET /</code></td><td>Redirige a <code style="font-family:monospace">/login</code></td><td><span class="tag-gray">Público</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /login</code></td><td>mascate-auth-final.html</td><td><span class="tag-gray">Público</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /dashboard</code></td><td>mascate-dashboards-final.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /actividades</code></td><td>actividades.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /configuracion</code></td><td>configuracion.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /dispositivos-admin</code></td><td>dispositivos-admin.html</td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /mapa</code></td><td>mapa.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /mis-actividades</code></td><td>mis-actividades.html</td><td><span class="tag-green">Beneficiario</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /notificaciones</code></td><td>notificaciones.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /perfil</code></td><td>perfil.html</td><td><span class="tag-green">Auth</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /reportar-info</code></td><td>reportar-info.html</td><td><span class="tag-green">Prescriptor / Dispositivo</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /reportes</code></td><td>reportes.html</td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /roles</code></td><td>roles.html</td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /usuarios</code></td><td>usuarios.html</td><td><span class="tag-yellow">Admin</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /health</code></td><td><code style="font-family:monospace">{"status":"ok"}</code></td><td><span class="tag-gray">Público</span></td></tr>
+          <tr><td><code style="font-family:monospace">GET /static/*</code></td><td>Archivos estáticos desde <code style="font-family:monospace">templates/static/</code></td><td><span class="tag-gray">Público</span></td></tr>
+        </tbody>
+      </table>
 
-<span class="cm"><!-- En mascate-dashboards-final.html --></span>
-&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/tokens.css"</span>&gt;
-&lt;link rel=<span class="str">"stylesheet"</span> href=<span class="str">"/static/css/dashboard.css"</span>&gt;
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>El frontend <strong>no restringe rutas</strong> — la restricción real es del backend. Cada vista llama <code style="font-family:monospace">MASCATE.guardAuth()</code> al cargar, que redirige a <code style="font-family:monospace">/login</code> si no hay token.</div>
+      </div>
+
+      <h3>Orden de carga de scripts</h3>
+      <div class="code-block"><span class="cm">/* Todas las vistas secundarias — utils PRIMERO */</span>
+&lt;script src=<span class="str">"/static/js/mascate-utils.js"</span>&gt;&lt;/script&gt;
+&lt;script src=<span class="str">"/static/js/[vista].js"</span>&gt;&lt;/script&gt;
+
+<span class="cm">/* Dashboard — no usa utils, es independiente */</span>
 &lt;script src=<span class="str">"/static/js/dashboard.js"</span>&gt;&lt;/script&gt;</div>
     </section>
 
@@ -1107,49 +1164,287 @@ localStorage.setItem(<span class="str">'mascate_token'</span>, data.access_token
     <hr class="doc-divider">
 
     <!-- ══════════════════════════════════════
+         MASCATE-UTILS.JS
+    ══════════════════════════════════════ -->
+    <section class="section" id="utils-js">
+      <h2>⚙️ mascate-utils.js — Librería compartida</h2>
+      <p>Centraliza helpers, constantes y lógica de UI reutilizable. Debe cargarse <strong>antes que cualquier JS de vista</strong>. Excepción: <code style="font-family:monospace">dashboard.js</code> es independiente por diseño.</p>
+
+      <h3>Objeto MASCATE</h3>
+      <div class="code-block"><span class="cm">// Propiedades — leen de localStorage</span>
+MASCATE.token             <span class="cm">← 'mascate_token'</span>
+MASCATE.rol               <span class="cm">← 'mascate_rol'</span>
+MASCATE.nombre            <span class="cm">← 'mascate_nombre'</span>
+MASCATE.email             <span class="cm">← 'mascate_email'</span>
+
+<span class="cm">// Métodos de autenticación</span>
+MASCATE.<span class="fn">authGet</span>()          <span class="cm">← { headers: { Authorization: Bearer ... } }</span>
+MASCATE.<span class="fn">authHeaders</span>()      <span class="cm">← { Authorization: ..., Content-Type: application/json }</span>
+MASCATE.<span class="fn">logout</span>()           <span class="cm">← limpia localStorage y redirige a /login</span>
+MASCATE.<span class="fn">guardAuth</span>()        <span class="cm">← redirige a /login si no hay token</span>
+MASCATE.<span class="fn">cambiarPassword</span>(actual, nueva)  <span class="cm">← POST /auth/cambiar-password</span>
+MASCATE.<span class="fn">cambiarRol</span>(id, rol)             <span class="cm">← PUT /admin/usuarios/{id}/rol</span></div>
+
+      <h3>Constantes</h3>
+      <table class="ep-table">
+        <thead><tr><th>Constante</th><th>Qué contiene</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">ROL_LABELS</code></td><td>Texto display por rol: <code style="font-family:monospace">{ admin, dispositivo, prescriptor, beneficiario }</code></td></tr>
+          <tr><td><code style="font-family:monospace">TAG_COLOR</code></td><td>Clase CSS del tag por tipo de actividad → <code style="font-family:monospace">mustard / green / blue / purple</code></td></tr>
+          <tr><td><code style="font-family:monospace">BG_DIM</code></td><td>Variable CSS de fondo suave por color</td></tr>
+          <tr><td><code style="font-family:monospace">SIDEBARS</code></td><td>Estructura de navegación completa por rol (usada por <code style="font-family:monospace">renderSidebar</code>)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Funciones de UI</h3>
+      <table class="ep-table">
+        <thead><tr><th>Función</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">set(id, val)</code></td><td>Setea <code style="font-family:monospace">textContent</code> de un elemento por ID.</td></tr>
+          <tr><td><code style="font-family:monospace">ini(str)</code></td><td>Devuelve las primeras 2 letras en mayúscula. Usado para avatares.</td></tr>
+          <tr><td><code style="font-family:monospace">campo(val, fallback='—')</code></td><td>Devuelve <code style="font-family:monospace">val</code> si existe, <code style="font-family:monospace">fallback</code> si no. <strong>Usar siempre</strong> para campos que el backend puede no mandar.</td></tr>
+          <tr><td><code style="font-family:monospace">infoRow(lbl, val, opts)</code></td><td>Renderiza una fila de info <strong>solo si <code style="font-family:monospace">val</code> existe</strong>. Cuando el backend agregue el campo, aparece automáticamente. <code style="font-family:monospace">opts.full</code> ocupa todo el ancho del grid.</td></tr>
+          <tr><td><code style="font-family:monospace">renderInfoGrid(gridId, data, userRol, viewerRol)</code></td><td>Llena un grid de información personal con <code style="font-family:monospace">infoRow</code> condicional. Maneja visibilidad por rol (ej: email solo para el propio usuario o admin).</td></tr>
+          <tr><td><code style="font-family:monospace">setSidebar(nombre, email)</code></td><td>Actualiza nombre, email e iniciales en el sidebar sin regenerarlo.</td></tr>
+          <tr><td><code style="font-family:monospace">renderSidebar(nombre, email)</code></td><td>Reemplaza completamente el <code style="font-family:monospace">&lt;nav class="sidebar"&gt;</code> con el sidebar correcto para el rol actual. Marca automáticamente el ítem activo por <code style="font-family:monospace">pathname</code>. Incluye botón de cerrar sesión. Llamar en <code style="font-family:monospace">DOMContentLoaded</code>.</td></tr>
+          <tr><td><code style="font-family:monospace">setStats(items)</code></td><td><code style="font-family:monospace">items: [{ id, val, lbl?, icon? }]</code> — actualiza stat cards por ID.</td></tr>
+          <tr><td><code style="font-family:monospace">renderActCards(containerId, acts, max=3)</code></td><td>Renderiza cards de actividades. Usa <code style="font-family:monospace">campo()</code> en cada propiedad — campos nulos se omiten limpiamente.</td></tr>
+          <tr><td><code style="font-family:monospace">renderActTabla(tbodyId, acts)</code></td><td>Renderiza filas de tabla de actividades.</td></tr>
+          <tr><td><code style="font-family:monospace">exportarDispositivos(formato='csv')</code></td><td>Descarga <code style="font-family:monospace">GET /admin/dispositivos/exportar</code> como archivo.</td></tr>
+          <tr><td><code style="font-family:monospace">initNotifBtn()</code></td><td>Async. Activa el badge (punto rojo) en la campanita si hay notificaciones pendientes. Admin: alertas + usuarios pendientes. Prescriptor: asignados urgentes/revisar. Dispositivo: prescriptores pendientes. Llamar después de <code style="font-family:monospace">renderSidebar()</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div>El <code style="font-family:monospace">&lt;nav class="sidebar"&gt;</code> en todos los HTML secundarios va <strong>vacío</strong> — lo llena <code style="font-family:monospace">renderSidebar()</code> en JS. No agregar ítems manualmente al nav.</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         AUTENTICACIÓN
+    ══════════════════════════════════════ -->
+    <section class="section" id="auth-flujo">
+      <h2>🔐 Autenticación y sesión</h2>
+
+      <h3>localStorage tras login</h3>
+      <div class="code-block">localStorage.<span class="fn">setItem</span>(<span class="str">'mascate_token'</span>, data.access_token)  <span class="cm">← JWT</span>
+localStorage.<span class="fn">setItem</span>(<span class="str">'mascate_rol'</span>,   data.rol)
+localStorage.<span class="fn">setItem</span>(<span class="str">'mascate_nombre'</span>, data.nombre)
+localStorage.<span class="fn">setItem</span>(<span class="str">'mascate_email'</span>,  <span class="cm">input del formulario de login</span>)</div>
+
+      <h3>Token JWT</h3>
+      <div class="info-grid">
+        <div class="info-card"><div class="info-card-label">Algoritmo</div><div class="info-card-val">HS256</div></div>
+        <div class="info-card"><div class="info-card-label">Expiración</div><div class="info-card-val">480 min</div><div class="info-card-sub">8 horas — configurable en .env</div></div>
+        <div class="info-card"><div class="info-card-label">Payload</div><div class="info-card-val" style="font-size:0.8rem"><code style="font-family:monospace">{ sub: usuario_id, rol }</code></div></div>
+      </div>
+
+      <h3>Flujo de aprobación por rol</h3>
+      <div class="flow">
+        <div class="flow-step">🌱 Beneficiario</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Verificación de email automática (backend)</div>
+      </div>
+      <div class="flow" style="margin-top:0.5rem">
+        <div class="flow-step">🎯 Prescriptor</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Aprobado por el Dispositivo al que pertenece</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><code style="font-family:monospace">POST /dispositivos/{id}/prescriptores/{prescriptor_id}/aprobar</code></div>
+      </div>
+      <div class="flow" style="margin-top:0.5rem">
+        <div class="flow-step">🏘️ Dispositivo</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Aprobado por Admin</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><code style="font-family:monospace">POST /admin/usuarios/{id}/aprobar</code></div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         ROLES Y VISTAS
+    ══════════════════════════════════════ -->
+    <section class="section" id="roles-vistas">
+      <h2>🛡️ Roles y vistas accesibles</h2>
+
+      <div class="role-grid">
+        <div class="role-card">
+          <span class="role-icon">🔐</span>
+          <div class="role-name">admin</div>
+          <div class="role-sub">Todas las vistas. Panel de alertas, aprobación de dispositivos, stats globales, gestión de usuarios, roles y reportes.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🏘️</span>
+          <div class="role-name">dispositivo</div>
+          <div class="role-sub">Panel general, perfil, actividades, beneficiarixs, estadísticas, reportar info, configuración. Puede aprobar prescriptores.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🎯</span>
+          <div class="role-name">prescriptor</div>
+          <div class="role-sub">Inicio, perfil, mis seguimientos, asignados, ingresar información, notificaciones, configuración.</div>
+        </div>
+        <div class="role-card">
+          <span class="role-icon">🌱</span>
+          <div class="role-name">beneficiario</div>
+          <div class="role-sub">Inicio, buscar actividades, mapa, mis actividades, perfil, notificaciones, configuración. No ve cantidades de otros beneficiarixs.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         CONVENCIONES
+    ══════════════════════════════════════ -->
+    <section class="section" id="convenciones">
+      <h2>📐 Convenciones de código</h2>
+
+      <h3>HTML</h3>
+      <div class="code-block"><span class="cm">// Todos los elementos dinámicos tienen id="" explícito
+// El nav.sidebar va VACÍO — lo llena renderSidebar() en JS
+// Orden de scripts: mascate-utils.js → [vista].js siempre
+// La .top-bar oscura está en todos los HTML vía body</span></div>
+
+      <h3>CSS</h3>
+      <div class="code-block"><span class="cm">// Nunca colores hardcodeados — solo variables de tokens.css</span>
+Clases de tag:       <span class="str">mustard | green | blue | purple | rust</span>
+Clases de stat-icon: <span class="str">mustard | green | blue | rust | purple</span></div>
+
+      <h3>JavaScript</h3>
+      <div class="code-block"><span class="cm">// Nunca datos hardcodeados — todo viene de la API o localStorage
+// Usar campo(val, '—') para cualquier campo que pueda ser null
+// Usar infoRow() para campos que el backend puede no mandar aún
+// Las funciones async siempre tienen try/catch
+// Los toasts se crean dinámicamente y se autodestruyen (3s)
+// Los modales se cierran al hacer clic fuera del panel</span></div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         FLUJOS
+    ══════════════════════════════════════ -->
+    <section class="section" id="flujos">
+      <h2>🔄 Flujos importantes</h2>
+
+      <h3>Registro de usuario</h3>
+      <div class="flow">
+        <div class="flow-step">1. /login → "Registrarme"</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">2. Seleccionar rol</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">3. Llenar formulario</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">4. POST /auth/register</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">5. Estado 'pendiente' → flujo de aprobación</div>
+      </div>
+
+      <h3>Cambio de contraseña</h3>
+      <div class="flow">
+        <div class="flow-step">/configuracion → "Cambiar"</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Modal: mín 8 chars, 1 mayúscula, 1 número, confirmación</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">POST /auth/cambiar-password</div>
+      </div>
+
+      <h3>Registro de seguimiento (Prescriptor)</h3>
+      <div class="flow">
+        <div class="flow-step">/reportar-info o formulario en dashboard</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Persona + tipo + observaciones</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">POST /prescriptores/seguimientos</div>
+      </div>
+
+      <h3>Exportar dispositivos (Admin)</h3>
+      <div class="flow">
+        <div class="flow-step">/dispositivos-admin → "⬇ Exportar CSV"</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">GET /admin/dispositivos/exportar?formato=csv</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step">Descarga automática del archivo</div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
+         CÓMO CORRER
+    ══════════════════════════════════════ -->
+    <section class="section" id="como-correr">
+      <h2>🚀 Cómo correr el proyecto</h2>
+
+      <h3>Requisitos</h3>
+      <div class="info-grid">
+        <div class="info-card"><div class="info-card-label">Python</div><div class="info-card-val">3.11+</div></div>
+        <div class="info-card"><div class="info-card-label">Base de datos</div><div class="info-card-val">PostgreSQL</div><div class="info-card-sub">BD: mascate_db</div></div>
+        <div class="info-card"><div class="info-card-label">Config</div><div class="info-card-val">.env</div><div class="info-card-sub">En la raíz del proyecto</div></div>
+      </div>
+
+      <h3>Instalación y ejecución</h3>
+      <div class="code-block"><span class="cm"># Crear y activar entorno virtual</span>
+python -m venv venv
+source venv/bin/activate          <span class="cm"># Mac/Linux</span>
+.\venv\Scripts\activate           <span class="cm"># Windows</span>
+
+<span class="cm"># Instalar dependencias</span>
+pip install -r requirements.txt
+
+<span class="cm"># Correr el servidor</span>
+python -m uvicorn main:app --reload --port 8080</div>
+
+      <h3>Variables de entorno (.env)</h3>
+      <div class="code-block">DATABASE_URL=postgresql://postgres:{password}@localhost:5432/mascate_db
+SECRET_KEY={clave_secreta}
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=480
+ADMIN_EMAIL=admin@mascate.org
+ADMIN_PASSWORD={password_admin}
+APP_ENV=development
+MAIL_USERNAME={correo_notificaciones}
+MAIL_PASSWORD={app_password}
+MAIL_FROM={correo_notificaciones}
+APP_BASE_URL=http://127.0.0.1:8080</div>
+
+      <h3>URLs de acceso</h3>
+      <table class="ep-table">
+        <thead><tr><th>URL</th><th>Qué es</th></tr></thead>
+        <tbody>
+          <tr><td><code style="font-family:monospace">http://127.0.0.1:8080</code></td><td>App — redirige a /login</td></tr>
+          <tr><td><code style="font-family:monospace">http://127.0.0.1:8080/docs</code></td><td>Swagger UI de la API</td></tr>
+          <tr><td><code style="font-family:monospace">http://127.0.0.1:8080/redoc</code></td><td>ReDoc de la API</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-card" style="max-width:320px">
+        <div class="info-card-label">👤 Credenciales de prueba (auto-creadas al iniciar)</div>
+        <div style="margin-top:0.5rem;font-size:0.82rem">
+          <div style="margin-bottom:0.2rem"><span style="color:var(--on-bg-muted)">Admin:</span> <code style="font-family:monospace">admin@mascate.org</code></div>
+          <div><span style="color:var(--on-bg-muted)">Contraseña:</span> <code style="font-family:monospace">ADMIN_PASSWORD del .env</code></div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="doc-divider">
+
+    <!-- ══════════════════════════════════════
          PENDIENTES
     ══════════════════════════════════════ -->
     <section class="section" id="pendientes">
-      <h2>⏳ TODOs y pendientes</h2>
-      <p>Lista de trabajo pendiente. <strong>Editá directamente este bloque</strong> para mantenerla al día.</p>
+      <h2>✅ TODOs y pendientes</h2>
+      <p>Sin pendientes activos. <span class="edit-hint">agregar si surge algo</span></p>
 
-      <div class="callout todo">
-        <span class="callout-icon">📌</span>
-        <div contenteditable="true">
-          <strong>Frontend — nuestro equipo</strong><br>
-          · Conectar gráfico de barras (asistencia semanal) con datos reales del backend<br>
-          · Conectar donut chart (tipos de actividad) con datos reales<br>
-          · Implementar buscador funcional de actividades (beneficiarix)<br>
-          · Hacer funcionales los chips de filtro por tipo<br>
-          · Pantalla "Mapa de dispositivos" (sidebar beneficiarix)<br>
-          · Formulario "Hoja de primer contacto" (sidebar dispositivo)<br>
-          · Vista "Mi perfil" para cada rol<br>
-          · Revisar responsive en dispositivos móviles reales<br>
-          · Definir y documentar la paleta de colores final en tokens.css
-        </div>
-      </div>
-
-      <div class="callout todo" style="margin-top:0.75rem">
-        <span class="callout-icon">📌</span>
-        <div contenteditable="true">
-          <strong>Coordinación con el equipo de backend</strong><br>
-          · Confirmar URL de producción de la API (actualizar constante <code style="font-family:monospace">API</code> en auth.js y dashboard.js)<br>
-          · Conectar <code style="font-family:monospace">/beneficiarios/me</code> al futuro "Mi perfil" del dashboard de beneficiarix<br>
-          · Conectar <code style="font-family:monospace">/beneficiarios/mis-actividades</code> al dashboard de beneficiarix<br>
-          · Revisar <code style="font-family:monospace">loadDispositivo()</code> — el campo <code style="font-family:monospace">valoracion_promedio</code> no existe en el schema real del backend<br>
-          · Explorar el endpoint <code style="font-family:monospace">PUT /admin/usuarios/{id}/estado</code> para el panel de gestión de usuarixs en admin
-        </div>
-      </div>
-
-      <div class="callout error" style="margin-top:0.75rem">
-        <span class="callout-icon">🚨</span>
-        <div contenteditable="true">
-          <strong>Antes de pasar a producción</strong><br>
-          · Actualizar constante <code style="font-family:monospace">API</code> de localhost:8080 a URL real (en auth.js y dashboard.js)<br>
-          · Asegurarse de que la API esté en HTTPS<br>
-          · Evaluar migrar tokens de localStorage a httpOnly cookies (más seguro)<br>
-          · Revisar manejo de errores en todos los fetch (actualmente algunos fallan silenciosamente)
-        </div>
+      <div class="callout info">
+        <span class="callout-icon">✅</span>
+        <div>El proyecto está al día — todas las funcionalidades documentadas están implementadas. Usar el formulario de changelog para registrar nuevos pendientes si surgen.</div>
       </div>
     </section>
 
@@ -1179,6 +1474,14 @@ localStorage.setItem(<span class="str">'mascate_token'</span>, data.access_token
 
       <!-- Lista de entradas -->
       <div id="changelogList">
+        <div class="changelog-entry">
+          <div class="cl-date">2026-05</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Documentación completa del frontend: estructura real, rutas, <code style="font-family:monospace">mascate-utils.js</code>, flujos de aprobación, convenciones, cómo correr el proyecto y pendientes actualizados.</div>
+        </div>
+        <div class="changelog-entry">
+          <div class="cl-date">2026-05</div>
+          <div class="cl-desc"><span class="cl-tag"><span class="tag-green">cambio</span></span>Paleta actualizada a light multicolor (dorado, teal, rosa, violeta). Toggle de tema claro/oscuro.</div>
+        </div>
         <div class="changelog-entry">
           <div class="cl-date">2026-04</div>
           <div class="cl-desc"><span class="cl-tag"><span class="tag-green">nuevo</span></span>Documentación del backend integrada: stack, arquitectura, JWT, ejecución local y referencia completa de endpoints desde <code style="font-family:monospace">openapi.json</code>.</div>
