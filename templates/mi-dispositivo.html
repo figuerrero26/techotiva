@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Dispositivo | MASCATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="screen active">
+  <nav class="sidebar"></nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Mi Dispositivo</span>
+      <div class="topbar-right">
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot" style="display:none"></span></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h1>Mi dispositivo</h1>
+        <p>Gestiona tu vinculación a un dispositivo CBC.</p>
+      </div>
+
+      <!-- Estado actual -->
+      <div id="panel-estado" class="panel">
+        <div class="panel-head"><span class="panel-title">📍 Estado actual</span></div>
+        <div id="estado-contenido">
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Aviso de restricción -->
+      <div id="aviso-restriccion" style="display:none;padding:1rem 1.25rem;border-radius:var(--radius-md);border:1.5px solid var(--warning,#e6a817);background:var(--warning-dim,#fef9ec)">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.4rem">⚠️ Solo puedes pertenecer a un dispositivo a la vez</div>
+        <div id="aviso-restriccion-texto" style="font-size:0.83rem;color:var(--on-bg-muted);line-height:1.5"></div>
+      </div>
+
+      <!-- Lista de dispositivos disponibles -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">🏘️ Dispositivos disponibles</span>
+          <span class="tag mustard" id="count-disps">0</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--on-bg-muted);margin:0 0 0.75rem">Envía una solicitud de unión al dispositivo con el que quieres trabajar. El dispositivo deberá aprobarla.</p>
+        <div id="lista-dispositivos">
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/mi-dispositivo.js"></script>
+</body>
+</html>

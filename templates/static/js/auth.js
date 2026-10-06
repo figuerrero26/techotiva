@@ -6,8 +6,20 @@ let selectedRole = null;
 const EYE_OPEN   = '<svg width="17" height="17"><use href="#eye-open"/></svg>';
 const EYE_CLOSED = '<svg width="17" height="17"><use href="#eye-closed"/></svg>';
 
-// Cargar dispositivos para el select de prescriptor
+// Cargar dispositivos y detectar token de reseteo en URL
 window.addEventListener('DOMContentLoaded', async () => {
+  // Detectar ?reset_token=xxx en la URL para mostrar formulario de nueva contraseña
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('reset_token');
+  if (resetToken) {
+    _resetToken = resetToken;
+    hideAllViews();
+    document.getElementById('tabLogin').classList.remove('active');
+    document.getElementById('tabReg').classList.remove('active');
+    document.getElementById('resetView').style.display = 'block';
+    return;
+  }
+
   try {
     const res = await fetch(API + '/dispositivos/');
     const disps = await res.json();
@@ -17,13 +29,69 @@ window.addEventListener('DOMContentLoaded', async () => {
   } catch(e) { console.log('Sin conexion al backend'); }
 });
 
+const ALL_VIEWS = ['loginView','registerView','successView','recoveryView','resetView'];
+
+function hideAllViews() {
+  ALL_VIEWS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.classList.remove('visible'); }
+  });
+}
+
 function switchTab(tab) {
+  hideAllViews();
   document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
   document.getElementById('tabReg').classList.toggle('active', tab === 'register');
   document.getElementById('loginView').style.display    = tab === 'login'    ? 'block' : 'none';
   document.getElementById('registerView').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('successView').classList.remove('visible');
-  document.getElementById('successView').style.display = '';
+}
+
+function showRecovery() {
+  hideAllViews();
+  document.getElementById('tabLogin').classList.remove('active');
+  document.getElementById('tabReg').classList.remove('active');
+  document.getElementById('recoveryView').style.display = 'block';
+}
+
+async function doRecovery() {
+  const email = val('recoveryEmail');
+  if (!email) { showToast('Ingresa tu correo', true); return; }
+  showToast('Enviando enlace...');
+  try {
+    const res = await fetch(API + '/auth/recuperar-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    showToast(data.message || 'Enlace enviado');
+    setTimeout(() => switchTab('login'), 2500);
+  } catch(e) {
+    showToast('Error de conexión', true);
+  }
+}
+
+let _resetToken = null;
+
+async function doReset() {
+  const pw1 = document.getElementById('resetPw1').value;
+  const pw2 = document.getElementById('resetPw2').value;
+  if (!pw1 || !pw2) { showToast('Completa ambos campos', true); return; }
+  if (pw1 !== pw2)  { showToast('Las contraseñas no coinciden', true); return; }
+  showToast('Actualizando contraseña...');
+  try {
+    const res = await fetch(API + '/auth/resetear-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token: _resetToken, nueva_password: pw1 })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.detail || 'Error al cambiar contraseña', true); return; }
+    showToast(data.message || 'Contraseña actualizada');
+    // Limpiar token de la URL y mostrar login
+    window.history.replaceState({}, '', '/login');
+    setTimeout(() => switchTab('login'), 2000);
+  } catch(e) {
+    showToast('Error de conexión', true);
+  }
 }
 
 function selectRole(role) {
@@ -138,6 +206,9 @@ async function doRegister() {
   const req = ROL_REQUIRED[selectedRole];
   if (req && !p[req.field]) { showToast(req.msg, true); return; }
   if (!p.email || !p.password) { showToast('Completa correo y contraseña', true); return; }
+  const privCheck = document.getElementById('regPrivacidad');
+  if (!privCheck?.checked) { showToast('Debes aceptar la política de privacidad para continuar', true); return; }
+  p.politica_privacidad = true;
 
   showToast('Creando tu cuenta...');
   try {

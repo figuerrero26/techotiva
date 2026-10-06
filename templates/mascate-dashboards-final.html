@@ -27,9 +27,8 @@
     <a class="sb-item" href="/actividades"><span class="ic">📋</span> Actividades</a>
     <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Beneficiarixs</a>
     <a class="sb-item" href="/mis-prescriptores"><span class="ic">🎯</span> Prescriptorxs</a>
+    <span class="sb-section">Reporte</span>
     <a class="sb-item" href="/reportar-info"><span class="ic">🤝</span> Hoja de primer contacto</a>
-    <span class="sb-section">Reportes</span>
-    <a class="sb-item" href="/reportar-info"><span class="ic">📄</span> Reportar info</a>
     <span class="sb-section">Configuracion</span>
     <a class="sb-item" href="/configuracion"><span class="ic">⚙️</span> Configuración</a>
     <div class="sb-spacer"></div>
@@ -112,8 +111,8 @@
     <span class="sb-section">Principal</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">🏠</span> Inicio</a>
     <a class="sb-item" href="/perfil"><span class="ic">👤</span> Mi perfil</a>
-    <a class="sb-item" href="/actividades"><span class="ic">📋</span> Mis seguimientos</a>
-    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Asignados a mí</a>
+    <a class="sb-item" href="/mis-seguimientos"><span class="ic">📋</span> Mis seguimientos</a>
+    <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Beneficiarixs</a>
     <span class="sb-section">Gestión</span>
     <a class="sb-item" href="/reportar-info"><span class="ic">📝</span> Ingresar información</a>
     <a class="sb-item" href="/notificaciones"><span class="ic">🔔</span> Notificaciones</a>
@@ -135,6 +134,18 @@
     </div>
     <div class="content">
       <div class="page-header"><h1 id="presc-h1">Hola 🎯</h1><p id="presc-sub">—</p></div>
+
+      <!-- Tarjeta dispositivo -->
+      <div id="presc-disp-card" style="display:flex;margin-bottom:1.25rem;padding:0.9rem 1.1rem;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--surface);align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="font-size:1.4rem">🏘️</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:0.95rem" id="presc-disp-nombre">Cargando...</div>
+          <div style="font-size:0.8rem;color:var(--on-bg-muted)" id="presc-disp-sub"></div>
+        </div>
+        <span id="presc-disp-tag" class="tag" style="visibility:hidden">—</span>
+        <a href="/mi-dispositivo" style="font-size:0.8rem;color:var(--primary);text-decoration:none;white-space:nowrap">Gestionar →</a>
+      </div>
+
       <div class="stats-row cols-3">
         <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val" id="presc-stat-0">—</div><div class="stat-label">Personas a mi cargo</div></div>
         <div class="stat-card"><div class="stat-icon mustard">📝</div><div class="stat-val" id="presc-stat-1">—</div><div class="stat-label">Registros este mes</div></div>
@@ -207,7 +218,6 @@
           <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val" id="benef-disp-horario">—</div><div class="contact-lbl">Horario</div></div></div>
           <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val" id="benef-facilitadora">—</div><div class="contact-lbl">Facilitadxra</div></div></div>
         </div>
-        <div style="margin-top:0.85rem"><button class="btn btn-md btn-green" style="width:100%" onclick="window.location.href='/notificaciones'">✉️ Contactar dispositivo</button></div>
       </div>
     </div>
   </div>

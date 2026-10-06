@@ -159,14 +159,19 @@ function renderActCards(containerId, acts, max = 3) {
         <span class="tag ${color}">${campo(a.tipo)}</span>
       </div>
       ${a.descripcion ? `<p style="font-size:0.83rem;color:var(--on-bg-muted);margin:0.5rem 0 0.75rem">${a.descripcion}</p>` : ''}
-      <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.75rem">
+      <div style="display:flex;gap:1rem;font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.75rem;flex-wrap:wrap">
         <span>📍 ${campo(a.lugar)}</span>
-        <span>🕓 ${campo(a.dia_semana)} ${campo(a.hora)}</span>
-        ${a.cupo_maximo ? `<span>👥 Cupo: ${a.cupo_maximo}</span>` : ''}
+        <span>🗓 ${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : campo(a.dia_semana)}</span>
+        ${a.cupo_maximo ? (() => {
+          const inscritos = a.total_inscritos ?? 0;
+          const disponibles = a.cupo_maximo - inscritos;
+          const color = disponibles <= 0 ? 'var(--error)' : disponibles <= 3 ? 'var(--warning,#e6a817)' : 'inherit';
+          return `<span style="color:${color}">👥 ${inscritos}/${a.cupo_maximo} inscritos · ${disponibles > 0 ? disponibles + ' cupos libres' : 'Sin cupos'}</span>`;
+        })() : (a.total_inscritos ? `<span>👥 ${a.total_inscritos} inscritos</span>` : '')}
       </div>
-      ${a.fecha_inicio ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">🗓 Desde: ${a.fecha_inicio}</div>` : ''}
+      ${(MASCATE.rol === 'prescriptor' || MASCATE.rol === 'admin') && a.dispositivo_nombre ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">🏘️ ${a.dispositivo_nombre}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.6rem">
-        <span style="font-size:0.78rem;color:var(--on-bg-muted)">${campo(a.dia_semana)} · ${campo(a.hora)}</span>
+        <span style="font-size:0.78rem;color:var(--on-bg-muted)">${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : campo(a.dia_semana)} · ${campo(a.hora)}</span>
         <button class="btn btn-sm btn-outline" onclick="window.verDetalleAct&&window.verDetalleAct(window._actsCache?.find(x=>x.id===${a.id}))">Ver detalle</button>
       </div>
     </div>`;
@@ -185,13 +190,15 @@ function renderActTabla(tbodyId, acts) {
     tbody.innerHTML = '<tr><td colspan="6" style="color:var(--on-bg-muted)">Sin actividades.</td></tr>';
     return;
   }
+  const mostrarDisp = MASCATE.rol === 'prescriptor' || MASCATE.rol === 'admin';
   tbody.innerHTML = acts.map(a => {
     const color = TAG_COLOR[a.tipo] ?? 'mustard';
     return `<tr>
       <td>${a.emoji || '📅'} ${campo(a.nombre)}</td>
       <td><span class="tag ${color}">${campo(a.tipo)}</span></td>
+      ${mostrarDisp ? `<td style="font-size:0.82rem;color:var(--on-bg-muted)">${campo(a.dispositivo_nombre)}</td>` : ''}
       <td>${campo(a.lugar)}</td>
-      <td>${campo(a.dia_semana)}</td>
+      <td>${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : campo(a.dia_semana)}</td>
       <td>${campo(a.hora)}</td>
       ${a.cupo_maximo != null ? `<td>${a.cupo_maximo}</td>` : ''}
     </tr>`;
@@ -265,18 +272,17 @@ const SIDEBARS = {
   dispositivo: {
     logo: '🏘️', sections: [
       { label: 'Principal', items: [
-        { href:'/dashboard',   ic:'📊', txt:'Panel general' },
-        { href:'/perfil',      ic:'👤', txt:'Mi perfil' },
-        { href:'/actividades', ic:'📋', txt:'Actividades' },
-        { href:'/usuarios',    ic:'👥', txt:'Beneficiarixs' },
+        { href:'/dashboard',         ic:'📊', txt:'Panel general' },
+        { href:'/perfil',            ic:'👤', txt:'Mi perfil' },
+        { href:'/actividades',       ic:'📋', txt:'Actividades' },
+        { href:'/usuarios',          ic:'👥', txt:'Beneficiarixs' },
         { href:'/mis-prescriptores', ic:'🎯', txt:'Prescriptorxs' },
-        { href:'/formularios', ic:'🤝', txt:'Hoja de primer contacto' },
       ]},
-      { label: 'Reportes', items: [
-        { href:'/reportar-info', ic:'📄', txt:'Reportar info' },
+      { label: 'Reporte', items: [
+        { href:'/reportar-info', ic:'🤝', txt:'Hoja de primer contacto' },
       ]},
       { label: 'Configuracion', items: [
-        { href:'/configuracion',  ic:'⚙️',  txt:'Configuración' },
+        { href:'/configuracion', ic:'⚙️', txt:'Configuración' },
       ]},
     ],
   },
@@ -285,8 +291,10 @@ const SIDEBARS = {
       { label: 'Principal', items: [
         { href:'/dashboard',     ic:'🏠', txt:'Inicio' },
         { href:'/perfil',        ic:'👤', txt:'Mi perfil' },
-        { href:'/actividades',   ic:'📋', txt:'Mis seguimientos' },
-        { href:'/usuarios',      ic:'👥', txt:'Asignados a mí' },
+        { href:'/mi-dispositivo',ic:'🏘️', txt:'Mi dispositivo' },
+        { href:'/actividades',   ic:'📅', txt:'Actividades' },
+        { href:'/mis-seguimientos', ic:'📋', txt:'Mis seguimientos' },
+        { href:'/usuarios',      ic:'👥', txt:'Beneficiarixs' },
       ]},
       { label: 'Gestión', items: [
         { href:'/reportar-info', ic:'📝', txt:'Ingresar información' },
@@ -415,6 +423,12 @@ async function initNotifBtn() {
     } else if (MASCATE.rol === 'prescriptor') {
       const asignados = await fetch(window.location.origin + '/prescriptores/mis-asignados', MASCATE.authGet()).then(r => r.json());
       hayPendientes = asignados.some(a => a.estado === 'urgente' || a.estado === 'revisar');
+    } else if (MASCATE.rol === 'dispositivo') {
+      const me = await fetch(window.location.origin + '/dispositivos/me', MASCATE.authGet()).then(r => r.json());
+      if (me && me.id) {
+        const pend = await fetch(window.location.origin + '/dispositivos/' + me.id + '/prescriptores/pendientes', MASCATE.authGet()).then(r => r.json());
+        hayPendientes = Array.isArray(pend) && pend.length > 0;
+      }
     }
 
     dot.style.display = hayPendientes ? 'block' : 'none';

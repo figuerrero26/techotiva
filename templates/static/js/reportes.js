@@ -9,11 +9,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const stats = await (await fetch(API + '/admin/stats', MASCATE.authGet())).json();
     setStats([
-      { id:'stat-0', val: campo(stats.participacion_pct, '—') },
+      { id:'stat-0', val: stats.total_beneficiarios },
       { id:'stat-1', val: stats.total_usuarios },
       { id:'stat-2', val: stats.total_dispositivos },
-      { id:'stat-3', val: campo(stats.total_actividades,
-                           (await (await fetch(API + '/actividades/')).json()).length) },
+      { id:'stat-3', val: stats.total_actividades },
     ]);
 
     // Distribución por rol — donut dinámico

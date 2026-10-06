@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 import re
 
-from app.services.email_service import generar_token, enviar_correo_verificacion
+from app.services.email_service import generar_token, enviar_correo_verificacion, enviar_correo_recuperacion
 from app.core.config import settings
 from database import get_db
 from app.models.models import Usuario, Estados, EstadoRegistro, Dispositivo, Prescriptor, Beneficiario
@@ -43,6 +44,8 @@ class RegisterRequest(BaseModel):
 
     # Beneficiarix
     nombre_apodo: Optional[str] = None
+
+    politica_privacidad: bool = False
 
     @field_validator("password")
     @classmethod
@@ -128,6 +131,7 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
         password_hash=hash_password(data.password),
         rol=data.rol,
         email_verificado=False,
+        politica_privacidad_at=datetime.now(timezone.utc) if data.politica_privacidad else None,
     )
     db.add(usuario)
     db.flush()
@@ -239,6 +243,62 @@ def verificar_email(token: str, db: Session = Depends(get_db)):
     usuario.email_token = None
     db.commit()
     return {"message": "¡Correo verificado! Tu solicitud será revisada pronto."}
+
+
+# ─── Recuperar contraseña ────────────────────────────────────────────────────
+class RecuperarPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+@router.post("/recuperar-password", summary="Solicitar recuperación de contraseña")
+def recuperar_password(
+    data: RecuperarPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    usuario = db.query(Usuario).filter(Usuario.email == data.email).first()
+    if usuario:
+        token = generar_token()
+        usuario.password_reset_token = token
+        usuario.password_reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=24)
+        db.commit()
+        background_tasks.add_task(
+            enviar_correo_recuperacion,
+            email=usuario.email,
+            token=token,
+            base_url=settings.app_base_url,
+        )
+    # Siempre responder igual para no revelar si el email existe
+    return {"message": "Si ese correo está registrado, recibirás un enlace para restablecer tu contraseña."}
+
+
+@router.post("/resetear-password", summary="Establecer nueva contraseña con token")
+def resetear_password(
+    data: dict,
+    db: Session = Depends(get_db),
+):
+    token = data.get("token", "").strip()
+    nueva = data.get("nueva_password", "").strip()
+    if not token or not nueva:
+        raise HTTPException(400, detail="Token y contraseña son requeridos")
+    if not _validar_password_nueva(nueva):
+        raise HTTPException(422, detail="La contraseña debe tener al menos 8 caracteres, una mayúscula y un número")
+    usuario = db.query(Usuario).filter(Usuario.password_reset_token == token).first()
+    if not usuario:
+        raise HTTPException(400, detail="El enlace no es válido o ya fue utilizado")
+    # Verificar expiración
+    if usuario.password_reset_token_expiry:
+        expiry = usuario.password_reset_token_expiry
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=timezone.utc)
+        if expiry < datetime.now(timezone.utc):
+            raise HTTPException(400, detail="El enlace ha expirado. Solicita uno nuevo desde el formulario de inicio de sesión.")
+    usuario.password_hash = hash_password(nueva)
+    usuario.password_reset_token = None
+    usuario.password_reset_token_expiry = None
+    usuario.email_verificado = True
+    db.commit()
+    return {"message": "Contraseña actualizada correctamente. Ya puedes iniciar sesión."}
 
 
 # ─── Cambiar contraseña ───────────────────────────────────────────────────────

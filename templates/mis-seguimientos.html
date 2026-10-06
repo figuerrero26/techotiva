@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis seguimientos | Cuida Tu Techo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;900&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="screen active">
+  <nav class="sidebar"></nav>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">Mis seguimientos</span>
+      <div class="topbar-right">
+        <div class="notif-btn" onclick="window.location.href='/notificaciones'" style="cursor:pointer">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></div>
+        <button class="btn btn-sm btn-green" onclick="window.location.href='/reportar-info'">+ Registrar</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h1>Mis seguimientos</h1>
+        <p>Historial de sesiones y registros que has realizado.</p>
+      </div>
+
+      <div class="stats-row cols-3">
+        <div class="stat-card"><div class="stat-icon blue">📝</div><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total registros</div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val" id="stat-personas">—</div><div class="stat-label">Personas distintas</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val" id="stat-mes">—</div><div class="stat-label">Este mes</div></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="panel">
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Persona</label>
+            <select id="filtro-persona" style="width:100%">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Tipo</label>
+            <select id="filtro-tipo" style="width:100%">
+              <option value="">Todos</option>
+              <option value="Sesion individual">Sesión individual</option>
+              <option value="Sesion grupal">Sesión grupal</option>
+              <option value="Llamada">Llamada</option>
+              <option value="Visita domiciliaria">Visita domiciliaria</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-outline" id="btn-filtrar">Filtrar</button>
+          <button class="btn btn-sm btn-outline" id="btn-limpiar">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Historial</span>
+          <span id="count-label" class="tag blue" style="display:none">0</span>
+        </div>
+        <div id="lista-seguimientos">
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js"></script>
+<script src="/static/js/mis-seguimientos.js"></script>
+</body>
+</html>

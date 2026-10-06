@@ -27,10 +27,21 @@
         <p>Personas facilitadoras vinculadas a tu dispositivo CBC.</p>
       </div>
 
-      <div class="stats-row cols-3">
+      <div class="stats-row cols-4">
         <div class="stat-card"><div class="stat-icon green">🎯</div><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total prescriptxres</div></div>
         <div class="stat-card"><div class="stat-icon mustard">✅</div><div class="stat-val" id="stat-activos">—</div><div class="stat-label">Activos</div></div>
         <div class="stat-card"><div class="stat-icon rust">⏳</div><div class="stat-val" id="stat-pendientes">—</div><div class="stat-label">Pendientes aprobación</div></div>
+        <div class="stat-card"><div class="stat-icon blue">📨</div><div class="stat-val" id="stat-solicitudes">—</div><div class="stat-label">Solicitudes de unión</div></div>
+      </div>
+
+      <!-- Solicitudes de unión (prescriptores que quieren unirse) -->
+      <div id="panel-solicitudes" class="panel" style="display:none;border:1.5px solid var(--secondary)">
+        <div class="panel-head">
+          <span class="panel-title">📨 Solicitudes de unión</span>
+          <span class="tag blue" id="count-solicitudes">0</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--on-bg-muted);margin:0 0 0.75rem">Prescriptxres que desean unirse a tu dispositivo.</p>
+        <div id="lista-solicitudes"></div>
       </div>
 
       <!-- Pendientes de aprobación -->

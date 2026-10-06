@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Boolean, Text,
-    DateTime, ForeignKey, Date,
+    DateTime, ForeignKey, Date, Time,
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -56,8 +56,11 @@ class Usuario(Base):
     rol              = Column(String(20), nullable=False)
     estado_actual_id = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
     fecha_registro   = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    email_verificado = Column(Boolean, default=False)
-    email_token      = Column(String(100), nullable=True)
+    email_verificado     = Column(Boolean, default=False)
+    email_token          = Column(String(100), nullable=True)
+    password_reset_token        = Column(String(100), nullable=True)
+    password_reset_token_expiry = Column(DateTime, nullable=True)
+    politica_privacidad_at      = Column(DateTime, nullable=True)
 
     estado_actual = relationship(
         "EstadoRegistro",
@@ -103,7 +106,7 @@ class Dispositivo(Base):
     estado_actual      = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
     usuario            = relationship("Usuario", back_populates="dispositivo")
     actividades        = relationship("Actividad", back_populates="dispositivo", cascade="all, delete-orphan")
-    prescriptores      = relationship("Prescriptor", back_populates="dispositivo")
+    prescriptores      = relationship("Prescriptor", foreign_keys="[Prescriptor.dispositivo_id]", back_populates="dispositivo")
     primeros_contactos = relationship("PrimerContacto", back_populates="dispositivo")
 
     @property
@@ -122,12 +125,14 @@ class Prescriptor(Base):
     nombre_completo   = Column(String(200), nullable=False)
     perfil_disciplina = Column(String(100))
     telefono          = Column(String(30))
-    dispositivo_id    = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
-    estado_actual_id  = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
+    dispositivo_id           = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
+    solicitud_dispositivo_id = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
+    estado_actual_id         = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
 
-    estado_actual = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
-    usuario       = relationship("Usuario", back_populates="prescriptor")
-    dispositivo   = relationship("Dispositivo", back_populates="prescriptores")
+    estado_actual        = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
+    usuario              = relationship("Usuario", back_populates="prescriptor")
+    dispositivo          = relationship("Dispositivo", foreign_keys=[dispositivo_id], back_populates="prescriptores")
+    dispositivo_solicitud = relationship("Dispositivo", foreign_keys=[solicitud_dispositivo_id])
     seguimientos  = relationship("Seguimiento", back_populates="prescriptor", cascade="all, delete-orphan")
 
     @property
@@ -145,22 +150,62 @@ class Beneficiario(Base):
     usuario_id       = Column(Integer, ForeignKey("usuarios.id"), nullable=False, unique=True)
     nombre_apodo     = Column(String(200), nullable=False)
     estado_actual_id = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
-    # ── NUEVOS ────────────────────────────────────
+    dispositivo_id   = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
+    prescriptor_id   = Column(Integer, ForeignKey("prescriptores.id"), nullable=True)
+
+    # Datos de contacto y básicos
     fecha_nacimiento = Column(Date, nullable=True)
     localidad        = Column(String(100), nullable=True)
     telefono         = Column(String(30), nullable=True)
     descripcion      = Column(Text, nullable=True)
     genero           = Column(String(30), nullable=True)
-    dispositivo_id   = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)  # ← agregar
-    dispositivo      = relationship("Dispositivo", foreign_keys=[dispositivo_id])     # ← agregar
-    # ──────────────────────────────────────────────
+
+    # Perfil sociodemográfico
+    estado_civil         = Column(String(40), nullable=True)
+    num_hijos            = Column(Integer, nullable=True)
+    etnia                = Column(String(60), nullable=True)
+    con_quien_vive       = Column(String(100), nullable=True)
+    direccion            = Column(Text, nullable=True)
+    escolaridad          = Column(String(60), nullable=True)
+    ocupacion            = Column(String(100), nullable=True)
+    sabe_leer_escribir   = Column(Boolean, nullable=True)
+    sabe_usar_computador = Column(Boolean, nullable=True)
+
+    # Red de apoyo
+    nombre_persona_apoyo   = Column(String(200), nullable=True)
+    telefono_persona_apoyo = Column(String(30), nullable=True)
+    vinculo_persona_apoyo  = Column(String(60), nullable=True)
+    apoyo_familiar         = Column(Boolean, nullable=True)
+    apoyo_comunitario      = Column(Boolean, nullable=True)
+    apoyo_institucional    = Column(Boolean, nullable=True)
+    apoyo_actor_social     = Column(String(200), nullable=True)
+
+    # Participación y recreación
+    practica_deporte         = Column(Boolean, nullable=True)
+    tiene_tiempo_recreacion  = Column(Boolean, nullable=True)
+    cuanto_tiempo_recreacion = Column(String(50), nullable=True)
+    conoce_espacios          = Column(String(20), nullable=True)   # Sí / No / Tal vez
+    ha_participado           = Column(String(20), nullable=True)   # Sí / No / Tal vez
+
+    # Identidad y cultura
+    religion = Column(String(60), nullable=True)
+
+    # Persona de apoyo extendida
+    tiene_persona_apoyo = Column(Boolean, nullable=True)
+    tipo_vinculo_codigo = Column(String(20), nullable=True)   # MADRE / PADRE / HIJX …
+    genero_apoyo        = Column(String(20), nullable=True)   # FEMENINO / MASCULINO / NR
+
+    # Red de apoyo extendida
+    apoyo_otro_actor  = Column(Boolean, nullable=True)         # Recibe apoyo de otro actor social
+    cual_actor_social = Column(String(200), nullable=True)     # Cuál actor
 
     estado_actual      = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
     usuario            = relationship("Usuario", back_populates="beneficiario")
+    dispositivo        = relationship("Dispositivo", foreign_keys=[dispositivo_id])
+    prescriptor        = relationship("Prescriptor", foreign_keys=[prescriptor_id])
     seguimientos       = relationship("Seguimiento", back_populates="beneficiario")
     primeros_contactos = relationship("PrimerContacto", back_populates="beneficiario")
     inscripciones      = relationship("Inscripcion", back_populates="beneficiario", cascade="all, delete-orphan")
-    dispositivo        = relationship("Dispositivo", foreign_keys=[dispositivo_id])
 
     @property
     def estado(self) -> str:
@@ -211,14 +256,59 @@ class Seguimiento(Base):
 class PrimerContacto(Base):
     __tablename__ = "primer_contacto"
 
-    id              = Column(Integer, primary_key=True, index=True)
-    beneficiario_id = Column(Integer, ForeignKey("beneficiarios.id"), nullable=False)
-    dispositivo_id  = Column(Integer, ForeignKey("dispositivos.id"), nullable=False)
-    fecha_contacto  = Column(Date, default=lambda: datetime.now(timezone.utc).date())
-    notas           = Column(Text)
+    id               = Column(Integer, primary_key=True, index=True)
+    beneficiario_id  = Column(Integer, ForeignKey("beneficiarios.id"), nullable=False)
+    dispositivo_id   = Column(Integer, ForeignKey("dispositivos.id"), nullable=False)
+    prescriptor_id   = Column(Integer, ForeignKey("prescriptores.id"), nullable=True)
+
+    # Datos del convenio
+    convenio_515        = Column(String(20), nullable=True)
+    tipo_dbc            = Column(String(60), nullable=True)
+    politica_privacidad = Column(String(20), nullable=True)
+    numero_caso         = Column(String(50), nullable=True)
+
+    # Datos del evento de contacto
+    fecha_contacto   = Column(Date, default=lambda: datetime.now(timezone.utc).date())
+    hora_contacto    = Column(Time, nullable=True)
+    upz              = Column(String(100), nullable=True)
+    barrio           = Column(String(100), nullable=True)
+    forma_contacto   = Column(String(60), nullable=True)
+
+    # Datos de la fuente (quien derivó)
+    nombre_fuente    = Column(String(200), nullable=True)
+    telefono_fuente  = Column(String(30), nullable=True)
+    genero_fuente    = Column(String(30), nullable=True)
+    vinculo_fuente   = Column(String(60), nullable=True)
+
+    # Edad del beneficiario (en caso de no tener fecha de nacimiento)
+    edad_benef       = Column(Integer, nullable=True)
+
+    # Dirección del beneficiario
+    clase_via                 = Column(String(30), nullable=True)
+    numero_via_principal      = Column(String(20), nullable=True)
+    letra_via_principal       = Column(String(10), nullable=True)
+    identificador_sector      = Column(String(20), nullable=True)
+    numero_via_generadora     = Column(String(20), nullable=True)
+    letra_via_generadora      = Column(String(10), nullable=True)
+    numero_predio             = Column(String(20), nullable=True)
+    otras_caracteristicas_dir = Column(String(100), nullable=True)
+
+    # Resumen del primer encuentro
+    situaciones_presentes = Column(Text, nullable=True)
+    peticiones            = Column(Text, nullable=True)
+    descripcion_caso      = Column(Text, nullable=True)
+
+    # Procesos previos
+    procesos_previos = Column(Integer, default=0, nullable=True)
+
+    # Datos del registrador
+    rol_registrador      = Column(String(100), nullable=True)
+    nombre_registrador   = Column(String(200), nullable=True)
+    telefono_registrador = Column(String(30), nullable=True)
 
     beneficiario = relationship("Beneficiario", back_populates="primeros_contactos")
     dispositivo  = relationship("Dispositivo",  back_populates="primeros_contactos")
+    prescriptor  = relationship("Prescriptor",  foreign_keys=[prescriptor_id])
 
 
 # ── INSCRIPCIONES (N:M) ────────────────────────────────────────────────────

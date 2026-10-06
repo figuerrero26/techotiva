@@ -12,16 +12,36 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!disp || !disp.id) return;
     dispId = disp.id;
 
-    const [pendientes, activos] = await Promise.all([
+    const [pendientes, activos, solicitudes] = await Promise.all([
       fetch(API + '/dispositivos/' + dispId + '/prescriptores/pendientes', MASCATE.authGet()).then(r => r.json()),
       fetch(API + '/dispositivos/' + dispId + '/prescriptores', MASCATE.authGet()).then(r => r.json()),
+      fetch(API + '/dispositivos/' + dispId + '/solicitudes', MASCATE.authGet()).then(r => r.json()),
     ]);
 
-    set('stat-total',     activos.length + pendientes.length);
-    set('stat-activos',   activos.length);
+    set('stat-total',      activos.length + pendientes.length);
+    set('stat-activos',    activos.length);
     set('stat-pendientes', pendientes.length);
+    set('stat-solicitudes', Array.isArray(solicitudes) ? solicitudes.length : 0);
 
-    // Panel pendientes
+    // Panel solicitudes de unión
+    if (Array.isArray(solicitudes) && solicitudes.length > 0) {
+      document.getElementById('panel-solicitudes').style.display = 'block';
+      set('count-solicitudes', solicitudes.length);
+      document.getElementById('lista-solicitudes').innerHTML = solicitudes.map(p => `
+        <div class="list-row" style="padding:0.6rem 0;border-bottom:1px solid var(--border)">
+          <div class="list-avatar" style="flex-shrink:0;background:var(--secondary-dim);color:var(--secondary)">${(p.nombre_completo||'??').substring(0,2).toUpperCase()}</div>
+          <div class="list-info">
+            <div class="list-name">${campo(p.nombre_completo)}</div>
+            <div class="list-sub">${campo(p.perfil_disciplina)} · ${campo(p.email)}${p.dispositivo_actual ? ' · Actual: ' + p.dispositivo_actual : ''}</div>
+          </div>
+          <div style="display:flex;gap:0.4rem;flex-shrink:0">
+            <button class="btn btn-sm btn-green" onclick="aprobarSolicitud(${p.id})">✓ Aceptar</button>
+            <button class="btn btn-sm btn-outline" style="color:var(--error);border-color:var(--error)" onclick="rechazarSolicitud(${p.id})">✕ Rechazar</button>
+          </div>
+        </div>`).join('');
+    }
+
+    // Panel pendientes de aprobación (flujo original)
     if (pendientes.length > 0) {
       document.getElementById('panel-pendientes').style.display = 'block';
       set('count-pendientes', pendientes.length);
@@ -83,6 +103,31 @@ async function rechazar(prescId) {
     const res = await fetch(
       API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/rechazar',
       { method: 'PUT', headers: MASCATE.authHeaders() }
+    );
+    if (res.ok) { window.location.reload(); }
+    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
+  } catch(e) { console.error(e); }
+}
+
+async function aprobarSolicitud(prescId) {
+  if (!dispId) return;
+  try {
+    const res = await fetch(
+      API + '/dispositivos/' + dispId + '/solicitudes/' + prescId + '/aprobar',
+      { method: 'POST', headers: MASCATE.authHeaders() }
+    );
+    if (res.ok) { window.location.reload(); }
+    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo aprobar.')); }
+  } catch(e) { console.error(e); }
+}
+
+async function rechazarSolicitud(prescId) {
+  if (!confirm('¿Rechazar la solicitud de este prescriptxr?')) return;
+  if (!dispId) return;
+  try {
+    const res = await fetch(
+      API + '/dispositivos/' + dispId + '/solicitudes/' + prescId + '/rechazar',
+      { method: 'POST', headers: MASCATE.authHeaders() }
     );
     if (res.ok) { window.location.reload(); }
     else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }

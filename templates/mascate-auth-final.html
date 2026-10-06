@@ -97,8 +97,50 @@
           </div>
         </div>
         <button class="btn-primary" onclick="doLogin()">Entrar →</button>
+        <div style="text-align:center;margin-top:0.75rem">
+          <button class="link-btn" onclick="showRecovery()" style="font-size:0.8rem;color:var(--on-bg-muted)">¿Olvidaste tu contraseña?</button>
+        </div>
         <div class="divider">¿no tienes cuenta?</div>
         <div style="text-align:center"><button class="link-btn" onclick="switchTab('register')">Crear cuenta</button></div>
+      </div>
+
+      <!-- RECUPERAR CONTRASEÑA -->
+      <div id="recoveryView" style="display:none">
+        <div class="form-title">Recuperar contraseña</div>
+        <div class="form-sub">Ingresa tu correo y te enviaremos un enlace para crear una nueva contraseña.</div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="recoveryEmail" placeholder="tucorreo@ejemplo.com">
+        </div>
+        <button class="btn-primary" onclick="doRecovery()">Enviar enlace →</button>
+        <div style="text-align:center;margin-top:1rem">
+          <button class="link-btn" onclick="switchTab('login')">← Volver al inicio de sesión</button>
+        </div>
+      </div>
+
+      <!-- RESTABLECER CONTRASEÑA (desde link del correo) -->
+      <div id="resetView" style="display:none">
+        <div class="form-title">Nueva contraseña</div>
+        <div class="form-sub">Crea una contraseña segura con al menos 8 caracteres, una mayúscula y un número.</div>
+        <div class="field">
+          <label>Nueva contraseña</label>
+          <div class="pw-wrap">
+            <input type="password" id="resetPw1" placeholder="••••••••">
+            <button class="pw-toggle" onclick="togglePw('resetPw1',this)" tabindex="-1">
+              <svg width="17" height="17"><use href="#eye-open"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Confirmar contraseña</label>
+          <div class="pw-wrap">
+            <input type="password" id="resetPw2" placeholder="••••••••">
+            <button class="pw-toggle" onclick="togglePw('resetPw2',this)" tabindex="-1">
+              <svg width="17" height="17"><use href="#eye-open"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="doReset()">Cambiar contraseña →</button>
       </div>
 
       <!-- REGISTER -->
@@ -179,6 +221,10 @@
         </div>
 
         <div id="submitWrap" style="display:none">
+          <label style="display:flex;align-items:flex-start;gap:0.6rem;font-size:0.82rem;color:var(--on-bg-muted);margin-bottom:0.75rem;cursor:pointer">
+            <input type="checkbox" id="regPrivacidad" style="margin-top:0.15rem;accent-color:var(--primary);flex-shrink:0">
+            <span>Acepto el tratamiento de mis datos personales conforme a la política de privacidad de Cuida Tu Techo.</span>
+          </label>
           <button class="btn-primary" onclick="doRegister()">Crear mi cuenta →</button>
         </div>
         <div class="divider">¿ya tienes cuenta?</div>

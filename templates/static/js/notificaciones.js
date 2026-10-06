@@ -68,9 +68,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ── Dispositivo: beneficiarios activos ──
   if (rol === 'dispositivo') {
     try {
-      const disps = await (await fetch(API + '/dispositivos/', MASCATE.authGet())).json();
-      if (disps.length) {
-        const stats = await (await fetch(API + '/dispositivos/' + disps[0].id + '/estadisticas', MASCATE.authGet())).json();
+      const disp = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
+      if (disp?.id) {
+        const stats = await (await fetch(API + '/dispositivos/' + disp.id + '/estadisticas', MASCATE.authGet())).json();
         notifs.push({
           icon:'🌱', titulo: `${stats.beneficiarios_activos} beneficiarixs activos esta semana`,
           desc: `${stats.actividades_registradas} actividades · ${stats.seguimientos_semana} seguimientos`,

@@ -40,10 +40,10 @@
       </div>
       <!-- STATS -->
       <div class="stats-row cols-4">
-        <div class="stat-card"><div class="stat-icon mustard" id="stat-icon-0">📅</div><div class="stat-val" id="stat-0">—</div><div class="stat-label" id="stat-lbl-0">Actividades</div></div>
-        <div class="stat-card"><div class="stat-icon green"   id="stat-icon-1">✅</div><div class="stat-val" id="stat-1">—</div><div class="stat-label" id="stat-lbl-1">Asistencia</div></div>
-        <div class="stat-card"><div class="stat-icon blue"    id="stat-icon-2">⭐</div><div class="stat-val" id="stat-2">—</div><div class="stat-label" id="stat-lbl-2">Eventos activos</div></div>
-        <div class="stat-card"><div class="stat-icon rust"    id="stat-icon-3">🎯</div><div class="stat-val" id="stat-3">—</div><div class="stat-label" id="stat-lbl-3">Progreso</div></div>
+        <div class="stat-card"><div class="stat-icon mustard" id="stat-0-icon">📅</div><div class="stat-val" id="stat-0">—</div><div class="stat-label" id="stat-0-lbl">—</div></div>
+        <div class="stat-card"><div class="stat-icon green"   id="stat-1-icon">—</div><div class="stat-val" id="stat-1">—</div><div class="stat-label" id="stat-1-lbl">—</div></div>
+        <div class="stat-card"><div class="stat-icon blue"    id="stat-2-icon">—</div><div class="stat-val" id="stat-2">—</div><div class="stat-label" id="stat-2-lbl">—</div></div>
+        <div class="stat-card"><div class="stat-icon rust"    id="stat-3-icon">—</div><div class="stat-val" id="stat-3">—</div><div class="stat-label" id="stat-3-lbl">—</div></div>
       </div>
       <!-- INFO + CONTACTO -->
       <div class="grid-2">
@@ -56,14 +56,53 @@
           <div id="contacto-list"></div>
         </div>
       </div>
-      <!-- ACTIVIDADES RECIENTES -->
-      <div class="panel">
+      <!-- ACTIVIDADES BENEFICIARIO -->
+      <div class="panel" id="panel-actividades" style="display:none">
         <div class="panel-head">
-          <span class="panel-title">Actividades recientes</span>
-          <button class="panel-action">Ver todas →</button>
+          <span class="panel-title">Actividades disponibles</span>
         </div>
-        <div class="grid-3" id="acts-grid">
-          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Actividad</th><th>Tipo</th><th>Dispositivo</th><th>Lugar</th><th>Fecha</th><th>Hora</th><th>Inscritos</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="acts-tbody">
+              <tr><td colspan="9" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- BENEFICIARIOS PRESCRIPTOR -->
+      <div class="panel" id="panel-presc-benef" style="display:none">
+        <div class="panel-head">
+          <span class="panel-title">Mis beneficiarixs</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Beneficiarix</th><th>Última sesión</th><th>Días sin sesión</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="presc-benef-tbody">
+              <tr><td colspan="5" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- ACTIVIDADES DISPOSITIVO -->
+      <div class="panel" id="panel-disp-acts" style="display:none">
+        <div class="panel-head">
+          <span class="panel-title">Mis actividades</span>
+          <button class="btn btn-sm btn-mustard" id="btn-nueva-act" onclick="abrirModalActDisp()">+ Nueva actividad</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Actividad</th><th>Tipo</th><th>Lugar</th><th>Fecha</th><th>Hora</th><th>Inscritos</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="disp-acts-tbody">
+              <tr><td colspan="8" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -85,6 +124,95 @@
   </div>
 </div>
 
+
+<!-- ═══ MODAL + SEGUIMIENTO (prescriptor) ═══ -->
+<div id="modal-seg-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1200;align-items:center;justify-content:center;padding:1rem">
+  <div class="panel" style="width:100%;max-width:460px;position:relative">
+    <button onclick="document.getElementById('modal-seg-overlay').style.display='none'"
+      style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head">
+      <span class="panel-title">+ Seguimiento</span>
+      <span class="tag mustard" id="seg-benef-nombre" style="font-size:0.78rem">—</span>
+    </div>
+    <input type="hidden" id="seg-benef-id">
+    <div style="display:flex;flex-direction:column;gap:0.75rem">
+      <div class="field">
+        <label>Tipo de registro *</label>
+        <select id="seg-tipo" style="width:100%">
+          <option value="">Selecciona...</option>
+          <option value="visita">Visita</option>
+          <option value="llamada">Llamada</option>
+          <option value="reunion">Reunión</option>
+          <option value="derivacion">Derivación</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Observaciones</label>
+        <textarea id="seg-observaciones" placeholder="Notas de la sesión..." style="width:100%;min-height:100px;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div id="seg-error" style="display:none;color:var(--error);font-size:0.82rem;margin:0.5rem 0;background:var(--error-dim);padding:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem">
+      <button class="btn btn-sm btn-outline" onclick="document.getElementById('modal-seg-overlay').style.display='none'">Cancelar</button>
+      <button class="btn btn-sm btn-green" onclick="guardarSeguimiento()">Guardar seguimiento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SEGUIMIENTOS DE BENEFICIARIO (prescriptor) ═══ -->
+<div id="modal-segs-benef-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1200;align-items:center;justify-content:center;padding:1rem">
+  <div class="panel" style="width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('modal-segs-benef-overlay').style.display='none'"
+      style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head">
+      <span class="panel-title" id="segs-benef-titulo">Seguimientos</span>
+      <span class="tag blue" id="segs-benef-count">0</span>
+    </div>
+    <div id="segs-benef-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL EDITAR ACTIVIDAD (dispositivo) ═══ -->
+<div id="modal-act-disp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1100;align-items:center;justify-content:center;overflow-y:auto">
+  <div class="panel" style="width:100%;max-width:520px;margin:2rem auto;position:relative">
+    <button onclick="cerrarModalActDisp()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head"><span class="panel-title" id="modal-act-disp-titulo">Nueva actividad</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div class="field" style="grid-column:1/-1"><label>Nombre *</label><input type="text" id="dact-nombre" style="width:100%" required></div>
+      <div class="field"><label>Tipo *</label>
+        <select id="dact-tipo" style="width:100%" required>
+          <option value="">Selecciona...</option>
+          <option>Artístico</option><option>Cultural</option><option>Deportivo</option>
+          <option>Ambiental</option><option>Educativo</option><option>Escucha</option>
+        </select>
+      </div>
+      <div class="field"><label>Emoji</label><input type="text" id="dact-emoji" placeholder="📋" style="width:100%" maxlength="2"></div>
+      <div class="field" style="grid-column:1/-1"><label>Lugar *</label><input type="text" id="dact-lugar" style="width:100%" required></div>
+      <div class="field"><label>Fecha de inicio *</label><input type="date" id="dact-fecha" style="width:100%" required></div>
+      <div class="field"><label>Hora *</label><input type="time" id="dact-hora" style="width:100%"></div>
+      <div class="field"><label>Cupo máximo</label><input type="number" id="dact-cupo" min="1" style="width:100%"></div>
+      <div class="field" style="grid-column:1/-1"><label>Descripción</label><textarea id="dact-descripcion" style="width:100%;min-height:80px;resize:vertical"></textarea></div>
+    </div>
+    <div id="dact-error" style="display:none;color:var(--error);font-size:0.82rem;margin:0.75rem 0;background:var(--error-dim);padding:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem">
+      <button class="btn btn-sm btn-outline" onclick="cerrarModalActDisp()">Cancelar</button>
+      <button class="btn btn-sm btn-green" id="dact-btn-guardar" onclick="guardarActividadDisp()">Crear actividad</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL INSCRITOS (dispositivo) ═══ -->
+<div id="modal-ins-disp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1100;align-items:center;justify-content:center;padding:1rem">
+  <div class="panel" style="width:100%;max-width:480px;max-height:85vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('modal-ins-disp-overlay').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head">
+      <span class="panel-title" id="ins-disp-titulo">Inscritos</span>
+      <span class="tag blue" id="ins-disp-count">0</span>
+    </div>
+    <div id="ins-disp-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem"></div>
+  </div>
+</div>
 
 <!-- ═══ MODAL EDITAR PERFIL ═══ -->
 <div id="modal-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;overflow-y:auto">

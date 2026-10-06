@@ -9,7 +9,7 @@ from database import get_db
 
 from app.core.config import settings
 from app.core.security import hash_password
-from database import Base, engine, SessionLocal
+from database import Base, engine, SessionLocal, run_migrations
 
 
 # ─── Seed: crear admin por defecto si no existe ───────────────────────────────
@@ -30,10 +30,10 @@ def seed_admin():
 
             # El admin se activa a sí mismo en el historial
             estado = EstadoRegistro(
-                entidad_tipo="usuario",
+                entidad_tipo="usuarios",
                 entidad_id=admin.id,
                 estado=Estados.ACTIVO,
-                cambiado_por=None,   # sistema
+                cambiado_por=None,
                 motivo="Usuario administrador inicial",
             )
             db.add(estado)
@@ -51,6 +51,7 @@ def seed_admin():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    run_migrations()
     seed_admin()
     yield
 
@@ -83,7 +84,7 @@ from fastapi.staticfiles import StaticFiles
 # Sirve los archivos HTML como estáticos
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 # ─── Routers ──────────────────────────────────────────────────────────────────
-from app.routers import auth, admin, dispositivos, prescriptores, beneficiarios, actividades
+from app.routers import auth, admin, dispositivos, prescriptores, beneficiarios, actividades, primer_contacto
 
 app.include_router(auth.router)
 app.include_router(admin.router)
@@ -91,6 +92,7 @@ app.include_router(dispositivos.router)
 app.include_router(prescriptores.router)
 app.include_router(beneficiarios.router)
 app.include_router(actividades.router)
+app.include_router(primer_contacto.router)
 
 @app.get("/login",          include_in_schema=False)
 def login_page():           return FileResponse("templates/mascate-auth-final.html")
@@ -144,6 +146,14 @@ def dispositivos_admin_page():
 @app.get("/mis-prescriptores", include_in_schema=False)
 def mis_prescriptores_page():
     return FileResponse("templates/mis-prescriptores.html")
+
+@app.get("/mi-dispositivo", include_in_schema=False)
+def mi_dispositivo_page():
+    return FileResponse("templates/mi-dispositivo.html")
+
+@app.get("/mis-seguimientos", include_in_schema=False)
+def mis_seguimientos_page():
+    return FileResponse("templates/mis-seguimientos.html")
 
 @app.get("/health", tags=["Health"])
 def health_check(db: Session = Depends(get_db)):

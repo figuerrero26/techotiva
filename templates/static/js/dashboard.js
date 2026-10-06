@@ -90,8 +90,8 @@ async function loadDispositivo() {
     const stats = await fetch(API + '/dispositivos/' + d.id + '/estadisticas', authGet()).then(r => r.json());
     setStatVal('dispositivo', 0, stats.beneficiarios_activos);
     setStatVal('dispositivo', 1, stats.actividades_registradas);
-    setStatVal('dispositivo', 2, stats.valoracion_promedio ?? '—');
-    setStatVal('dispositivo', 3, stats.seguimientos_semana);
+    setStatVal('dispositivo', 2, stats.seguimientos_semana);
+    setStatVal('dispositivo', 3, '—');
 
     const h1 = document.querySelector('#screen-dispositivo .page-header h1');
     if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
@@ -123,9 +123,9 @@ async function loadDispositivo() {
 
     // Beneficiarios
     const benefs = await fetch(API + '/dispositivos/' + d.id + '/beneficiarios', authGet()).then(r => r.json());
-    const listPanel = document.querySelectorAll('#screen-dispositivo .panel')[2];
+    const listPanel = document.getElementById('disp-panel-beneficiarios');
     if (listPanel && benefs.length > 0) {
-      let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs</span></div>';
+      let html = '<div class="panel-head"><span class="panel-title">Beneficiarixs recientes</span><button class="panel-action" onclick="window.location.href=\'/usuarios\'">Ver todos →</button></div>';
       benefs.forEach(b => {
         const i = b.nombre_apodo.substring(0,2).toUpperCase();
         html += `<div class="list-row"><div class="list-avatar">${i}</div><div class="list-info"><div class="list-name">${b.nombre_apodo}</div></div><span class="tag green">Activo</span></div>`;
@@ -135,9 +135,9 @@ async function loadDispositivo() {
 
     // Actividades
     const acts = await fetch(API + '/actividades/?dispositivo_id=' + d.id).then(r => r.json());
-    const actPanel = document.querySelectorAll('#screen-dispositivo .panel')[3];
+    const actPanel = document.getElementById('disp-panel-actividades');
     if (actPanel && acts.length > 0) {
-      let html = '<div class="panel-head"><span class="panel-title">Actividades</span></div>';
+      let html = '<div class="panel-head"><span class="panel-title">Actividades</span><button class="panel-action" onclick="window.location.href=\'/actividades\'">+ Nueva</button></div>';
       acts.forEach(a => {
         html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji||'📅'}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
       });
@@ -165,6 +165,29 @@ async function loadPrescriptor() {
   // Ver todas → /usuarios (asignados)
   const btnVerTodas = document.querySelector('#screen-prescriptor .panel-action');
   if (btnVerTodas) btnVerTodas.onclick = () => window.location.href = '/usuarios';
+
+  // Tarjeta dispositivo
+  try {
+    const me = await fetch(API + '/prescriptores/me', authGet()).then(r => r.json());
+    const tag = document.getElementById('presc-disp-tag');
+    if (tag) tag.style.visibility = 'visible';
+    if (me.dispositivo_id && me.dispositivo_nombre) {
+      document.getElementById('presc-disp-nombre').textContent = me.dispositivo_nombre;
+      document.getElementById('presc-disp-sub').textContent = 'Dispositivo asignado';
+      if (tag) { tag.textContent = 'Activo'; tag.className = 'tag green'; }
+    } else if (me.solicitud_dispositivo_id && me.solicitud_dispositivo_nombre) {
+      document.getElementById('presc-disp-nombre').textContent = me.solicitud_dispositivo_nombre;
+      document.getElementById('presc-disp-sub').textContent = 'Solicitud pendiente de aprobación';
+      if (tag) { tag.textContent = 'Pendiente'; tag.className = 'tag mustard'; }
+    } else {
+      document.getElementById('presc-disp-nombre').textContent = 'Sin dispositivo asignado';
+      document.getElementById('presc-disp-sub').textContent = 'Solicita unirte a un dispositivo';
+      if (tag) { tag.textContent = 'Sin asignar'; tag.className = 'tag rust'; }
+    }
+  } catch(e) {
+    document.getElementById('presc-disp-nombre').textContent = 'No se pudo cargar';
+    console.error('Error cargando dispositivo prescriptor:', e);
+  }
 
   try {
     const asignados = await fetch(API + '/prescriptores/mis-asignados', authGet()).then(r => r.json());
@@ -319,10 +342,7 @@ async function loadBeneficiario() {
           <div class="contact-card"><div class="contact-icon" style="background:var(--primary-dim)">🕐</div><div><div class="contact-val">${horario}</div><div class="contact-lbl">Horario</div></div></div>
           <div class="contact-card"><div class="contact-icon" style="background:var(--error-dim)">👤</div><div><div class="contact-val" id="benef-facilitadora">—</div><div class="contact-lbl">Facilitadxra</div></div></div>
         </div>
-        <div style="margin-top:0.85rem">
-          <button class="btn btn-md btn-green" style="width:100%"
-            onclick="window.location.href='/notificaciones'">✉️ Contactar dispositivo</button>
-        </div>`;
+        `;
     }
 
     // Exponer para los chips dinámicos
@@ -368,7 +388,7 @@ async function loadAdmin() {
   setText('admin-sb-uname', nombre);
   setText('admin-sb-uemail', email || '');
 
-  const adminAvatar = document.querySelector('#screen-admin admin-sb-avatar');
+  const adminAvatar = document.querySelector('#screen-admin #admin-sb-avatar');
   if (adminAvatar && nombre) {
     adminAvatar.textContent = nombre.substring(0,2).toUpperCase();
     adminAvatar.style.background = 'var(--primary-dim)';
@@ -480,9 +500,8 @@ async function aprobarPrescriptor(dispId, prescId) {
 window.rechazarPrescriptor = async function(dispId, prescId) {
   if (!confirm('¿Rechazar este prescriptxr?')) return;
   try {
-    const res = await fetch(API + '/admin/usuarios/' + prescId + '/estado',
-      { method: 'PUT', headers: authHeaders(),
-        body: JSON.stringify({ status: 'inactivo' }) });
+    const res = await fetch(API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/rechazar',
+      { method: 'PUT', headers: authHeaders() });
     if (res.ok) { loadDispositivo(); }
     else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
   } catch(e) { console.error(e); }
@@ -493,7 +512,7 @@ window.rechazarDisp = async function(usuarioId) {
   try {
     const res = await fetch(API + '/admin/usuarios/' + usuarioId + '/estado',
       { method: 'PUT', headers: authHeaders(),
-        body: JSON.stringify({ status: 'inactivo' }) });
+        body: JSON.stringify({ status: 'rechazado' }) });
     if (res.ok) { loadAdmin(); }
     else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
   } catch(e) { console.error(e); }

@@ -99,9 +99,30 @@ function verDetalle(id) {
       ${infoRow('Redes',        d.redes_sociales)}
       ${infoRow('Lugar',        d.lugar_actividades)}
     </div>
-    <button class="btn btn-sm btn-green" style="width:100%"
-      onclick="window.location.href='/notificaciones'">✉️ Contactar dispositivo</button>`;
+    <button class="btn btn-sm btn-outline" style="width:100%" onclick="document.getElementById('modal-disp-detalle').style.display='none'">Cerrar</button>`;
   document.getElementById('modal-disp-detalle').style.display = 'flex';
+}
+
+async function solicitarUnirse(dispId, nombre) {
+  if (!confirm(`¿Unirte al dispositivo "${nombre}"?`)) return;
+  try {
+    const res  = await fetch(API + '/beneficiarios/solicitar-dispositivo/' + dispId, {
+      method: 'POST', headers: MASCATE.authHeaders(),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('modal-disp-detalle').style.display = 'none';
+      const t = document.createElement('div');
+      t.textContent = '✓ ' + data.msg;
+      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    } else {
+      alert(data.detail || 'No se pudo completar la solicitud.');
+    }
+  } catch(e) {
+    alert('Error de conexión.');
+  }
 }
 
 // Cerrar modal al click fuera

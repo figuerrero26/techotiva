@@ -67,20 +67,38 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (elDb)  { elDb.className  = 'tag rust'; elDb.textContent  = 'Desconocido'; }
   }
 
+  // Cargar preferencias guardadas
+  const prefs = JSON.parse(localStorage.getItem('mascate_prefs') || '{}');
+  if (prefs.tema === 'oscuro') {
+    document.getElementById('theme-oscuro').style.border = '2px solid var(--primary)';
+    document.getElementById('theme-claro').style.border  = '2px solid var(--border)';
+  }
+  if (prefs.compacto) {
+    document.body.classList.add('compact');
+    const chk = document.getElementById('chk-compacto');
+    if (chk) { chk.checked = true; if (chk.nextSibling) chk.nextSibling.textContent = ' On'; }
+  }
+
   // Tema
   document.getElementById('theme-claro')?.addEventListener('click', () => {
     document.getElementById('theme-claro').style.border  = '2px solid var(--primary)';
     document.getElementById('theme-oscuro').style.border = '2px solid var(--border)';
+    const p = JSON.parse(localStorage.getItem('mascate_prefs') || '{}');
+    p.tema = 'claro'; localStorage.setItem('mascate_prefs', JSON.stringify(p));
   });
   document.getElementById('theme-oscuro')?.addEventListener('click', () => {
     document.getElementById('theme-oscuro').style.border = '2px solid var(--primary)';
     document.getElementById('theme-claro').style.border  = '2px solid var(--border)';
+    const p = JSON.parse(localStorage.getItem('mascate_prefs') || '{}');
+    p.tema = 'oscuro'; localStorage.setItem('mascate_prefs', JSON.stringify(p));
   });
 
   // Modo compacto
   document.getElementById('chk-compacto')?.addEventListener('change', e => {
     document.body.classList.toggle('compact', e.target.checked);
     e.target.nextSibling.textContent = e.target.checked ? ' On' : ' Off';
+    const p = JSON.parse(localStorage.getItem('mascate_prefs') || '{}');
+    p.compacto = e.target.checked; localStorage.setItem('mascate_prefs', JSON.stringify(p));
   });
 
   // Abrir modal contraseña

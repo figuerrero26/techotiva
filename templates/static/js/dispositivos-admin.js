@@ -41,21 +41,25 @@ function renderTabla(lista) {
     tbody.innerHTML = '<tr><td colspan="7" style="color:var(--on-bg-muted);text-align:center;padding:1rem">Sin dispositivos.</td></tr>';
     return;
   }
-  tbody.innerHTML = lista.map(d => `<tr>
-    <td><div style="display:flex;align-items:center;gap:0.6rem">
-      <div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">${ini(d.nombre)}</div>
-      <div>
-        <div style="font-weight:600">${campo(d.nombre)}</div>
-        ${d.email ? `<div style="font-size:0.75rem;color:var(--on-bg-muted)">${d.email}</div>` : ''}
-      </div>
-    </div></td>
-    <td>${d.tipo_servicio ? `<span class="tag ${TAG_COLOR[d.tipo_servicio]??'mustard'}">${d.tipo_servicio}</span>` : '—'}</td>
-    <td style="color:var(--primary);font-weight:700">${campo(d.num_beneficiarios, 0)}</td>
-    <td>${campo(d.num_actividades, '—')}</td>
-    <td>${renderPrescriptores(d)}</td>
-    <td>${d.activo ? '<span class="tag green">Activo</span>' : '<span class="tag rust">Inactivo</span>'}</td>
-    <td><button class="btn btn-sm btn-outline" onclick="abrirModal(${d.id})">Editar</button></td>
-  </tr>`).join('');
+  tbody.innerHTML = lista.map(d => {
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:0.6rem">
+        <div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">${ini(d.nombre)}</div>
+        <div>
+          <div style="font-weight:600">${campo(d.nombre)}</div>
+          ${d.email ? `<div style="font-size:0.75rem;color:var(--on-bg-muted)">${d.email}</div>` : ''}
+        </div>
+      </div></td>
+      <td>${d.tipo_servicio ? `<span class="tag ${TAG_COLOR[d.tipo_servicio]??'mustard'}">${d.tipo_servicio}</span>` : '—'}</td>
+      <td style="color:var(--primary);font-weight:700">${campo(d.num_beneficiarios, 0)}</td>
+      <td>${campo(d.num_actividades, '—')}</td>
+      <td>${renderPrescriptores(d)}</td>
+      <td>${d.activo ? '<span class="tag green">Activo</span>' : '<span class="tag rust">Inactivo</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="abrirModal(${d.id})">Editar</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function initFiltros() {
@@ -91,6 +95,10 @@ function abrirModal(id = null) {
   document.getElementById('m-redes').value     = d?.redes_sociales ?? '';
   document.getElementById('m-email').disabled  = !!d; // no editar email en edición
   document.getElementById('modal-error').style.display = 'none';
+
+  const btnEliminar = document.getElementById('modal-btn-eliminar');
+  if (btnEliminar) btnEliminar.style.display = d ? 'inline-flex' : 'none';
+
   document.getElementById('modal-disp-overlay').style.display = 'flex';
 }
 
@@ -160,6 +168,28 @@ function renderPrescriptores(d) {
   return lista.map(p =>
     `<span class="tag blue" style="margin:0.1rem;font-size:0.72rem">${p}</span>`
   ).join('');
+}
+
+async function pedirEliminarDispModal() {
+  if (!dispEditando) return;
+  await pedirEliminarDisp(dispEditando.id, dispEditando.nombre);
+}
+
+async function pedirEliminarDisp(id, nombre) {
+  if (!confirm(`¿Eliminar el dispositivo "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(API + '/admin/dispositivos/' + id, { method: 'DELETE', headers: MASCATE.authHeaders() });
+    if (res.ok) {
+      cerrarModal();
+      await cargarDispositivos();
+      mostrarToast('✓ Dispositivo eliminado');
+    } else {
+      const d = await res.json();
+      alert(d.detail || 'No se pudo eliminar.');
+    }
+  } catch(e) {
+    alert('Error de conexión.');
+  }
 }
 
 function mostrarToast(msg) {

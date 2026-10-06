@@ -5,9 +5,10 @@ Router de actividades: CRUD con filtros.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
+from datetime import date as date_type
 
 from database import get_db
-from app.models.models import Usuario, Dispositivo, Actividad
+from app.models.models import Usuario, Dispositivo, Actividad, Inscripcion, Beneficiario
 from app.schemas.schemas import ActividadCreate, ActividadUpdate, ActividadOut
 from app.routers._deps import get_current_user
 
@@ -27,7 +28,16 @@ def listar_actividades(
         q = q.filter(Actividad.tipo == tipo)
     if dispositivo_id:
         q = q.filter(Actividad.dispositivo_id == dispositivo_id)
-    return [ActividadOut.model_validate(a) for a in q.all()]
+    hoy = date_type.today()
+    result = []
+    for a in q.all():
+        out = ActividadOut.model_validate(a)
+        out.total_inscritos = len(a.inscripciones)
+        out.dispositivo_nombre = a.dispositivo.nombre if a.dispositivo else None
+        if a.fecha_inicio and a.fecha_inicio < hoy:
+            out.activa = False
+        result.append(out)
+    return result
 
 
 # ────────────────────────── CREAR ──────────────────────────
@@ -117,3 +127,43 @@ def eliminar_actividad(
     db.delete(act)
     db.commit()
     return {"message": "Actividad eliminada"}
+
+
+# ────────────────────────── INSCRITOS ──────────────────────────
+@router.get("/{actividad_id}/inscritos")
+def listar_inscritos(
+    actividad_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if current_user.rol not in ("dispositivo", "admin"):
+        raise HTTPException(status_code=403, detail="Sin permisos")
+
+    act = db.query(Actividad).filter(Actividad.id == actividad_id).first()
+    if not act:
+        raise HTTPException(status_code=404, detail="Actividad no encontrada")
+
+    if current_user.rol == "dispositivo":
+        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
+        if not disp or act.dispositivo_id != disp.id:
+            raise HTTPException(status_code=403, detail="No tienes acceso a esta actividad")
+
+    inscritos = (
+        db.query(Inscripcion)
+        .filter(Inscripcion.actividad_id == actividad_id)
+        .all()
+    )
+
+    result = []
+    for insc in inscritos:
+        b = db.query(Beneficiario).filter(Beneficiario.id == insc.beneficiario_id).first()
+        if b:
+            result.append({
+                "beneficiario_id": b.id,
+                "nombre_apodo": b.nombre_apodo,
+                "telefono": b.telefono,
+                "localidad": b.localidad,
+                "fecha_inscripcion": insc.fecha_inscripcion.isoformat() if insc.fecha_inscripcion else None,
+            })
+
+    return {"total": len(result), "inscritos": result}

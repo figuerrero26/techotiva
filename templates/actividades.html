@@ -41,11 +41,6 @@
         <div class="stat-card"><div class="stat-icon rust">📍</div><div class="stat-val" id="stat-lugares">—</div><div class="stat-label">Lugares</div></div>
       </div>
 
-      <!-- CARDS -->
-      <div class="grid-3" id="acts-cards">
-        <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando actividades...</div>
-      </div>
-
       <!-- TABLA -->
       <div class="panel">
         <div class="panel-head">
@@ -55,7 +50,7 @@
         <div style="overflow-x:auto">
           <table>
             <thead>
-              <tr><th>Actividad</th><th>Tipo</th><th>Lugar</th><th>Día</th><th>Hora</th></tr>
+              <tr><th>Actividad</th><th>Tipo</th><th id="th-disp-act" style="display:none">Dispositivo</th><th>Lugar</th><th>Fecha</th><th>Hora</th><th id="th-inscritos-act" style="display:none">Inscritos</th><th>Estado</th></tr>
             </thead>
             <tbody id="acts-tbody">
               <tr><td colspan="5" style="color:var(--on-bg-muted)">Cargando...</td></tr>
@@ -78,11 +73,11 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
       <div class="field" style="grid-column:1/-1">
         <label>Nombre *</label>
-        <input type="text" id="act-nombre" placeholder="Ej: Taller de grafiti" style="width:100%">
+        <input type="text" id="act-nombre" placeholder="Ej: Taller de grafiti" style="width:100%" required>
       </div>
       <div class="field">
-        <label>Tipo</label>
-        <select id="act-tipo" style="width:100%">
+        <label>Tipo *</label>
+        <select id="act-tipo" style="width:100%" required>
           <option value="">Selecciona...</option>
           <option>Artístico</option><option>Cultural</option><option>Deportivo</option>
           <option>Ambiental</option><option>Educativo</option><option>Escucha</option>
@@ -93,24 +88,20 @@
         <input type="text" id="act-emoji" placeholder="🎨" style="width:100%" maxlength="2">
       </div>
       <div class="field" style="grid-column:1/-1">
-        <label>Lugar</label>
-        <input type="text" id="act-lugar" placeholder="Ej: Parque El Tintal" style="width:100%">
+        <label>Lugar *</label>
+        <input type="text" id="act-lugar" placeholder="Ej: Parque El Tintal" style="width:100%" required>
       </div>
       <div class="field">
-        <label>Día de la semana</label>
-        <input type="text" id="act-dia" placeholder="Ej: Lunes, Miércoles" style="width:100%">
+        <label>Fecha de inicio *</label>
+        <input type="date" id="act-fecha" style="width:100%" required>
       </div>
       <div class="field">
-        <label>Hora</label>
-        <input type="time" id="act-hora" style="width:100%">
+        <label>Hora *</label>
+        <input type="time" id="act-hora" style="width:100%" required>
       </div>
       <div class="field">
         <label>Cupo máximo</label>
         <input type="number" id="act-cupo" placeholder="Ej: 20" style="width:100%" min="1">
-      </div>
-      <div class="field">
-        <label>Fecha de inicio</label>
-        <input type="date" id="act-fecha" style="width:100%">
       </div>
       <div class="field" style="grid-column:1/-1">
         <label>Descripción</label>
@@ -145,6 +136,24 @@
   </div>
 </div>
 </div>
+<!-- ═══ MODAL INSCRITOS ═══ -->
+<div id="modal-inscritos-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+            z-index:1100;align-items:center;justify-content:center;padding:1rem">
+  <div class="panel" style="width:100%;max-width:500px;max-height:85vh;overflow-y:auto;position:relative">
+    <button onclick="document.getElementById('modal-inscritos-overlay').style.display='none'"
+            style="position:absolute;top:1rem;right:1rem;background:none;border:none;
+                   font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head">
+      <span class="panel-title" id="inscritos-titulo">Inscritos</span>
+      <span class="tag blue" id="inscritos-count">0</span>
+    </div>
+    <div id="inscritos-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+      <div style="color:var(--on-bg-muted);font-size:0.85rem">Cargando...</div>
+    </div>
+  </div>
+</div>
+
 <script src="/static/js/mascate-utils.js"></script>
 <script src="/static/js/actividades.js"></script>
 </body>

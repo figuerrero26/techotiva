@@ -6,8 +6,10 @@ import csv
 import io
 import json
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from app.services.email_service import enviar_correo_bienvenida_dispositivo, enviar_correo_recuperacion
+from app.core.config import settings
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -19,6 +21,7 @@ from app.models.models import (
 from app.schemas.schemas import (
     AdminStats, UsuarioAdmin, CambiarEstado, AlertaOut,
     AdminDispositivoOut, AdminDispositivoCreate, CambiarRolRequest,
+    BeneficiarioResumen,
 )
 from app.routers._deps import get_current_user, require_role
 from app.services.estado_service import EstadoService
@@ -36,14 +39,25 @@ def _build_usuario_admin(u: Usuario) -> UsuarioAdmin:
     telefono = None
     descripcion = None
     genero = None
+    prescriptor_nombre = None
+    dispositivo_nombre = None
+    prescriptor_id_val = None
+    dispositivo_id_val = None
+    beneficiario_id_val = None
 
     if u.rol == "dispositivo" and u.dispositivo:
         nombre = u.dispositivo.nombre
         telefono = u.dispositivo.telefono
         descripcion = u.dispositivo.descripcion
+        dispositivo_id_val = u.dispositivo.id
+        dispositivo_nombre = u.dispositivo.nombre
     elif u.rol == "prescriptor" and u.prescriptor:
         nombre = u.prescriptor.nombre_completo
         telefono = u.prescriptor.telefono
+        prescriptor_id_val = u.prescriptor.id
+        descripcion = u.prescriptor.perfil_disciplina
+        if u.prescriptor.dispositivo_id and u.prescriptor.dispositivo:
+            dispositivo_nombre = u.prescriptor.dispositivo.nombre
     elif u.rol == "beneficiario" and u.beneficiario:
         nombre = u.beneficiario.nombre_apodo
         fecha_nacimiento = u.beneficiario.fecha_nacimiento
@@ -51,6 +65,12 @@ def _build_usuario_admin(u: Usuario) -> UsuarioAdmin:
         telefono = u.beneficiario.telefono
         descripcion = u.beneficiario.descripcion
         genero = u.beneficiario.genero
+        beneficiario_id_val = u.beneficiario.id
+        if u.beneficiario.prescriptor_id and u.beneficiario.prescriptor:
+            prescriptor_nombre = u.beneficiario.prescriptor.nombre_completo
+        if u.beneficiario.dispositivo_id and u.beneficiario.dispositivo:
+            dispositivo_nombre = u.beneficiario.dispositivo.nombre
+            dispositivo_id_val = u.beneficiario.dispositivo_id
     elif u.rol == "admin":
         nombre = "Admin"
 
@@ -66,6 +86,13 @@ def _build_usuario_admin(u: Usuario) -> UsuarioAdmin:
         telefono=telefono,
         descripcion=descripcion,
         genero=genero,
+        prescriptor_nombre=prescriptor_nombre,
+        dispositivo_nombre=dispositivo_nombre,
+        prescriptor_id=prescriptor_id_val,
+        dispositivo_id=dispositivo_id_val,
+        beneficiario_id=beneficiario_id_val,
+        perfil_disciplina=u.prescriptor.perfil_disciplina if u.rol == "prescriptor" and u.prescriptor else None,
+        politica_privacidad_at=u.politica_privacidad_at,
     )
 
 
@@ -120,12 +147,15 @@ def admin_stats(
         if not ultimo_seg:
             alertas += 1
 
+    total_acts = db.query(Actividad).count()
+
     return AdminStats(
         total_dispositivos=total_disp,
         total_usuarios=total_users,
         total_prescriptores=total_presc,
         total_beneficiarios=total_benef,
         alertas_pendientes=alertas,
+        total_actividades=total_acts,
     )
 
 
@@ -213,6 +243,154 @@ def cambiar_rol_usuario(
     return _build_usuario_admin(user)
 
 
+# ────────────────────────── CREAR PERFIL DISPOSITIVO PARA USUARIO EXISTENTE ──────────────────────────
+@router.post("/usuarios/{usuario_id}/crear-dispositivo", response_model=UsuarioAdmin)
+def crear_perfil_dispositivo(
+    usuario_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    user = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.rol != "dispositivo":
+        raise HTTPException(status_code=400, detail="El usuario no tiene rol de dispositivo")
+    if user.dispositivo:
+        raise HTTPException(status_code=409, detail="Ya tiene un perfil de dispositivo")
+
+    disp = Dispositivo(
+        usuario_id=user.id,
+        nombre=user.email,
+    )
+    db.add(disp)
+    db.flush()
+
+    service = EstadoService(db)
+    service.cambiar_estado(entidad_obj=disp, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Perfil creado desde admin")
+
+    db.commit()
+    db.refresh(user)
+    return _build_usuario_admin(user)
+
+
+# ────────────────────────── ELIMINAR USUARIO ──────────────────────────
+@router.delete("/usuarios/{usuario_id}", status_code=204)
+def eliminar_usuario(
+    usuario_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    user = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta")
+
+    try:
+        # Limpiar FK estado_actual del usuario
+        user.estado_actual_id = None
+        db.flush()
+
+        # ── Beneficiario (puede existir aunque el rol actual sea otro) ──
+        benef = db.query(Beneficiario).filter(Beneficiario.usuario_id == user.id).first()
+        if benef:
+            benef.estado_actual_id = None
+            db.flush()
+            db.query(Seguimiento).filter(Seguimiento.beneficiario_id == benef.id).delete(synchronize_session="fetch")
+            db.flush()
+            db.query(PrimerContacto).filter(PrimerContacto.beneficiario_id == benef.id).delete(synchronize_session="fetch")
+            db.flush()
+            db.query(Inscripcion).filter(Inscripcion.beneficiario_id == benef.id).delete(synchronize_session="fetch")
+            db.flush()
+            db.query(EstadoRegistro).filter(
+                EstadoRegistro.entidad_tipo.in_(["beneficiarios", "beneficiario"]),
+                EstadoRegistro.entidad_id == benef.id,
+            ).delete(synchronize_session="fetch")
+            db.flush()
+            db.delete(benef)
+            db.flush()
+
+        # ── Prescriptor ──
+        presc = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+        if presc:
+            presc.estado_actual_id = None
+            db.flush()
+            db.query(Beneficiario).filter(Beneficiario.prescriptor_id == presc.id).update(
+                {"prescriptor_id": None}, synchronize_session="fetch"
+            )
+            db.flush()
+            db.query(Seguimiento).filter(Seguimiento.prescriptor_id == presc.id).delete(synchronize_session="fetch")
+            db.flush()
+            db.query(PrimerContacto).filter(PrimerContacto.prescriptor_id == presc.id).delete(synchronize_session="fetch")
+            db.flush()
+            db.query(EstadoRegistro).filter(
+                EstadoRegistro.entidad_tipo.in_(["prescriptores", "prescriptor"]),
+                EstadoRegistro.entidad_id == presc.id,
+            ).delete(synchronize_session="fetch")
+            db.flush()
+            db.delete(presc)
+            db.flush()
+
+        # ── Dispositivo ──
+        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == user.id).first()
+        if disp:
+            disp.estado_actual_id = None
+            db.flush()
+            db.query(Prescriptor).filter(Prescriptor.dispositivo_id == disp.id).update(
+                {"dispositivo_id": None}, synchronize_session="fetch"
+            )
+            db.flush()
+            db.query(EstadoRegistro).filter(
+                EstadoRegistro.entidad_tipo.in_(["dispositivos", "dispositivo"]),
+                EstadoRegistro.entidad_id == disp.id,
+            ).delete(synchronize_session="fetch")
+            db.flush()
+            db.delete(disp)
+            db.flush()
+
+        # ── Estados del usuario ──
+        db.query(EstadoRegistro).filter(
+            EstadoRegistro.entidad_tipo.in_(["usuarios", "usuario"]),
+            EstadoRegistro.entidad_id == user.id,
+        ).delete(synchronize_session=False)
+
+        db.delete(user)
+        db.commit()
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al eliminar: {str(e)}")
+
+
+# ────────────────────────── RESTABLECER CONTRASEÑA ──────────────────────────
+@router.post("/usuarios/{usuario_id}/restablecer-password")
+def admin_restablecer_password(
+    usuario_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    from app.services.email_service import generar_token
+    user = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if not user.email or user.email.endswith("@sin-cuenta.mascate"):
+        raise HTTPException(status_code=400, detail="Este usuario no tiene un correo real registrado")
+
+    token = generar_token()
+    user.password_reset_token = token
+    user.password_reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=24)
+    db.commit()
+
+    background_tasks.add_task(
+        enviar_correo_recuperacion,
+        email=user.email,
+        token=token,
+        base_url=settings.app_base_url,
+    )
+    return {"message": f"Correo de restablecimiento enviado a {user.email}"}
+
+
 # ────────────────────────── ALERTAS ──────────────────────────
 @router.get("/alertas", response_model=list[AlertaOut])
 def alertas_sistema(
@@ -268,6 +446,7 @@ def alertas_sistema(
 @router.post("/dispositivos", response_model=AdminDispositivoOut, status_code=201)
 def admin_crear_dispositivo(
     data: AdminDispositivoCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only),
 ):
@@ -309,6 +488,13 @@ def admin_crear_dispositivo(
 
     db.commit()
     db.refresh(disp)
+
+    background_tasks.add_task(
+        enviar_correo_bienvenida_dispositivo,
+        email=data.email,
+        password=password_temporal,
+        base_url=settings.app_base_url,
+    )
 
     return AdminDispositivoOut(
         id=disp.id,
@@ -378,6 +564,37 @@ def admin_listar_dispositivos(
     return result
 
 
+# ────────────────────────── ELIMINAR DISPOSITIVO ──────────────────────────
+@router.delete("/dispositivos/{dispositivo_id}", status_code=204)
+def admin_eliminar_dispositivo(
+    dispositivo_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
+    if not disp:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    tiene_actividades = db.query(Actividad).filter(Actividad.dispositivo_id == dispositivo_id).count() > 0
+    tiene_prescriptores = len(disp.prescriptores) > 0
+    tiene_pc = db.query(PrimerContacto).filter(PrimerContacto.dispositivo_id == dispositivo_id).count() > 0
+
+    if tiene_actividades or tiene_prescriptores or tiene_pc:
+        raise HTTPException(status_code=409, detail="No se puede eliminar: el dispositivo tiene datos asociados")
+
+    usuario = db.query(Usuario).filter(Usuario.id == disp.usuario_id).first()
+    db.delete(disp)
+    db.flush()
+    if usuario:
+        db.query(EstadoRegistro).filter(
+            EstadoRegistro.entidad_tipo == "usuario",
+            EstadoRegistro.entidad_id == usuario.id,
+        ).delete(synchronize_session="fetch")
+        db.flush()
+        db.delete(usuario)
+    db.commit()
+
+
 # ────────────────────────── EXPORTAR DISPOSITIVOS ──────────────────────────
 @router.get("/dispositivos/exportar")
 def exportar_dispositivos(
@@ -440,6 +657,30 @@ def exportar_dispositivos(
     )
 
 
+# ────────────────────────── LISTAR BENEFICIARIOS (para formularios) ──────────
+@router.get("/beneficiarios", response_model=list[BeneficiarioResumen])
+def admin_listar_beneficiarios(
+    admin_actual: Usuario = Depends(admin_only),
+    db: Session = Depends(get_db),
+):
+    benefs = db.query(Beneficiario).all()
+    result = []
+    for b in benefs:
+        email = b.usuario.email if b.usuario else None
+        status = b.estado
+        result.append(BeneficiarioResumen(
+            id=b.id,
+            nombre_apodo=b.nombre_apodo,
+            email=email,
+            genero=b.genero,
+            fecha_nacimiento=b.fecha_nacimiento,
+            localidad=b.localidad,
+            telefono=b.telefono,
+            status=status,
+        ))
+    return result
+
+
 # ────────────────────────── APROBAR USUARIO ──────────────────────────
 @router.post("/usuarios/{usuario_id}/aprobar")
 def aprobar_usuario(
@@ -462,3 +703,131 @@ def aprobar_usuario(
         service.cambiar_estado(entidad_obj=usuario.beneficiario, nuevo_estado=Estados.ACTIVO, admin_id=admin_actual.id, motivo="Documentación verificada correctamente")
 
     return {"msg": "Usuario aprobado"}
+
+
+# ────────────────────────── SOLICITUDES DE PRESCRIPTORES ──────────────────────────
+@router.get("/solicitudes-prescriptor")
+def listar_solicitudes_prescriptor(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    """Retorna todos los prescriptores con solicitud de unión pendiente a algún dispositivo."""
+    prescs = (
+        db.query(Prescriptor)
+        .filter(Prescriptor.solicitud_dispositivo_id.isnot(None))
+        .all()
+    )
+    result = []
+    for p in prescs:
+        disp_sol = db.query(Dispositivo).filter(Dispositivo.id == p.solicitud_dispositivo_id).first()
+        disp_actual = db.query(Dispositivo).filter(Dispositivo.id == p.dispositivo_id).first() if p.dispositivo_id else None
+        result.append({
+            "prescriptor_id":           p.id,
+            "nombre_completo":          p.nombre_completo,
+            "email":                    p.usuario.email if p.usuario else "",
+            "dispositivo_id_actual":    p.dispositivo_id,
+            "dispositivo_nombre_actual": disp_actual.nombre if disp_actual else None,
+            "solicitud_dispositivo_id": p.solicitud_dispositivo_id,
+            "solicitud_nombre":         disp_sol.nombre if disp_sol else None,
+        })
+    return result
+
+
+@router.post("/prescriptores/{prescriptor_id}/aprobar-solicitud")
+def admin_aprobar_solicitud(
+    prescriptor_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
+    if not presc.solicitud_dispositivo_id:
+        raise HTTPException(status_code=400, detail="No tiene solicitud pendiente")
+
+    presc.dispositivo_id = presc.solicitud_dispositivo_id
+    presc.solicitud_dispositivo_id = None
+
+    service = EstadoService(db)
+    if presc.usuario:
+        service.cambiar_estado(entidad_obj=presc.usuario, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Solicitud aprobada por admin")
+    service.cambiar_estado(entidad_obj=presc, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Solicitud aprobada por admin")
+
+    return {"msg": "Solicitud aprobada"}
+
+
+@router.post("/prescriptores/{prescriptor_id}/rechazar-solicitud")
+def admin_rechazar_solicitud(
+    prescriptor_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
+    presc.solicitud_dispositivo_id = None
+    db.commit()
+    return {"msg": "Solicitud rechazada"}
+
+
+# ────────────────────────── ASIGNAR / DESASOCIAR DISPOSITIVO ──────────────────────────
+from pydantic import BaseModel as _BM
+
+class AsignarDispositivoRequest(_BM):
+    dispositivo_id: int | None = None
+
+
+@router.put("/prescriptores/{prescriptor_id}/dispositivo")
+def admin_asignar_dispositivo(
+    prescriptor_id: int,
+    data: AsignarDispositivoRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    """Asigna o quita el dispositivo de un prescriptor directamente (sin solicitud)."""
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
+
+    if data.dispositivo_id is not None:
+        disp = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
+        if not disp:
+            raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    presc.dispositivo_id = data.dispositivo_id
+    presc.solicitud_dispositivo_id = None  # limpiar solicitud pendiente si la había
+    db.commit()
+
+    disp_nombre = None
+    if data.dispositivo_id:
+        d = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
+        disp_nombre = d.nombre if d else None
+
+    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp_nombre}
+
+
+@router.put("/beneficiarios/{beneficiario_id}/dispositivo")
+def admin_asignar_dispositivo_beneficiario(
+    beneficiario_id: int,
+    data: AsignarDispositivoRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    benef = db.query(Beneficiario).filter(Beneficiario.id == beneficiario_id).first()
+    if not benef:
+        raise HTTPException(status_code=404, detail="Beneficiario no encontrado")
+
+    if data.dispositivo_id is not None:
+        disp = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
+        if not disp:
+            raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+
+    benef.dispositivo_id = data.dispositivo_id
+    db.commit()
+
+    disp_nombre = None
+    if data.dispositivo_id:
+        d = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
+        disp_nombre = d.nombre if d else None
+
+    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp_nombre}

@@ -26,21 +26,17 @@
         <h1>Mis actividades inscritas</h1>
         <p>Actividades en las que participas actualmente.</p>
       </div>
-      <div class="stats-row cols-3">
-        <div class="stat-card"><div class="stat-icon mustard">📅</div><div class="stat-val" id="stat-total">—</div><div class="stat-label">Total inscritas</div></div>
-        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-val" id="stat-activas">—</div><div class="stat-label">Activas</div></div>
-        <div class="stat-card"><div class="stat-icon blue">🎯</div><div class="stat-val" id="stat-tipos">—</div><div class="stat-label">Tipos distintos</div></div>
-      </div>
-      <div class="grid-3" id="mis-acts-grid">
-        <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:1rem">Cargando...</div>
-      </div>
-      <div class="panel" style="margin-top:0">
-        <div class="panel-head">
-          <span class="panel-title">Explorar más actividades</span>
-          <button class="panel-action" onclick="window.location.href='/actividades'">Ver todas →</button>
+      <div class="panel">
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Actividad</th><th>Tipo</th><th>Dispositivo</th><th>Lugar</th><th>Fecha</th><th>Hora</th><th>Inscritos</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="mis-acts-tbody">
+              <tr><td colspan="9" style="color:var(--on-bg-muted)">Cargando...</td></tr>
+            </tbody>
+          </table>
         </div>
-        <p style="font-size:0.85rem;color:var(--on-bg-muted)">¿Quieres unirte a más actividades? Explora todo lo disponible en tu territorio.</p>
-        <button class="btn btn-sm btn-green" onclick="window.location.href='/actividades'">🔍 Buscar actividades</button>
       </div>
     </div>
   </div>
