@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Admin por defecto
     admin_email: str = "admin@mascate.com"
-    admin_password: str = "Admin1234!"
+    admin_password: str = "Test1234!"
 
     # App
     app_env: str = "development"
