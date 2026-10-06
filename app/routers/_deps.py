@@ -8,8 +8,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from app.core.security import decode_access_token
-# IMPORTANTE: Asegúrate de importar Usuario y Estados
-from app.models.models import Usuario, Estados 
+from app.models.models import Usuario, Estados
 
 security_scheme = HTTPBearer()
 

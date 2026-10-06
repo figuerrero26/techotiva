@@ -5,12 +5,18 @@ Router de administración: estadísticas globales, gestión de usuarios y alerta
 import csv
 import io
 import json
+import secrets
+import string
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from app.services.email_service import enviar_correo_bienvenida_dispositivo, enviar_correo_recuperacion
-from app.core.config import settings
+from pydantic import BaseModel as _BM
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
+from app.services.email_service import (
+    enviar_correo_bienvenida_dispositivo, enviar_correo_recuperacion, generar_token,
+)
+from app.core.config import settings
 
 from database import get_db
 from app.core.security import hash_password
@@ -165,7 +171,6 @@ def listar_usuarios(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only),
 ):
-    from sqlalchemy import case
     users = (
         db.query(Usuario)
         .outerjoin(EstadoRegistro, Usuario.estado_actual_id == EstadoRegistro.id)
@@ -370,7 +375,6 @@ def admin_restablecer_password(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only),
 ):
-    from app.services.email_service import generar_token
     user = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -419,7 +423,6 @@ def alertas_sistema(
                 tiene_actividad_reciente = True
 
         if not tiene_actividad_reciente:
-            from sqlalchemy import func
             ultima_fecha = (
                 db.query(func.max(Seguimiento.fecha))
                 .filter(Seguimiento.prescriptor_id.in_(presc_ids) if presc_ids else False)
@@ -454,7 +457,6 @@ def admin_crear_dispositivo(
         raise HTTPException(status_code=409, detail="Ya existe una cuenta con ese correo")
 
     # Generar password temporal
-    import secrets, string
     alphabet = string.ascii_letters + string.digits
     password_temporal = ''.join(secrets.choice(alphabet) for _ in range(12))
 
@@ -771,8 +773,6 @@ def admin_rechazar_solicitud(
 
 
 # ────────────────────────── ASIGNAR / DESASOCIAR DISPOSITIVO ──────────────────────────
-from pydantic import BaseModel as _BM
-
 class AsignarDispositivoRequest(_BM):
     dispositivo_id: int | None = None
 
@@ -798,12 +798,7 @@ def admin_asignar_dispositivo(
     presc.solicitud_dispositivo_id = None  # limpiar solicitud pendiente si la había
     db.commit()
 
-    disp_nombre = None
-    if data.dispositivo_id:
-        d = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
-        disp_nombre = d.nombre if d else None
-
-    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp_nombre}
+    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp.nombre if data.dispositivo_id else None}
 
 
 @router.put("/beneficiarios/{beneficiario_id}/dispositivo")
@@ -823,11 +818,8 @@ def admin_asignar_dispositivo_beneficiario(
             raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
 
     benef.dispositivo_id = data.dispositivo_id
+    if data.dispositivo_id is None:
+        benef.prescriptor_id = None
     db.commit()
 
-    disp_nombre = None
-    if data.dispositivo_id:
-        d = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
-        disp_nombre = d.nombre if d else None
-
-    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp_nombre}
+    return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp.nombre if data.dispositivo_id else None}

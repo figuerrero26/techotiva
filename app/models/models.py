@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Boolean, Text,
-    DateTime, ForeignKey, Date, Time,
+    DateTime, ForeignKey, Date, Time, func,
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -98,10 +98,8 @@ class Dispositivo(Base):
     telefono          = Column(String(30))
     redes_sociales    = Column(String(300))
     estado_actual_id  = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
-    # ── NUEVOS ────────────────────────────────────
     descripcion       = Column(Text, nullable=True)
     capacidad         = Column(Integer, nullable=True)
-    # ──────────────────────────────────────────────
 
     estado_actual      = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
     usuario            = relationship("Usuario", back_populates="dispositivo")
@@ -188,7 +186,8 @@ class Beneficiario(Base):
     ha_participado           = Column(String(20), nullable=True)   # Sí / No / Tal vez
 
     # Identidad y cultura
-    religion = Column(String(60), nullable=True)
+    religion            = Column(String(60), nullable=True)
+    pertenencia_etnica  = Column(String(5),  nullable=True)   # 'Sí' / 'No'
 
     # Persona de apoyo extendida
     tiene_persona_apoyo = Column(Boolean, nullable=True)
@@ -227,11 +226,9 @@ class Actividad(Base):
     hora           = Column(String(20))
     emoji          = Column(String(10), default="📋")
     activa         = Column(Boolean, default=True)
-    # ── NUEVOS ────────────────────────────────────
     descripcion    = Column(Text, nullable=True)
     cupo_maximo    = Column(Integer, nullable=True)
     fecha_inicio   = Column(Date, nullable=True)
-    # ──────────────────────────────────────────────
 
     dispositivo   = relationship("Dispositivo", back_populates="actividades")
     inscripciones = relationship("Inscripcion", back_populates="actividad", cascade="all, delete-orphan")
@@ -260,6 +257,7 @@ class PrimerContacto(Base):
     beneficiario_id  = Column(Integer, ForeignKey("beneficiarios.id"), nullable=False)
     dispositivo_id   = Column(Integer, ForeignKey("dispositivos.id"), nullable=False)
     prescriptor_id   = Column(Integer, ForeignKey("prescriptores.id"), nullable=True)
+    created_at       = Column(DateTime, default=datetime.utcnow, nullable=True)
 
     # Datos del convenio
     convenio_515        = Column(String(20), nullable=True)

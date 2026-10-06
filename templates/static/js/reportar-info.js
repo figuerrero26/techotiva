@@ -446,6 +446,7 @@ async function guardarPrimerContacto() {
     convenio_515:          _sel('pc-convenio515'),
     tipo_dbc:              dbcNombre || _val('pc-dbc'),
     numero_caso:           _val('pc-num-caso'),
+    politica_privacidad:   document.getElementById('pc-politica-privacidad')?.checked ? 'Sí' : 'No',
     // § 2 Evento
     fecha_contacto:        fecha,
     hora_contacto:         _sel('pc-hora'),
@@ -467,6 +468,7 @@ async function guardarPrimerContacto() {
     num_hijos:             _num('pc-num-hijos'),
     procesos_previos:      _num('pc-procesos') ?? 0,
     // § 5 Identidad y cultura
+    pertenencia_etnica:    _sel('pc-grupo-etnico') || null,
     etnia:                 _val('pc-cual-etnico'),
     religion:              _sel('pc-religion'),
     // § 6 Persona de apoyo
@@ -582,6 +584,8 @@ function limpiarPC() {
 
   document.querySelectorAll('#pc-situaciones-checks input[type="checkbox"]')
     .forEach(c => c.checked = false);
+  const polCheck = document.getElementById('pc-politica-privacidad');
+  if (polCheck) polCheck.checked = false;
 
   const modo = document.getElementById('pc-modo');
   if (modo) { modo.value = 'nueva'; }

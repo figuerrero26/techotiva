@@ -2,6 +2,7 @@
 Router de beneficiarios: perfil propio, edición y actividades.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import date as date_type
 from database import get_db
@@ -143,7 +144,6 @@ def mis_seguimientos(
     )
     result = []
     for s in segs:
-        presc = db.query(Prescriptor).filter(Prescriptor.id == s.prescriptor_id).first()
         result.append(SeguimientoOut(
             id=s.id,
             prescriptor_id=s.prescriptor_id,
@@ -151,7 +151,7 @@ def mis_seguimientos(
             tipo_registro=s.tipo_registro,
             observaciones=s.observaciones,
             fecha=s.fecha,
-            nombre_beneficiario=presc.nombre_completo if presc else None,
+            nombre_beneficiario=benef.nombre_apodo,
         ))
     return result
 
@@ -192,11 +192,15 @@ def inscribirse(
     return InscripcionResponse(mensaje="Inscripción exitosa", actividad_id=data.actividad_id)
 
 
+class AsignarPrescriptorRequest(BaseModel):
+    prescriptor_id: int | None = None
+
+
 # ────────────────────────── PUT /asignar-prescriptor ──────────────────────────
 @router.put("/{beneficiario_id}/asignar-prescriptor")
 def asignar_prescriptor(
     beneficiario_id: int,
-    data: dict,
+    data: AsignarPrescriptorRequest,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -207,15 +211,14 @@ def asignar_prescriptor(
     if not benef:
         raise HTTPException(status_code=404, detail="Beneficiario no encontrado")
 
-    prescriptor_id = data.get("prescriptor_id")
+    prescriptor_id = data.prescriptor_id
     if prescriptor_id:
         presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
         if not presc:
             raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
         # Verificar que el prescriptor pertenece al mismo dispositivo que el beneficiario
         if current_user.rol == "dispositivo":
-            from app.models.models import Dispositivo as Disp
-            disp = db.query(Disp).filter(Disp.usuario_id == current_user.id).first()
+            disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
             if disp and presc.dispositivo_id != disp.id:
                 raise HTTPException(status_code=403, detail="El prescriptor no pertenece a tu dispositivo")
 

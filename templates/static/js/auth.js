@@ -206,6 +206,7 @@ async function doRegister() {
   const req = ROL_REQUIRED[selectedRole];
   if (req && !p[req.field]) { showToast(req.msg, true); return; }
   if (!p.email || !p.password) { showToast('Completa correo y contraseña', true); return; }
+  if (p.password.length < 8) { showToast('La contraseña debe tener al menos 8 caracteres', true); return; }
   const privCheck = document.getElementById('regPrivacidad');
   if (!privCheck?.checked) { showToast('Debes aceptar la política de privacidad para continuar', true); return; }
   p.politica_privacidad = true;
@@ -217,7 +218,13 @@ async function doRegister() {
       body: JSON.stringify(p)
     });
     const data = await res.json();
-    if (!res.ok) { showToast(data.detail || 'Error al registrar', true); return; }
+    if (!res.ok) {
+      const msg = Array.isArray(data.detail)
+        ? data.detail.map(e => e.msg).join(' | ')
+        : (data.detail || 'Error al registrar');
+      showToast(msg, true);
+      return;
+    }
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('registerView').style.display = 'none';
     const sv = document.getElementById('successView');

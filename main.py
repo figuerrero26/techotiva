@@ -5,11 +5,10 @@ from fastapi.responses import FileResponse, RedirectResponse
 from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, Base, engine, SessionLocal, run_migrations
 
 from app.core.config import settings
 from app.core.security import hash_password
-from database import Base, engine, SessionLocal, run_migrations
 
 
 # ─── Seed: crear admin por defecto si no existe ───────────────────────────────
@@ -47,12 +46,110 @@ def seed_admin():
     finally:
         db.close()
 
+# ─── Seed: datos iniciales (dispositivos, prescriptores, beneficiarios) ───────
+def seed_datos():
+    from app.models.models import (
+        Usuario, Dispositivo, Prescriptor, Beneficiario, EstadoRegistro, Estados
+    )
+
+    PASSWORD = "Test1234!"
+
+    dispositivos_data = [
+        {"email": "artevivo.fontibon@ctt.org",        "nombre": "Arte Vivo Fontibón",      "tipo_servicio": "Arte y cultura", "lugar_actividades": "Fontibón"},
+        {"email": "clubdeportivo.engativa@ctt.org",   "nombre": "Club Deportivo Engativá", "tipo_servicio": "Deporte",        "lugar_actividades": "Engativá"},
+    ]
+    prescriptores_data = [
+        {"email": "frankin.guerrero@ctt.org", "nombre_completo": "Frankin Ivan Guerrero", "perfil_disciplina": "Trabajo social", "disp_email": "artevivo.fontibon@ctt.org"},
+        {"email": "ana.martinez@ctt.org",     "nombre_completo": "Ana Sofia Martinez",    "perfil_disciplina": "Psicología",     "disp_email": "clubdeportivo.engativa@ctt.org"},
+    ]
+    beneficiarios_data = [
+        {"email": "laura.omana@correo.com",  "nombre_apodo": "Laura Isabela Omaña",  "disp_email": "artevivo.fontibon@ctt.org"},
+        {"email": "karol.cotame@correo.com", "nombre_apodo": "Karol Marcela Cotame", "disp_email": "artevivo.fontibon@ctt.org"},
+        {"email": "yeimy.poveda@correo.com", "nombre_apodo": "Yeimy Poveda",         "disp_email": "clubdeportivo.engativa@ctt.org"},
+    ]
+
+    db = SessionLocal()
+    try:
+        def _make_estado(tipo, entidad_id):
+            e = EstadoRegistro(entidad_tipo=tipo, entidad_id=entidad_id,
+                               estado=Estados.ACTIVO, motivo="Dato inicial", cambiado_por=None)
+            db.add(e)
+            db.flush()
+            return e
+
+        def _make_usuario(email, rol):
+            u = Usuario(email=email, password_hash=hash_password(PASSWORD),
+                        rol=rol, email_verificado=True)
+            db.add(u)
+            db.flush()
+            eu = _make_estado("usuario", u.id)
+            u.estado_actual_id = eu.id
+            return u
+
+        # ── Dispositivos ──────────────────────────────────────────────────────
+        disp_ids = {}
+        for d in dispositivos_data:
+            existing = db.query(Usuario).filter(Usuario.email == d["email"]).first()
+            if not existing:
+                u = _make_usuario(d["email"], "dispositivo")
+                perfil = Dispositivo(usuario_id=u.id, nombre=d["nombre"],
+                                     tipo_servicio=d["tipo_servicio"],
+                                     lugar_actividades=d["lugar_actividades"])
+                db.add(perfil)
+                db.flush()
+                ep = _make_estado("dispositivo", perfil.id)
+                perfil.estado_actual_id = ep.id
+                db.flush()
+                disp_ids[d["email"]] = perfil.id
+                print(f"  Dispositivo creado: {d['nombre']}")
+            else:
+                p = db.query(Dispositivo).filter(Dispositivo.usuario_id == existing.id).first()
+                if p:
+                    disp_ids[d["email"]] = p.id
+        db.commit()
+
+        # ── Prescriptores ─────────────────────────────────────────────────────
+        for d in prescriptores_data:
+            existing = db.query(Usuario).filter(Usuario.email == d["email"]).first()
+            if not existing:
+                u = _make_usuario(d["email"], "prescriptor")
+                perfil = Prescriptor(usuario_id=u.id, nombre_completo=d["nombre_completo"],
+                                     perfil_disciplina=d["perfil_disciplina"],
+                                     dispositivo_id=disp_ids.get(d["disp_email"]))
+                db.add(perfil)
+                db.flush()
+                ep = _make_estado("prescriptor", perfil.id)
+                perfil.estado_actual_id = ep.id
+                db.flush()
+                print(f"  Prescriptor creado: {d['nombre_completo']}")
+        db.commit()
+
+        # ── Beneficiarios ─────────────────────────────────────────────────────
+        for d in beneficiarios_data:
+            existing = db.query(Usuario).filter(Usuario.email == d["email"]).first()
+            if not existing:
+                u = _make_usuario(d["email"], "beneficiario")
+                perfil = Beneficiario(usuario_id=u.id, nombre_apodo=d["nombre_apodo"],
+                                      dispositivo_id=disp_ids.get(d["disp_email"]))
+                db.add(perfil)
+                db.flush()
+                ep = _make_estado("beneficiario", perfil.id)
+                perfil.estado_actual_id = ep.id
+                db.flush()
+                print(f"  Beneficiario creado: {d['nombre_apodo']}")
+        db.commit()
+
+    finally:
+        db.close()
+
+
 # ─── Lifespan ─────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_migrations()
     seed_admin()
+    seed_datos()
     yield
 
 
@@ -136,7 +233,6 @@ def roles_page():
 
 @app.get("/", include_in_schema=False)
 def root():
-    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/login")
 
 @app.get("/dispositivos-admin", include_in_schema=False)
@@ -172,7 +268,7 @@ def health_check(db: Session = Depends(get_db)):
         },
         "database": {
             "status": db_status,
-            "engine": "postgresql"
+            "engine": "sqlite" if settings.database_url.startswith("sqlite") else "postgresql",
         },
         "timestamp": datetime.now(timezone.utc).isoformat()
     }

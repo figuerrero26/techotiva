@@ -2,13 +2,13 @@ __pycache__/
 venv/
 *.pyc
 *.pyo
+.env
 *.db
 *.htmlz
 FIX.txt
 *.cssz
 templates/THEMES
 baca/
-*.db
 *.sql
 lista_pendientes.html
 *.zip

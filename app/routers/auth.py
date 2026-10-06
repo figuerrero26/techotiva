@@ -272,13 +272,18 @@ def recuperar_password(
     return {"message": "Si ese correo está registrado, recibirás un enlace para restablecer tu contraseña."}
 
 
+class ResetearPasswordRequest(BaseModel):
+    token: str
+    nueva_password: str
+
+
 @router.post("/resetear-password", summary="Establecer nueva contraseña con token")
 def resetear_password(
-    data: dict,
+    data: ResetearPasswordRequest,
     db: Session = Depends(get_db),
 ):
-    token = data.get("token", "").strip()
-    nueva = data.get("nueva_password", "").strip()
+    token = data.token.strip()
+    nueva = data.nueva_password.strip()
     if not token or not nueva:
         raise HTTPException(400, detail="Token y contraseña son requeridos")
     if not _validar_password_nueva(nueva):

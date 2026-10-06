@@ -9,38 +9,12 @@ from pydantic import BaseModel, EmailStr
 
 # ════════════════════ AUTH ════════════════════
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     rol: str
     nombre: str
     user_id: int
-
-
-class RegisterRequest(BaseModel):
-    rol: str
-    email: EmailStr
-    password: str
-    # dispositivo
-    nombre: Optional[str] = None
-    lugar_actividades: Optional[str] = None
-    ubicacion: Optional[str] = None
-    tipo_servicio: Optional[str] = None
-    dia_actividad: Optional[str] = None
-    hora_actividad: Optional[str] = None
-    telefono: Optional[str] = None
-    redes_sociales: Optional[str] = None
-    # prescriptor
-    nombre_completo: Optional[str] = None
-    perfil_disciplina: Optional[str] = None
-    dispositivo_id: Optional[int] = None
-    # beneficiario
-    nombre_apodo: Optional[str] = None
 
 
 class RegisterResponse(BaseModel):
@@ -406,6 +380,7 @@ class _PCBase(BaseModel):
     estado_civil:             Optional[str]  = None
     num_hijos:                Optional[int]  = None
     etnia:                    Optional[str]  = None
+    pertenencia_etnica:       Optional[str]  = None
     religion:                 Optional[str]  = None
     con_quien_vive:           Optional[str]  = None
     sabe_leer_escribir:       Optional[bool] = None
@@ -439,6 +414,7 @@ class PrimerContactoOut(BaseModel):
     beneficiario_id: int
     dispositivo_id: int
     prescriptor_id: Optional[int] = None
+    created_at:      Optional[datetime] = None
     # Convenio
     convenio_515:        Optional[str]  = None
     tipo_dbc:            Optional[str]  = None
@@ -483,6 +459,7 @@ class PrimerContactoOut(BaseModel):
     estado_civil:             Optional[str]  = None
     num_hijos:                Optional[int]  = None
     etnia:                    Optional[str]  = None
+    pertenencia_etnica:       Optional[str]  = None
     religion:                 Optional[str]  = None
     con_quien_vive:           Optional[str]  = None
     sabe_leer_escribir:       Optional[bool] = None

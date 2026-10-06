@@ -120,8 +120,65 @@ Backend informatica social/
 
 ---
 
+## ⚙️ Configuración del archivo `.env`
+
+Crea un archivo `.env` en la raíz del proyecto con la siguiente estructura:
+
+```env
+DATABASE_URL=sqlite:///./mascate.db
+SECRET_KEY=clave_secreta_larga_y_aleatoria
+
+# Cuenta administrador (se crea automáticamente al arrancar si no existe)
+ADMIN_EMAIL=correo_admin@dominio.com
+ADMIN_PASSWORD=clave_admin
+
+# Configuración SMTP para envío de correos
+MAIL_USERNAME=correo_remitente@gmail.com
+MAIL_PASSWORD=contraseña_de_aplicacion_gmail
+MAIL_FROM=correo_remitente@gmail.com
+
+APP_ENV=development
+APP_BASE_URL=http://127.0.0.1:8080
+```
+
+> **`MAIL_PASSWORD`** no es la contraseña normal de Gmail. Debes generar una **contraseña de aplicación** desde: Cuenta Google → Seguridad → Verificación en dos pasos → Contraseñas de aplicaciones.
+
+
+
+---
+
+## 👥 Usuarios por defecto
+
+Al arrancar por primera vez, el servidor crea automáticamente la base de datos y los siguientes usuarios de prueba:
+
+### Administrador
+| Email | Clave |
+|---|---|
+| techotivasite@gmail.com | *(clave configurada en el .env)* |
+
+### Dispositivos
+| Email | Dispositivo | Clave |
+|---|---|---|
+| artevivo.fontibon@ctt.org | Arte Vivo Fontibón | Test1234! |
+| clubdeportivo.engativa@ctt.org | Club Deportivo Engativá | Test1234! |
+
+### Prescriptores
+| Email | Nombre | Clave |
+|---|---|---|
+| frankin.guerrero@ctt.org | Frankin Ivan Guerrero | Test1234! |
+| ana.martinez@ctt.org | Ana Sofia Martinez | Test1234! |
+
+### Beneficiarios
+| Email | Nombre | Clave |
+|---|---|---|
+| laura.omana@correo.com | Laura Isabela Omaña | Test1234! |
+| karol.cotame@correo.com | Karol Marcela Cotame | Test1234! |
+| yeimy.poveda@correo.com | Yeimy Poveda | Test1234! |
+
+---
+
 ## 📝 Notas
 
-- La base de datos `mascate.db` ya viene con datos de prueba (seeds) listos para usar.
-- La autenticación ya está configurada en el proyecto.
-- No se requiere configuración adicional de base de datos ni variables de entorno para arrancar.
+- La base de datos `mascate.db` **no** se incluye en el repositorio — se genera automáticamente al primer arranque.
+- El archivo `.env` **no** se incluye en el repositorio — cada quien debe crear el suyo antes de arrancar.
+- Si necesitas empezar desde cero, borra `mascate.db` y reinicia el servidor.

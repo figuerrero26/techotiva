@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from app.models.models import EstadoRegistro, Estados, TipoEntidad
+from app.models.models import EstadoRegistro, Estados
 
 
 class EstadoRepository:

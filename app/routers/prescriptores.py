@@ -25,7 +25,6 @@ router = APIRouter(prefix="/prescriptores", tags=["Prescriptores"])
 
 def _get_prescriptor(db: Session, user: Usuario) -> Prescriptor:
     """Obtiene el perfil de prescriptor. Si no existe, lo crea automáticamente."""
-    from app.models.models import EstadoRegistro, Estados
     presc = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
     if not presc:
         presc = Prescriptor(usuario_id=user.id, nombre_completo=user.email)
@@ -86,7 +85,6 @@ def mis_asignados(
 
     # 3. Si aún no hay nadie asignado, mostrar los del dispositivo como fallback
     if not benef_ids and presc.dispositivo_id:
-        from app.models.models import Actividad, Inscripcion, PrimerContacto
         insc = (
             db.query(Inscripcion.beneficiario_id)
             .join(Actividad, Actividad.id == Inscripcion.actividad_id)
@@ -133,17 +131,16 @@ def mis_asignados(
                 ultima = ultima.replace(tzinfo=tz.utc)
             dias_sin = (now - ultima).days
 
-        # Obtener email del usuario asociado
-        usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first() if hasattr(benef, 'usuario_id') else None
-
+        usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first()
+        estado = "desvinculado" if benef.prescriptor_id is None else _calcular_estado(dias_sin)
         result.append(AsignadoOut(
             id=benef.id,
             nombre_apodo=benef.nombre_apodo,
             ultima_sesion=ultima,
             dias_sin_sesion=dias_sin,
-            estado=_calcular_estado(dias_sin),
+            estado=estado,
             email=usuario.email if usuario else None,
-            telefono=benef.telefono if hasattr(benef, 'telefono') else None,
+            telefono=benef.telefono,
         ))
 
     return result

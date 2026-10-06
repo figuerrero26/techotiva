@@ -25,7 +25,7 @@ from app.services.email_service import generar_token, enviar_correo_bienvenida_b
 # ── Campos demográficos que viven en Beneficiario ────────────────────────────
 _BENEF_FIELDS = (
     "genero", "telefono", "localidad",
-    "estado_civil", "num_hijos", "etnia", "religion", "con_quien_vive",
+    "estado_civil", "num_hijos", "etnia", "pertenencia_etnica", "religion", "con_quien_vive",
     "sabe_leer_escribir", "sabe_usar_computador", "escolaridad", "ocupacion",
     "apoyo_familiar", "apoyo_comunitario", "apoyo_institucional",
     "apoyo_otro_actor", "cual_actor_social", "practica_deporte",
@@ -61,6 +61,11 @@ router = APIRouter(prefix="/primer-contacto", tags=["Primer Contacto"])
 
 def _get_prescriptor_opt(db: Session, user: Usuario) -> Optional[Prescriptor]:
     return db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+
+
+def _marcar_privacidad(db: Session, usuario: Usuario) -> None:
+    if usuario and not usuario.politica_privacidad_at:
+        usuario.politica_privacidad_at = datetime.now(timezone.utc)
 
 
 def _parse_fecha(s: Optional[str]) -> Optional[ddate]:
@@ -106,6 +111,7 @@ def _to_out(pc: PrimerContacto, benef: Optional[Beneficiario]) -> PrimerContacto
         beneficiario_id=pc.beneficiario_id,
         dispositivo_id=pc.dispositivo_id,
         prescriptor_id=pc.prescriptor_id,
+        created_at=pc.created_at,
         # Convenio
         convenio_515=pc.convenio_515,
         tipo_dbc=pc.tipo_dbc,
@@ -150,6 +156,7 @@ def _to_out(pc: PrimerContacto, benef: Optional[Beneficiario]) -> PrimerContacto
         estado_civil=benef.estado_civil if benef else None,
         num_hijos=benef.num_hijos if benef else None,
         etnia=benef.etnia if benef else None,
+        pertenencia_etnica=benef.pertenencia_etnica if benef else None,
         religion=benef.religion if benef else None,
         con_quien_vive=benef.con_quien_vive if benef else None,
         sabe_leer_escribir=benef.sabe_leer_escribir if benef else None,
@@ -204,6 +211,9 @@ def crear_primer_contacto(
     )
     _apply_pc_fields(pc, data)
     _apply_benef_fields(benef, data)
+
+    if data.politica_privacidad == 'Sí' and benef.usuario:
+        _marcar_privacidad(db, benef.usuario)
 
     db.add(pc)
     db.commit()
@@ -288,6 +298,9 @@ def crear_primer_contacto_sin_cuenta(
     )
     _apply_pc_fields(pc, data)
 
+    if data.politica_privacidad == 'Sí':
+        _marcar_privacidad(db, usuario_anonimo)
+
     db.add(pc)
     db.commit()
     db.refresh(pc)
@@ -322,7 +335,9 @@ def listar_primer_contacto(
 
     if current_user.rol == "prescriptor":
         presc = _get_prescriptor_opt(db, current_user)
-        if presc and presc.dispositivo_id:
+        # When loading a specific beneficiario's ficha, skip the dispositivo filter
+        # so prescriptors can see primer contactos regardless of which dispositivo created them
+        if presc and presc.dispositivo_id and not beneficiario_id:
             q = q.filter(PrimerContacto.dispositivo_id == presc.dispositivo_id)
     elif current_user.rol == "dispositivo":
         disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
@@ -389,6 +404,8 @@ def actualizar_primer_contacto(
     benef = db.query(Beneficiario).filter(Beneficiario.id == pc.beneficiario_id).first()
     if benef:
         _apply_benef_fields(benef, data)
+        if data.politica_privacidad == 'Sí' and benef.usuario:
+            _marcar_privacidad(db, benef.usuario)
 
     db.commit()
     db.refresh(pc)

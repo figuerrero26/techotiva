@@ -115,6 +115,10 @@ def run_migrations():
         ("primer_contacto", "rol_registrador",          "VARCHAR(100)"),
         ("primer_contacto", "nombre_registrador",       "VARCHAR(200)"),
         ("primer_contacto", "telefono_registrador",     "VARCHAR(30)"),
+        # PrimerContacto — marca temporal
+        ("primer_contacto", "created_at",               "DATETIME"),
+        # Beneficiario — pertenencia étnica
+        ("beneficiarios",   "pertenencia_etnica",       "VARCHAR(5)"),
     ]
 
     is_sqlite = settings.database_url.startswith("sqlite")

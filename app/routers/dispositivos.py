@@ -11,8 +11,8 @@ from database import get_db
 from app.models.models import (
     Usuario, Dispositivo, Beneficiario, Actividad,
     Seguimiento, Prescriptor, PrimerContacto, Inscripcion,
+    Estados, EstadoRegistro,
 )
-from app.models.models import Estados, EstadoRegistro
 from app.schemas.schemas import (
     DispositivoOut, DispositivoUpdate, DispositivoEstadisticas,
     BeneficiarioResumen, PrescriptorResumen, AsignadoOut,
@@ -236,15 +236,16 @@ def beneficiarios_dispositivo_detalle(
                 return "revisar"
             return "urgente"
 
-        usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first() if hasattr(benef, 'usuario_id') else None
+        usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first()
+        estado = "desvinculado" if benef.prescriptor_id is None else _estado(dias_sin)
         result.append(AsignadoOut(
             id=benef.id,
             nombre_apodo=benef.nombre_apodo,
             ultima_sesion=ultima,
             dias_sin_sesion=dias_sin,
-            estado=_estado(dias_sin),
+            estado=estado,
             email=usuario.email if usuario else None,
-            telefono=benef.telefono if hasattr(benef, 'telefono') else None,
+            telefono=benef.telefono,
         ))
 
     return result

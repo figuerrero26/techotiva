@@ -397,6 +397,20 @@ async function abrirModal(id) {
   const btnEliminar = document.getElementById('modal-btn-eliminar');
   if (btnEliminar) btnEliminar.style.display = MASCATE.rol === 'dispositivo' ? 'none' : '';
 
+  // Política de privacidad
+  const privWrap = document.getElementById('modal-privacidad-wrap');
+  const privTxt  = document.getElementById('modal-privacidad-txt');
+  if (privWrap && privTxt) {
+    if (u.politica_privacidad_at) {
+      const fecha = new Date(u.politica_privacidad_at).toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' });
+      privTxt.innerHTML = `✅ Aceptó tratamiento de datos el <strong>${fecha}</strong>`;
+      privWrap.style.cssText = 'display:block;margin-bottom:1rem;padding:0.6rem 0.75rem;border-radius:var(--radius-sm);font-size:0.8rem;background:var(--primary-dim,#e8f5e9);color:var(--on-bg)';
+    } else {
+      privTxt.innerHTML = '⚠️ No ha aceptado la política de tratamiento de datos';
+      privWrap.style.cssText = 'display:block;margin-bottom:1rem;padding:0.6rem 0.75rem;border-radius:var(--radius-sm);font-size:0.8rem;font-weight:600;background:#fdecea;color:#c0392b';
+    }
+  }
+
   const overlay = document.getElementById('modal-overlay');
   if (overlay) { overlay.style.display = 'flex'; }
 }
@@ -644,9 +658,10 @@ async function cargarAsignados() {
 }
 
 const ESTADO_PRESC = {
-  al_dia:  { label: 'Al día',  cls: 'green'  },
-  revisar: { label: 'Revisar', cls: 'mustard' },
-  urgente: { label: 'Urgente', cls: 'rust'    },
+  al_dia:       { label: 'Al día',       cls: 'green'  },
+  revisar:      { label: 'Revisar',      cls: 'mustard' },
+  urgente:      { label: 'Urgente',      cls: 'rust'    },
+  desvinculado: { label: 'Desvinculado', cls: 'gray'    },
 };
 
 function renderTablaAsignados(lista) {
@@ -735,6 +750,9 @@ function renderFichaView(pc) {
   const fecha = pc.fecha_contacto
     ? new Date(pc.fecha_contacto + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })
     : '—';
+  const marcaTemporal = pc.created_at
+    ? new Date(pc.created_at).toLocaleString('es-CO', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    : null;
   const fnac = pc.fecha_nacimiento
     ? new Date(pc.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })
     : '—';
@@ -760,11 +778,13 @@ function renderFichaView(pc) {
       f('Localidad', pc.localidad),
       f('Estado civil', pc.estado_civil),
       f('N.º hijos', pc.num_hijos),
+      f('Pertenencia étnica', pc.pertenencia_etnica),
       f('Etnia', pc.etnia),
       f('Religión', pc.religion),
     )}
 
     ${sec('Evento de contacto · ' + fecha)}
+    ${marcaTemporal ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.4rem">🕐 Registrado el ${marcaTemporal}</div>` : ''}
     ${grid(
       f('Hora', pc.hora_contacto),
       f('UPZ', pc.upz),
