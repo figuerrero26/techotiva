@@ -218,6 +218,7 @@ class SeguimientoOut(BaseModel):
     observaciones: Optional[str] = None
     fecha: datetime
     nombre_beneficiario: Optional[str] = None
+    nombre_prescriptor: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -287,6 +288,7 @@ class UsuarioAdmin(BaseModel):
     beneficiario_id: Optional[int] = None
     perfil_disciplina: Optional[str] = None
     politica_privacidad_at: Optional[datetime] = None
+    proceso_finalizado: bool = False
 
     class Config:
         from_attributes = True
@@ -314,6 +316,12 @@ class AdminDispositivoOut(BaseModel):
     fecha_registro: Optional[datetime] = None
     num_actividades: Optional[int] = None
     asistencia_pct: Optional[float] = None
+    lugar_actividades: Optional[str] = None
+    ubicacion: Optional[str] = None
+    dia_actividad: Optional[str] = None
+    hora_actividad: Optional[str] = None
+    telefono: Optional[str] = None
+    redes_sociales: Optional[str] = None
 
     class Config:
         from_attributes = True

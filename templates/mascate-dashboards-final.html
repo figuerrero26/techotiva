@@ -47,11 +47,10 @@
     </div>
     <div class="content">
       <div class="page-header"><h1>Bienvenidx, Arte Vivo 👋</h1><p>Resumen de tu dispositivo esta semana</p></div>
-      <div class="stats-row cols-4">
+      <div class="stats-row cols-3">
         <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-val">—</div><div class="stat-label">Beneficiarixs activos</div></div>
         <div class="stat-card"><div class="stat-icon mustard">📋</div><div class="stat-val">—</div><div class="stat-label">Actividades realizadas</div></div>
-        <div class="stat-card"><div class="stat-icon rust">⭐</div><div class="stat-val">4.8</div><div class="stat-label">Valoración promedio</div></div>
-        <div class="stat-card"><div class="stat-icon blue">📍</div><div class="stat-val">2</div><div class="stat-label">Seguimientos esta semana</div></div>
+        <div class="stat-card"><div class="stat-icon blue">📍</div><div class="stat-val">—</div><div class="stat-label">Seguimientos esta semana</div></div>
       </div>
       <div class="grid-2">
         <div class="panel">
@@ -111,6 +110,7 @@
     <span class="sb-section">Principal</span>
     <a class="sb-item active" href="/dashboard"><span class="ic">🏠</span> Inicio</a>
     <a class="sb-item" href="/perfil"><span class="ic">👤</span> Mi perfil</a>
+    <a class="sb-item" href="/actividades"><span class="ic">📅</span> Actividades</a>
     <a class="sb-item" href="/mis-seguimientos"><span class="ic">📋</span> Mis seguimientos</a>
     <a class="sb-item" href="/usuarios"><span class="ic">👥</span> Beneficiarixs</a>
     <span class="sb-section">Gestión</span>
@@ -143,7 +143,6 @@
           <div style="font-size:0.8rem;color:var(--on-bg-muted)" id="presc-disp-sub"></div>
         </div>
         <span id="presc-disp-tag" class="tag" style="visibility:hidden">—</span>
-        <a href="/mi-dispositivo" style="font-size:0.8rem;color:var(--primary);text-decoration:none;white-space:nowrap">Gestionar →</a>
       </div>
 
       <div class="stats-row cols-3">
@@ -205,7 +204,7 @@
       <div class="grid-3" id="benef-acts-grid" style="margin-bottom:1.5rem">
         <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando actividades...</div>
       </div>
-      <div class="panel">
+      <div class="panel" id="benef-disp-panel">
         <div class="panel-head"><span class="panel-title">Detalle del dispositivo seleccionado</span><button class="panel-action" onclick="window.location.href='/mapa'">Ver en mapa →</button></div>
         <div class="detail-hero">
           <h2 id="benef-disp-nombre">—</h2>

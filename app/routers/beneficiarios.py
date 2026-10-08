@@ -6,12 +6,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import date as date_type
 from database import get_db
-from app.models.models import Usuario, Beneficiario, Inscripcion, Actividad, Dispositivo, Prescriptor, Seguimiento
+from app.models.models import Usuario, Beneficiario, Inscripcion, Actividad, Dispositivo, Prescriptor, Seguimiento, EstadoRegistro, Estados
 from app.schemas.schemas import (
     BeneficiarioMe, BeneficiarioUpdate,
     ActividadOut, InscripcionRequest, InscripcionResponse, SeguimientoOut,
+    PrescriptorResumen,
 )
 from app.routers._deps import get_current_user
+from app.routers.prescriptores import _nombre_autor_seguimiento
 
 router = APIRouter(prefix="/beneficiarios", tags=["Beneficiarios"])
 
@@ -152,6 +154,7 @@ def mis_seguimientos(
             observaciones=s.observaciones,
             fecha=s.fecha,
             nombre_beneficiario=benef.nombre_apodo,
+            nombre_prescriptor=_nombre_autor_seguimiento(db, s.prescriptor_id),
         ))
     return result
 
@@ -249,6 +252,38 @@ def solicitar_dispositivo(
     benef.dispositivo_id = dispositivo_id
     db.commit()
     return {"msg": f"Te has unido a {disp.nombre} correctamente."}
+
+
+# ────────────────────────── GET /mis-prescriptores ──────────────────────────
+@router.get("/mis-prescriptores", response_model=list[PrescriptorResumen])
+def mis_prescriptores(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if current_user.rol != "beneficiario":
+        raise HTTPException(status_code=403, detail="Requiere rol beneficiario")
+    benef = _get_beneficiario(db, current_user)
+    if not benef.dispositivo_id:
+        return []
+    prescs = (
+        db.query(Prescriptor)
+        .filter(
+            Prescriptor.dispositivo_id == benef.dispositivo_id,
+            Prescriptor.estado_actual.has(EstadoRegistro.estado == Estados.ACTIVO),
+        )
+        .all()
+    )
+    return [
+        PrescriptorResumen(
+            id=p.id,
+            nombre_completo=p.nombre_completo,
+            perfil_disciplina=p.perfil_disciplina,
+            telefono=p.telefono,
+            email=p.usuario.email if p.usuario else "",
+            status=p.estado,
+        )
+        for p in prescs
+    ]
 
 
 # ────────────────────────── DELETE /desinscribirse/{actividad_id} ──────────────────────────

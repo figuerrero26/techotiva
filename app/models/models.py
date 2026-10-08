@@ -14,6 +14,7 @@ class Estados:
     INACTIVO   = "inactivo"
     RECHAZADO  = "rechazado"
     SUSPENDIDO = "suspendido"
+    FINALIZADO = "finalizado"
 
 
 # ── Tipos de entidad ───────────────────────────────────────────────────────

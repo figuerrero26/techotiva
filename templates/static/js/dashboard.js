@@ -91,7 +91,6 @@ async function loadDispositivo() {
     setStatVal('dispositivo', 0, stats.beneficiarios_activos);
     setStatVal('dispositivo', 1, stats.actividades_registradas);
     setStatVal('dispositivo', 2, stats.seguimientos_semana);
-    setStatVal('dispositivo', 3, '—');
 
     const h1 = document.querySelector('#screen-dispositivo .page-header h1');
     if (h1) h1.textContent = 'Bienvenidx, ' + nombre + ' 👋';
@@ -204,8 +203,8 @@ async function loadPrescriptor() {
       const col1  = asignados.slice(0, mitad);
       const col2  = asignados.slice(mitad);
       const renderCol = arr => arr.map(a => {
-        const tagClass = a.estado==='urgente'?'rust':a.estado==='revisar'?'mustard':'green';
-        const label    = a.estado==='urgente'?'Urgente':a.estado==='revisar'?'Revisar':'Al día';
+        const tagClass = a.estado==='urgente'?'rust':a.estado==='revisar'?'mustard':a.estado==='finalizado'?'blue':a.estado==='desvinculado'?'':'green';
+        const label    = a.estado==='urgente'?'Urgente':a.estado==='revisar'?'Revisar':a.estado==='finalizado'?'Proceso finalizado':a.estado==='desvinculado'?'Desvinculado':'Al día';
         const dias     = a.dias_sin_sesion != null ? 'Hace ' + a.dias_sin_sesion + ' días' : 'Sin sesiones';
         return `<div class="list-row"><div class="list-avatar ${tagClass}">${a.nombre_apodo.substring(0,2).toUpperCase()}</div><div class="list-info"><div class="list-name">${a.nombre_apodo}</div><div class="list-sub">${dias}${a.localidad?' · '+a.localidad:''}</div></div><span class="tag ${tagClass}">${label}</span></div>`;
       }).join('');
@@ -217,7 +216,10 @@ async function loadPrescriptor() {
     // Select personas en formulario
     const sel = document.getElementById('presc-select-persona');
     if (sel && asignados.length > 0) {
-      sel.innerHTML = asignados.map(a => `<option value="${a.id}">${a.nombre_apodo}</option>`).join('');
+      const activos = asignados.filter(a => a.estado !== 'finalizado');
+      sel.innerHTML = activos.length
+        ? activos.map(a => `<option value="${a.id}">${a.nombre_apodo}</option>`).join('')
+        : '<option value="" disabled>Sin personas activas</option>';
     }
 
     // Botón guardar registro
@@ -249,6 +251,7 @@ async function loadPrescriptor() {
     const segs = await fetch(API + '/prescriptores/seguimientos', authGet()).then(r => r.json());
     setStatVal('prescriptor', 1, segs.length);
   } catch(e) {}
+
 }
 
 // ═══ BENEFICIARIO ═══
@@ -283,7 +286,7 @@ async function loadBeneficiario() {
     renderActsBenef(misActs);
 
     // Panel dispositivo: derivar los dispositivos únicos de sus actividades
-    const dispPanel = document.querySelector('#screen-beneficiario .panel');
+    const dispPanel = document.getElementById('benef-disp-panel');
     if (!misActs.length) {
       // Sin inscripciones — ocultar panel dispositivo y mostrar CTA
       if (dispPanel) {

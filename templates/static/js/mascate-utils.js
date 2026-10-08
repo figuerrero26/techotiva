@@ -291,7 +291,6 @@ const SIDEBARS = {
       { label: 'Principal', items: [
         { href:'/dashboard',     ic:'🏠', txt:'Inicio' },
         { href:'/perfil',        ic:'👤', txt:'Mi perfil' },
-        { href:'/mi-dispositivo',ic:'🏘️', txt:'Mi dispositivo' },
         { href:'/actividades',   ic:'📅', txt:'Actividades' },
         { href:'/mis-seguimientos', ic:'📋', txt:'Mis seguimientos' },
         { href:'/usuarios',      ic:'👥', txt:'Beneficiarixs' },

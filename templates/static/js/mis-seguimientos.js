@@ -87,6 +87,7 @@ function renderLista(segs) {
           <span class="tag mustard" style="font-size:0.7rem">${tipo}</span>
           <span style="font-size:0.75rem;color:var(--on-bg-muted);margin-left:auto">${fecha}</span>
         </div>
+        ${s.nombre_prescriptor ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.25rem">👤 Prescriptxr: ${s.nombre_prescriptor}</div>` : ''}
         ${s.observaciones ? `<div style="font-size:0.82rem;color:var(--on-bg-muted);white-space:pre-wrap;word-break:break-word;line-height:1.5">${s.observaciones}</div>` : ''}
       </div>`;
   }).join('');

@@ -100,8 +100,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ══ BENEFICIARIO ══
   if (rol === 'beneficiario') {
     try {
-      const me   = await (await fetch(API + '/beneficiarios/me', MASCATE.authGet())).json();
-      const acts = await (await fetch(API + '/actividades/')).json();
+      const [me, acts, segs] = await Promise.all([
+        fetch(API + '/beneficiarios/me', MASCATE.authGet()).then(r => r.json()),
+        fetch(API + '/actividades/').then(r => r.json()),
+        fetch(API + '/beneficiarios/mis-seguimientos', MASCATE.authGet())
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .catch(e => { console.error('mis-seguimientos error:', e); return []; }),
+      ]);
+
+      const ultimoPrescriptor = Array.isArray(segs) && segs.length ? (segs[0].nombre_prescriptor || '—') : '—';
 
       renderSidebar(me.nombre_apodo, me.email);
       set('hero-avatar', ini(me.nombre_apodo));
@@ -110,25 +117,45 @@ window.addEventListener('DOMContentLoaded', async () => {
       set('hero-desc',   campo(me.descripcion, 'Participante del colectivo MASCATE.'));
 
       setStats([
-        { id:'stat-0', val: acts.length,                           lbl:'Actividades disponibles', icon:'📅' },
-        { id:'stat-1', val: acts.filter(a=>a.activa!==false).length, lbl:'Activas',               icon:'⭐' },
-        { id:'stat-2', val: me.prescriptor_nombre || '—',           lbl:'Prescriptxr',            icon:'🎯' },
-        { id:'stat-3', val: me.dispositivo_nombre || '—',           lbl:'Dispositivo',            icon:'🏘️' },
+        { id:'stat-0', val: acts.length,                             lbl:'Actividades disponibles', icon:'📅' },
+        { id:'stat-1', val: acts.filter(a=>a.activa!==false).length, lbl:'Activas',                 icon:'⭐' },
+        { id:'stat-2', val: ultimoPrescriptor,                       lbl:'Prescriptxr',             icon:'🎯' },
+        { id:'stat-3', val: me.dispositivo_nombre || '—',            lbl:'Dispositivo',             icon:'🏘️' },
       ]);
+
+      // Los stats 2 y 3 contienen texto, no números — reducir fuente para que quepan
+      ['stat-2', 'stat-3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.fontSize = '0.85rem'; el.style.fontWeight = '600'; el.style.lineHeight = '1.3'; el.style.wordBreak = 'break-word'; }
+      });
 
       renderInfoGrid('info-grid', me, rol, rol);
 
       const contactoList = document.getElementById('contacto-list');
       if (contactoList) {
         let html = '';
-        if (me.prescriptor_nombre) html += `<div class="list-row">
-          <div class="contact-icon" style="background:var(--primary-dim)">👩‍🏫</div>
-          <div class="list-info"><div class="list-name">${me.prescriptor_nombre}</div>
-          <div class="list-sub">Prescriptxr asignado</div></div></div>`;
         if (me.dispositivo_nombre) html += `<div class="list-row">
           <div class="contact-icon" style="background:var(--secondary-dim)">🏢</div>
           <div class="list-info"><div class="list-name">${me.dispositivo_nombre}</div>
           <div class="list-sub">Organización vinculada</div></div></div>`;
+
+        try {
+          const prescs = await (await fetch(API + '/beneficiarios/mis-prescriptores', MASCATE.authGet())).json();
+          if (prescs.length) {
+            html += `<div style="font-size:0.78rem;font-weight:600;color:var(--on-bg-muted);margin:0.75rem 0 0.35rem">🎯 Prescriptorxs</div>`;
+            html += prescs.map(p => `
+              <div class="list-row" style="padding:0.5rem 0;border-bottom:1px solid var(--border)">
+                <div class="list-avatar green" style="font-size:0.75rem;flex-shrink:0">${ini(p.nombre_completo)}</div>
+                <div class="list-info">
+                  <div class="list-name">${p.nombre_completo}</div>
+                  ${p.perfil_disciplina ? `<div class="list-sub">${p.perfil_disciplina}</div>` : ''}
+                  ${p.telefono ? `<div style="font-size:0.76rem;color:var(--on-bg-muted)">📞 ${p.telefono}</div>` : ''}
+                  ${p.email ? `<div style="font-size:0.76rem;color:var(--on-bg-muted)">✉️ ${p.email}</div>` : ''}
+                </div>
+              </div>`).join('');
+          }
+        } catch(e) { console.error('Error cargando prescriptores:', e); }
+
         contactoList.innerHTML = html || '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Sin contactos asignados aún.</div>';
       }
 
@@ -182,7 +209,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div class="contact-icon" style="background:var(--on-bg-dim,#eee)">🏘️</div>
             <div class="list-info">
               <div class="list-name" style="color:var(--on-bg-muted)">Sin dispositivo asignado</div>
-              <div class="list-sub"><a href="/mi-dispositivo" style="color:var(--primary)">Solicitar unirme a un dispositivo</a></div>
             </div>
           </div>`;
         }
@@ -606,9 +632,11 @@ document.getElementById('modal-edit-overlay')?.addEventListener('click', e => {
 // TABLA BENEFICIARIOS (prescriptor)
 // ═══════════════════════════════════════════════════════════════
 const ESTADO_SEG = {
-  al_dia:  { label:'Al día',  cls:'green' },
-  revisar: { label:'Revisar', cls:'mustard' },
-  urgente: { label:'Urgente', cls:'rust' },
+  al_dia:     { label:'Al día',           cls:'green' },
+  revisar:    { label:'Revisar',          cls:'mustard' },
+  urgente:    { label:'Urgente',          cls:'rust' },
+  finalizado: { label:'Proceso finalizado', cls:'blue' },
+  desvinculado: { label:'Desvinculado',   cls:'' },
 };
 
 function renderTablaBenefPresc(tbodyId, asignados) {
@@ -630,8 +658,8 @@ function renderTablaBenefPresc(tbodyId, asignados) {
       <td style="font-size:0.85rem">${diasLabel}</td>
       <td><span class="tag ${est.cls}">${est.label}</span></td>
       <td style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <button class="btn btn-sm btn-green" style="font-size:0.78rem"
-          onclick="abrirModalSeg(${b.id}, '${b.nombre_apodo.replace(/'/g,"\\'")}')">+ Seguimiento</button>
+        ${b.estado !== 'finalizado' ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem"
+          onclick="abrirModalSeg(${b.id}, '${b.nombre_apodo.replace(/'/g,"\\'")}')">+ Seguimiento</button>` : ''}
         <button class="btn btn-sm btn-outline" style="font-size:0.78rem"
           onclick="verSeguimientosBenef(${b.id}, '${b.nombre_apodo.replace(/'/g,"\\'")}')">Ficha</button>
       </td>

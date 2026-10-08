@@ -2,7 +2,6 @@ __pycache__/
 venv/
 *.pyc
 *.pyo
-.env
 *.db
 *.htmlz
 FIX.txt

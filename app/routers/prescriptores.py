@@ -20,6 +20,22 @@ from app.schemas.schemas import (
 )
 from app.routers._deps import get_current_user
 
+
+def _nombre_autor_seguimiento(db: Session, prescriptor_id: int) -> str | None:
+    """Devuelve el nombre de quien hizo el seguimiento según su rol real."""
+    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
+    if not presc:
+        return None
+    usuario = db.query(Usuario).filter(Usuario.id == presc.usuario_id).first()
+    if not usuario:
+        return presc.nombre_completo
+    if usuario.rol == "admin":
+        return "Administrador"
+    if usuario.rol == "dispositivo":
+        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == usuario.id).first()
+        return disp.nombre if disp else usuario.email
+    return presc.nombre_completo
+
 router = APIRouter(prefix="/prescriptores", tags=["Prescriptores"])
 
 
@@ -83,8 +99,14 @@ def mis_asignados(
     )
     benef_ids.update(b[0] for b in seg_ids)
 
-    # 3. Si aún no hay nadie asignado, mostrar los del dispositivo como fallback
-    if not benef_ids and presc.dispositivo_id:
+    # 3. Siempre incluir todos los beneficiarios del dispositivo
+    if presc.dispositivo_id:
+        directo = (
+            db.query(Beneficiario.id)
+            .filter(Beneficiario.dispositivo_id == presc.dispositivo_id)
+            .all()
+        )
+        benef_ids.update(b[0] for b in directo)
         insc = (
             db.query(Inscripcion.beneficiario_id)
             .join(Actividad, Actividad.id == Inscripcion.actividad_id)
@@ -132,7 +154,12 @@ def mis_asignados(
             dias_sin = (now - ultima).days
 
         usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first()
-        estado = "desvinculado" if benef.prescriptor_id is None else _calcular_estado(dias_sin)
+        if benef.estado == Estados.FINALIZADO:
+            estado = "finalizado"
+        elif benef.prescriptor_id is None:
+            estado = "desvinculado"
+        else:
+            estado = _calcular_estado(dias_sin)
         result.append(AsignadoOut(
             id=benef.id,
             nombre_apodo=benef.nombre_apodo,
@@ -163,6 +190,9 @@ def crear_seguimiento(
     if not benef:
         raise HTTPException(status_code=404, detail="Beneficiario no encontrado")
 
+    if benef.estado == Estados.FINALIZADO and current_user.rol != "admin":
+        raise HTTPException(status_code=403, detail="El proceso de este beneficiario está finalizado. Un administrador debe reactivarlo primero.")
+
     seg = Seguimiento(
         prescriptor_id=presc.id,
         beneficiario_id=data.beneficiario_id,
@@ -170,6 +200,19 @@ def crear_seguimiento(
         observaciones=data.observaciones,
     )
     db.add(seg)
+
+    if data.tipo_registro == "Cierre de proceso":
+        estado_fin = EstadoRegistro(
+            entidad_tipo=benef.__tablename__,
+            entidad_id=benef.id,
+            estado=Estados.FINALIZADO,
+            cambiado_por=current_user.id,
+            motivo="Cierre de proceso registrado",
+        )
+        db.add(estado_fin)
+        db.flush()
+        benef.estado_actual_id = estado_fin.id
+
     db.commit()
     db.refresh(seg)
 
@@ -181,6 +224,7 @@ def crear_seguimiento(
         observaciones=seg.observaciones,
         fecha=seg.fecha,
         nombre_beneficiario=benef.nombre_apodo,
+        nombre_prescriptor=_nombre_autor_seguimiento(db, seg.prescriptor_id),
     )
 
 
@@ -200,9 +244,12 @@ def listar_seguimientos(
             q = q.filter(Seguimiento.beneficiario_id == beneficiario_id)
     else:
         presc = _get_prescriptor(db, current_user)
-        q = db.query(Seguimiento).filter(Seguimiento.prescriptor_id == presc.id)
         if beneficiario_id:
-            q = q.filter(Seguimiento.beneficiario_id == beneficiario_id)
+            # Ver ficha de un beneficiario: mostrar todos los seguimientos de ese beneficiario
+            q = db.query(Seguimiento).filter(Seguimiento.beneficiario_id == beneficiario_id)
+        else:
+            # Sin filtro de beneficiario: solo los propios del prescriptor
+            q = db.query(Seguimiento).filter(Seguimiento.prescriptor_id == presc.id)
 
     segs = q.order_by(Seguimiento.fecha.desc()).all()
     result = []
@@ -216,6 +263,7 @@ def listar_seguimientos(
             observaciones=s.observaciones,
             fecha=s.fecha,
             nombre_beneficiario=benef.nombre_apodo if benef else None,
+            nombre_prescriptor=_nombre_autor_seguimiento(db, s.prescriptor_id),
         ))
     return result
 

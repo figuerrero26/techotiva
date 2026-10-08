@@ -246,7 +246,8 @@ function renderTabla(lista) {
                    : u.rol === 'prescriptor'  ? 'blue'
                    : u.rol === 'dispositivo'  ? 'purple' : 'green';
     const stColor  = u.status === 'activo'    ? 'green'
-                   : u.status === 'pendiente' ? 'mustard' : 'rust';
+                   : u.status === 'pendiente' ? 'mustard'
+                   : u.status === 'finalizado'? 'blue' : 'rust';
     const fecha    = u.fecha_registro
                    ? new Date(u.fecha_registro).toLocaleDateString('es-CO') : '—';
     let contexto = '—';
@@ -270,7 +271,10 @@ function renderTabla(lista) {
       <td><span class="tag ${rolColor}">${ROL_LABELS[u.rol] ?? u.rol}</span></td>
       <td style="font-size:0.82rem;color:var(--on-bg-muted)">${campo(u.email)}</td>
       <td style="font-size:0.82rem">${campo(u.telefono)}</td>
-      <td><span class="tag ${stColor}">${u.status}</span></td>
+      <td>
+        <span class="tag ${stColor}">${u.status}</span>
+        ${u.proceso_finalizado ? `<span class="tag blue" style="font-size:0.68rem;margin-left:0.3rem">Proceso finalizado</span>` : ''}
+      </td>
       ${MASCATE.rol !== 'dispositivo' ? `<td>${contexto}</td>` : ''}
       ${MASCATE.rol !== 'dispositivo' ? `<td style="font-size:0.82rem;color:var(--on-bg-muted)">${fecha}</td>` : ''}
       <td style="display:flex;gap:0.4rem;flex-wrap:wrap">
@@ -279,6 +283,7 @@ function renderTabla(lista) {
         ${u.rol === 'prescriptor' && MASCATE.rol === 'admin' ? `<button class="btn btn-sm btn-outline" style="color:var(--primary);border-color:var(--primary)" onclick="abrirFichaPresc(${u.id})">Ficha</button>` : ''}
         ${MASCATE.rol === 'prescriptor' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem" onclick="irASeguimiento(${u.beneficiario_id},'${(u.nombre||u.email).replace(/'/g,"\\'")}')">+ Seguimiento</button>` : ''}
         ${MASCATE.rol === 'admin' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem" onclick="verSeguimientosUsu(${u.beneficiario_id}, '${(u.nombre||u.email).replace(/'/g,"\\'")}')">Seguimientos</button>` : ''}
+        ${MASCATE.rol === 'admin' && u.proceso_finalizado ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:var(--secondary);border-color:var(--secondary)" onclick="reactivarBeneficiario(${u.id}, '${(u.nombre||u.email).replace(/'/g,"\\'")}')">Reactivar</button>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -796,7 +801,7 @@ function renderFichaView(pc) {
 
     ${sec('Convenio y DBC')}
     ${grid(
-      f('Convenio 515', pc.convenio_515),
+      f('Convenio', pc.convenio_515),
       f('DBC', pc.tipo_dbc),
       f('Número de caso', pc.numero_caso),
       f('Procesos previos', pc.procesos_previos),
@@ -1080,12 +1085,35 @@ async function verSeguimientosUsu(benefId, nombre) {
           <span class="tag mustard" style="font-size:0.72rem">${s.tipo_registro || '—'}</span>
           <span style="font-size:0.78rem;color:var(--on-bg-muted)">${fecha}</span>
         </div>
+        ${s.nombre_prescriptor ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.25rem">👤 Prescriptxr: ${s.nombre_prescriptor}</div>` : ''}
         ${s.observaciones ? `<div style="font-size:0.85rem">${s.observaciones}</div>` : '<div style="font-size:0.82rem;color:var(--on-bg-muted)">Sin observaciones.</div>'}
       </div>`;
     }).join('');
   } catch(e) {
     document.getElementById('ver-segs-list').innerHTML = '<div style="color:var(--error);font-size:0.85rem">Error al cargar.</div>';
   }
+}
+
+async function reactivarBeneficiario(usuarioId, nombre) {
+  if (!confirm(`¿Reactivar el proceso de ${nombre}? El beneficiario volverá a estado activo.`)) return;
+  try {
+    const res = await fetch(API + '/admin/usuarios/' + usuarioId + '/estado', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...MASCATE.authHeaders() },
+      body: JSON.stringify({ status: 'activo' }),
+    });
+    if (res.ok) {
+      const t = document.createElement('div');
+      t.textContent = '✓ Proceso reactivado';
+      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--secondary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+      await cargarUsuarios();
+    } else {
+      const d = await res.json();
+      alert(d.detail || 'Error al reactivar.');
+    }
+  } catch(e) { alert('Error de conexión.'); }
 }
 
 async function guardarSeguimientoUsu() {

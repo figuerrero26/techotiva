@@ -80,6 +80,10 @@ def _build_usuario_admin(u: Usuario) -> UsuarioAdmin:
     elif u.rol == "admin":
         nombre = "Admin"
 
+    proceso_finalizado = (
+        u.beneficiario is not None and u.beneficiario.estado == Estados.FINALIZADO
+    )
+
     return UsuarioAdmin(
         id=u.id,
         email=u.email,
@@ -99,6 +103,7 @@ def _build_usuario_admin(u: Usuario) -> UsuarioAdmin:
         beneficiario_id=beneficiario_id_val,
         perfil_disciplina=u.prescriptor.perfil_disciplina if u.rol == "prescriptor" and u.prescriptor else None,
         politica_privacidad_at=u.politica_privacidad_at,
+        proceso_finalizado=proceso_finalizado,
     )
 
 
@@ -561,6 +566,12 @@ def admin_listar_dispositivos(
             fecha_registro=fecha_registro,
             num_actividades=num_actividades,
             asistencia_pct=None,
+            lugar_actividades=d.lugar_actividades,
+            ubicacion=d.ubicacion,
+            dia_actividad=d.dia_actividad,
+            hora_actividad=d.hora_actividad,
+            telefono=d.telefono,
+            redes_sociales=d.redes_sociales,
         ))
 
     return result
@@ -794,9 +805,22 @@ def admin_asignar_dispositivo(
         if not disp:
             raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
 
+    # Si cambia de dispositivo, desasignar todos sus beneficiarios
+    if presc.dispositivo_id != data.dispositivo_id:
+        db.query(Beneficiario).filter(Beneficiario.prescriptor_id == presc.id).update(
+            {Beneficiario.prescriptor_id: None}
+        )
+
     presc.dispositivo_id = data.dispositivo_id
-    presc.solicitud_dispositivo_id = None  # limpiar solicitud pendiente si la había
+    presc.solicitud_dispositivo_id = None
     db.commit()
+
+    if data.dispositivo_id is not None:
+        service = EstadoService(db)
+        if presc.usuario and presc.usuario.estado != Estados.ACTIVO:
+            service.cambiar_estado(entidad_obj=presc.usuario, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Asignado a dispositivo por admin")
+        if presc.estado != Estados.ACTIVO:
+            service.cambiar_estado(entidad_obj=presc, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Asignado a dispositivo por admin")
 
     return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp.nombre if data.dispositivo_id else None}
 

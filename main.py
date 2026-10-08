@@ -27,7 +27,6 @@ def seed_admin():
             db.add(admin)
             db.flush()
 
-            # El admin se activa a sí mismo en el historial
             estado = EstadoRegistro(
                 entidad_tipo="usuarios",
                 entidad_id=admin.id,
@@ -42,7 +41,9 @@ def seed_admin():
             db.commit()
             print(f" Admin creado: {settings.admin_email}")
         else:
-            print(f" Admin ya existe: {exists.email}")
+            exists.password_hash = hash_password(settings.admin_password)
+            db.commit()
+            print(f" Admin sincronizado: {exists.email}")
     finally:
         db.close()
 
