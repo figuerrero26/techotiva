@@ -260,7 +260,7 @@ def recuperar_password(
     if usuario:
         token = generar_token()
         usuario.password_reset_token = token
-        usuario.password_reset_token_expiry = datetime.now(timezone.utc) + timedelta(hours=24)
+        usuario.password_reset_token_expiry = datetime.now(timezone.utc) + timedelta(minutes=10)
         db.commit()
         background_tasks.add_task(
             enviar_correo_recuperacion,
