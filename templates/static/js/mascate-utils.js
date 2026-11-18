@@ -14,6 +14,14 @@ const MASCATE = {
   authHeaders() { return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' }; },
 
   logout() {
+    // Avisar al servidor para que deje de aparecer en "sesiones activas"
+    if (this.token) {
+      try {
+        fetch(window.location.origin + '/auth/logout', {
+          method: 'POST', headers: { 'Authorization': 'Bearer ' + this.token }, keepalive: true,
+        }).catch(() => {});
+      } catch(e) {}
+    }
     ['mascate_token','mascate_rol','mascate_nombre','mascate_email'].forEach(k => localStorage.removeItem(k));
     window.location.href = '/login';
   },
@@ -40,6 +48,30 @@ const MASCATE = {
     return { ok: res.ok, data: await res.json() };
   },
 };
+
+// ── Pulso de actividad (sesiones activas) ────────────────────────────────
+// Mientras la pestaña esté visible, avisa cada 2 min que la persona sigue conectada.
+if (MASCATE.token) {
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    fetch(window.location.origin + '/auth/ping', { method: 'POST', ...MASCATE.authGet() }).catch(() => {});
+  }, 120000);
+}
+
+// ── Escape de datos al construir HTML (evita inyección de código) ─────────
+/** Texto o valor de atributo:  value="${esc(x)}"  ·  <div>${esc(x)}</div> */
+function esc(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+/** Texto dentro de un string JS en un atributo:  onclick="f('${jsq(x)}')" */
+function jsq(v) {
+  return esc(String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n'));
+}
+/** Objeto como argumento JS en un atributo:  onclick='f(${jsonAttr(obj)})' */
+function jsonAttr(obj) {
+  return esc(JSON.stringify(obj));
+}
 
 // ── Labels ────────────────────────────────────────────────────────────────
 const ROL_LABELS = {
@@ -96,30 +128,6 @@ function infoRow(lbl, val, opts = {}) {
  */
 function campo(val, fallback = '—') {
   return (val !== null && val !== undefined && val !== '') ? val : fallback;
-}
-
-/**
- * Renderiza el sidebar con datos del usuario logueado.
- * @param {string} nombreVal  - nombre a mostrar
- * @param {string} emailVal   - email a mostrar
- */
-function setSidebar(nombreVal, emailVal) {
-  set('sb-role-tag', ROL_LABELS[MASCATE.rol] ?? MASCATE.rol);
-  set('sb-uname',    nombreVal || '—');
-  set('sb-uemail',   emailVal  || '—');
-  set('sb-avatar',   ini(nombreVal));
-}
-
-/** Agrega botón de logout al .sb-user de cada vista */
-function initLogout() {
-  document.querySelectorAll('.sb-user').forEach(u => {
-    const btn = document.createElement('button');
-    btn.textContent = 'Cerrar sesion';
-    btn.className   = 'btn btn-sm btn-outline';
-    btn.style.cssText = 'margin-top:0.5rem;width:100%;font-size:0.72rem;';
-    btn.onclick = () => MASCATE.logout();
-    u.after(btn);
-  });
 }
 
 /**
@@ -372,28 +380,6 @@ function renderSidebar(nombreVal, emailVal) {
     btn.onclick = () => MASCATE.logout();
     sbUser.after(btn);
   }
-}
-
-// ── Export helper ─────────────────────────────────────────────────────────
-/**
- * Descarga la lista de dispositivos como CSV o JSON.
- * Llama a GET /admin/dispositivos/exportar?formato=csv
- */
-async function exportarDispositivos(formato = 'csv') {
-  try {
-    const res = await fetch(
-      window.location.origin + '/admin/dispositivos/exportar?formato=' + formato,
-      MASCATE.authGet()
-    );
-    if (!res.ok) { alert('Error al exportar'); return; }
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'dispositivos-mascate.' + formato;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch(e) { console.error('Error exportando:', e); }
 }
 
 // ── Campanita de notificaciones ───────────────────────────────────────────

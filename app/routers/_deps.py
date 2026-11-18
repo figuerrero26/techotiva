@@ -2,7 +2,9 @@
 Dependencias compartidas: extracción del usuario actual desde el JWT.
 """
 
-from fastapi import Depends, HTTPException, status
+from datetime import datetime, timedelta
+
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -37,7 +39,16 @@ def get_current_user(
             status_code=403, 
             detail="Cuenta desactivada o pendiente de aprobación"
         )
-        
+
+    # Registrar actividad para "sesiones activas" (máx. una escritura por minuto)
+    ahora = datetime.utcnow()
+    if not user.ultima_actividad or ahora - user.ultima_actividad > timedelta(seconds=60):
+        try:
+            user.ultima_actividad = ahora
+            db.commit()
+        except Exception:
+            db.rollback()
+
     return user
 
 

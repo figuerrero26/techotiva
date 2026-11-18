@@ -13,8 +13,20 @@ function authGet()     { return { headers: { 'Authorization': 'Bearer ' + token 
 
 // ── Logout ──
 function doLogout() {
+  // Avisar al servidor para que deje de aparecer en "sesiones activas"
+  if (token) {
+    try { fetch(API + '/auth/logout', { method: 'POST', ...authGet(), keepalive: true }).catch(() => {}); } catch(e) {}
+  }
   ['mascate_token','mascate_rol','mascate_nombre','mascate_email'].forEach(k => localStorage.removeItem(k));
   window.location.href = '/login';
+}
+
+// Pulso de actividad (sesiones activas): cada 2 min mientras la pestaña esté visible
+if (token) {
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    fetch(API + '/auth/ping', { method: 'POST', ...authGet() }).catch(() => {});
+  }, 120000);
 }
 
 document.querySelectorAll('.sb-user').forEach(u => {
@@ -34,7 +46,7 @@ function showScreen(role) {
 
 // ── Helpers UI ──
 function setStatVal(screen, index, value) {
-  const cards = document.querySelectorAll(`#screen-${screen} .stat-val`);
+  const cards = document.querySelectorAll(`#screen-${screen} .stats-row:not(.ind-row) .stat-val`);
   if (cards[index] != null) cards[index].textContent = value;
 }
 function setHTML(el, html) { if (el) el.innerHTML = html; }
@@ -43,7 +55,6 @@ function setText(id, val)  { const el = document.getElementById(id); if (el && v
 // ── Init ──
 window.addEventListener('DOMContentLoaded', async () => {
   showScreen(rol);
-  if (rol !== 'admin') document.querySelector('.demo-bar')?.remove();
 
   // Notif badge
   try {
@@ -174,13 +185,9 @@ async function loadPrescriptor() {
       document.getElementById('presc-disp-nombre').textContent = me.dispositivo_nombre;
       document.getElementById('presc-disp-sub').textContent = 'Dispositivo asignado';
       if (tag) { tag.textContent = 'Activo'; tag.className = 'tag green'; }
-    } else if (me.solicitud_dispositivo_id && me.solicitud_dispositivo_nombre) {
-      document.getElementById('presc-disp-nombre').textContent = me.solicitud_dispositivo_nombre;
-      document.getElementById('presc-disp-sub').textContent = 'Solicitud pendiente de aprobación';
-      if (tag) { tag.textContent = 'Pendiente'; tag.className = 'tag mustard'; }
     } else {
       document.getElementById('presc-disp-nombre').textContent = 'Sin dispositivo asignado';
-      document.getElementById('presc-disp-sub').textContent = 'Solicita unirte a un dispositivo';
+      document.getElementById('presc-disp-sub').textContent = 'El administrador debe asignarte un dispositivo';
       if (tag) { tag.textContent = 'Sin asignar'; tag.className = 'tag rust'; }
     }
   } catch(e) {
@@ -407,6 +414,13 @@ async function loadAdmin() {
     window.location.href = '/usuarios';
   });
 
+  const dbcSel = document.getElementById('ind-dbc');
+  if (dbcSel && !dbcSel.dataset.bound) {
+    dbcSel.dataset.bound = '1';
+    dbcSel.addEventListener('change', () => loadIndicadores(dbcSel.value));
+  }
+  loadIndicadores(dbcSel?.value || '');
+
   try {
     const stats = await fetch(API + '/admin/stats', authGet()).then(r => r.json());
     setStatVal('admin', 0, stats.total_dispositivos);
@@ -464,22 +478,178 @@ async function loadAdmin() {
 
   try {
     const users    = await fetch(API + '/admin/usuarios', authGet()).then(r => r.json());
-    const rolPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[0];
-    if (rolPanel) {
-      const d2 = users.filter(u => u.rol==='dispositivo').length;
-      const pr = users.filter(u => u.rol==='prescriptor').length;
+    // Distribución por rol — donut (circunferencia = 2π × 28 ≈ 176)
+    if (document.getElementById('rol-donut')) {
       const be = users.filter(u => u.rol==='beneficiario').length;
-      const tot = Math.max(d2, pr, be, 1);
-      const fills = rolPanel.querySelectorAll('.seed-fill');
-      const nums  = rolPanel.querySelectorAll('div[style*="font-weight:700"]');
-      if (fills[0]) fills[0].style.width = Math.round(d2/tot*100)+'%';
-      if (fills[1]) fills[1].style.width = Math.round(pr/tot*100)+'%';
-      if (fills[2]) fills[2].style.width = Math.round(be/tot*100)+'%';
-      if (nums[0])  nums[0].textContent  = d2;
-      if (nums[1])  nums[1].textContent  = pr;
-      if (nums[2])  nums[2].textContent  = be;
+      const pr = users.filter(u => u.rol==='prescriptor').length;
+      const d2 = users.filter(u => u.rol==='dispositivo').length;
+      const tot  = Math.max(be + pr + d2, 1);
+      const CIRC = 176;
+      const bLen = Math.round(be / tot * CIRC);
+      const pLen = Math.round(pr / tot * CIRC);
+      const dLen = Math.round(d2 / tot * CIRC);
+      const arc = (id, len, offset) => {
+        const el = document.getElementById(id);
+        if (el) { el.setAttribute('stroke-dasharray', `${len} ${CIRC - len}`); el.setAttribute('stroke-dashoffset', `-${offset}`); }
+      };
+      arc('donut-benef', bLen, 0);
+      arc('donut-presc', pLen, bLen);
+      arc('donut-disp',  dLen, bLen + pLen);
+      const pct = n => Math.round(n / tot * 100);
+      setText('lg-benef', `Beneficiarixs · ${be} (${pct(be)}%)`);
+      setText('lg-presc', `Prescriptxres · ${pr} (${pct(pr)}%)`);
+      setText('lg-disp',  `Dispositivos · ${d2} (${pct(d2)}%)`);
     }
   } catch(e) {}
+}
+
+// ── Indicadores de la población (panel central admin) ──
+function _indBars(obj, total) {
+  const entries = Object.entries(obj || {});
+  if (!entries.length) return '<div class="ind-empty">Sin datos aún.</div>';
+  const max = Math.max(total || 0, ...entries.map(([, v]) => v), 1);
+  return entries.map(([k, v]) => `<div class="ind-bar">
+      <span>${k}</span>
+      <div class="seed-track"><div class="seed-fill" style="width:${Math.round(v / max * 100)}%"></div></div>
+      <b>${v}</b>
+    </div>`).join('');
+}
+
+async function loadIndicadores(dispositivoId) {
+  let d;
+  try {
+    const qs = dispositivoId ? '?dispositivo_id=' + dispositivoId : '';
+    const res = await fetch(API + '/admin/indicadores' + qs, authGet());
+    if (!res.ok) return;
+    d = await res.json();
+  } catch(e) { console.error(e); return; }
+
+  const sel = document.getElementById('ind-dbc');
+  if (sel && sel.options.length <= 1) {
+    d.dispositivos.forEach(x => sel.insertAdjacentHTML('beforeend', `<option value="${x.id}">${x.nombre}</option>`));
+  }
+
+  const total = d.total_beneficiarios;
+  const base  = d.con_primer_contacto;
+  setText('ind-benef', total);
+  setText('ind-spa', d.spa.total);
+  // SPA cuenta solo personas en proceso activo (para priorizar)
+  const baseSpa = d.spa.base || 0;
+  setText('ind-spa-lbl', `Usuarios de SPA${baseSpa ? ' · ' + Math.round(d.spa.total / baseSpa * 100) + '%' : ''}`);
+
+  const emo = d.emociones;
+  const balEl = document.getElementById('ind-balance');
+  if (balEl) {
+    if (!emo.personas) {
+      balEl.textContent = 'Sin datos';
+    } else {
+      const pos = emo.positivas, neg = emo.negativas;
+      balEl.textContent = pos > neg ? 'Positivo' : neg > pos ? 'Negativo' : 'Neutro';
+      balEl.style.color = pos > neg ? 'var(--secondary)' : neg > pos ? 'var(--error)' : 'var(--on-bg-muted)';
+    }
+  }
+  setText('ind-balance-lbl', `Balance emocional · 😊 ${emo.positivas} / 😟 ${emo.negativas}`);
+  setText('ind-emo-n', `${emo.personas} persona${emo.personas === 1 ? '' : 's'}`);
+
+  // Cada emoción principal con su barra; al hacer clic se despliegan sus niveles de intensidad
+  const maxEmo = Math.max(1, ...Object.values(emo.conteo));
+  const emoGrupo = nombres => nombres.map(n => {
+    const v = emo.conteo[n] || 0;
+    const niveles = Object.entries((emo.niveles || {})[n] || {});
+    const maxNiv = Math.max(1, ...niveles.map(([, c]) => c));
+    const detalle = niveles.map(([k, c]) => `<div class="ind-bar" style="font-size:0.76rem;padding:0.15rem 0">
+        <span style="padding-left:1.1rem;color:var(--on-bg-muted)">${k}</span>
+        <div class="seed-track" style="height:5px"><div class="seed-fill" style="width:${Math.round(c / maxNiv * 100)}%;opacity:0.7"></div></div>
+        <b style="font-weight:600">${c}</b>
+      </div>`).join('');
+    return `<div class="ind-bar ind-emo" ${v ? 'onclick="this.classList.toggle(\'open\');this.nextElementSibling.hidden=!this.nextElementSibling.hidden"' : ''}
+        title="${v ? 'Clic para ver los niveles de intensidad' : ''}" style="${v ? 'cursor:pointer' : ''}">
+        <span>${v ? '<span class="ind-caret">▸</span>' : '<span class="ind-caret" style="visibility:hidden">▸</span>'} ${n}</span>
+        <div class="seed-track"><div class="seed-fill" style="width:${Math.round(v / maxEmo * 100)}%"></div></div>
+        <b>${v}</b>
+      </div>
+      <div hidden>${detalle}</div>`;
+  }).join('');
+
+  setHTML(document.getElementById('ind-emociones'),
+    emo.personas
+      ? `<div class="ind-sub">Positivas</div>${emoGrupo(['Alegría', 'Confianza', 'Anticipación'])}
+         <div class="ind-sub">Neutra</div>${emoGrupo(['Sorpresa'])}
+         <div class="ind-sub">Negativas</div>${emoGrupo(['Miedo', 'Tristeza', 'Disgusto', 'Ira'])}
+         <div class="ind-empty" style="font-size:0.72rem">Haz clic en una emoción para ver sus niveles de intensidad (leve · media · intensa).</div>`
+      : '<div class="ind-empty">Aún no hay primeros contactos con la rueda de emociones diligenciada.</div>');
+
+  // Barras de SPA clicables: cada una abre la lista de personas de ese tipo
+  const maxSpa = Math.max(baseSpa, 1);
+  const barrasSpa = Object.entries(d.spa.tipos).map(([k, v]) => `<div class="ind-bar ind-spa-bar"
+      onclick="verUsuariosSpa('${k}')" title="Clic para ver quiénes son">
+      <span>${k}</span>
+      <div class="seed-track"><div class="seed-fill" style="width:${Math.round(v / maxSpa * 100)}%"></div></div>
+      <b>${v}</b>
+    </div>`).join('');
+
+  setHTML(document.getElementById('ind-caract'), `
+    <div class="ind-sub">Usuarios de SPA</div>${barrasSpa}
+    <div class="ind-sub">Género</div>${_indBars(d.genero, total)}
+    <div class="ind-sub">Edad</div>${_indBars(d.edades, total)}
+    ${Object.keys(d.poblaciones).length ? `<div class="ind-sub">Poblaciones de especial interés</div>${_indBars(d.poblaciones, base)}` : ''}`);
+
+  setHTML(document.getElementById('ind-cobertura'),
+    _indBars(Object.fromEntries(d.cobertura.map(c => [c.nombre, c.beneficiarios]))));
+
+  setHTML(document.getElementById('ind-categorias'),
+    _indBars(d.categorias, base) +
+    `<div class="ind-empty" style="font-size:0.75rem">Personas con al menos una situación de cada categoría (según su último primer contacto).</div>`);
+}
+
+// ── Lista de personas con consumo de SPA (clic en la tarjeta o en una barra) ──
+function _escHtml(v) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function verUsuariosSpa(tipo) {
+  const dbc = document.getElementById('ind-dbc');
+  const params = new URLSearchParams();
+  if (dbc?.value) params.set('dispositivo_id', dbc.value);
+  if (tipo) params.set('tipo', tipo);
+
+  const modal = document.getElementById('modal-spa');
+  const tbody = document.getElementById('modal-spa-tbody');
+  document.getElementById('modal-spa-titulo').textContent = '💊 ' + (tipo ? 'Consumo: ' + tipo : 'Usuarios de SPA');
+  const nombreDbc = dbc?.value ? dbc.options[dbc.selectedIndex].text : 'Todos los DBC';
+  document.getElementById('modal-spa-sub').textContent =
+    `${nombreDbc} · solo personas en proceso activo, según su último primer contacto.`;
+  tbody.innerHTML = '<tr><td colspan="4" style="color:var(--on-bg-muted);text-align:center">Cargando...</td></tr>';
+  modal.style.display = 'flex';
+
+  try {
+    const res = await fetch(API + '/admin/indicadores/spa?' + params.toString(), authGet());
+    const lista = res.ok ? await res.json() : [];
+    document.getElementById('modal-spa-count').textContent = lista.length;
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--on-bg-muted);text-align:center">No hay personas en esta situación.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = lista.map(p => {
+      const fecha = p.fecha_contacto
+        ? new Date(p.fecha_contacto + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })
+        : '—';
+      const tipos = p.tipos.map(t => `<span class="tag rust" style="font-size:0.7rem;margin:0.1rem">${_escHtml(t)}</span>`).join('');
+      return `<tr>
+        <td style="font-weight:600">${_escHtml(p.nombre)}</td>
+        <td style="font-size:0.82rem">${_escHtml(p.dispositivo)}</td>
+        <td>${tipos}</td>
+        <td style="font-size:0.82rem;color:var(--on-bg-muted)">${fecha}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--error);text-align:center">Error al cargar.</td></tr>';
+  }
+}
+
+function cerrarModalSpa() {
+  document.getElementById('modal-spa').style.display = 'none';
 }
 
 async function aprobarDisp(usuarioId) {
@@ -501,7 +671,7 @@ async function aprobarPrescriptor(dispId, prescId) {
 }
 
 window.rechazarPrescriptor = async function(dispId, prescId) {
-  if (!confirm('¿Rechazar este prescriptxr?')) return;
+  if (!confirm('¿Rechazar esta solicitud? La cuenta se eliminará y la persona podrá volver a registrarse con ese correo.')) return;
   try {
     const res = await fetch(API + '/dispositivos/' + dispId + '/prescriptores/' + prescId + '/rechazar',
       { method: 'PUT', headers: authHeaders() });
@@ -510,33 +680,3 @@ window.rechazarPrescriptor = async function(dispId, prescId) {
   } catch(e) { console.error(e); }
 };
 
-window.rechazarDisp = async function(usuarioId) {
-  if (!confirm('¿Rechazar este dispositivo?')) return;
-  try {
-    const res = await fetch(API + '/admin/usuarios/' + usuarioId + '/estado',
-      { method: 'PUT', headers: authHeaders(),
-        body: JSON.stringify({ status: 'rechazado' }) });
-    if (res.ok) { loadAdmin(); }
-    else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
-  } catch(e) { console.error(e); }
-};
-
-async function inscribirseDesdeDB(actividadId) {
-  try {
-    const res = await fetch(API + '/beneficiarios/inscribirse', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ actividad_id: actividadId })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      const t = document.createElement('div');
-      t.textContent = '✓ Inscripción exitosa';
-      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
-      document.body.appendChild(t);
-      setTimeout(() => { t.remove(); loadBeneficiario(); }, 2000);
-    } else {
-      alert('Error: ' + (data.detail || 'No se pudo inscribir.'));
-    }
-  } catch(e) { console.error(e); }
-}

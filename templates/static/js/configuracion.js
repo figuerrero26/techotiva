@@ -34,6 +34,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.querySelector(".panel.span-2:last-of-type")?.remove();
   }
 
+  // Exportar toda la información (admin)
+  document.getElementById('btn-exportar-todo')?.addEventListener('click', exportarTodo);
+
+  // Verificación en dos pasos: solo admin
+  if (rol === 'admin') cargar2FA();
+
+  // Sesiones activas solo para admin
+  if (rol === 'admin') {
+    document.getElementById('row-sesiones').style.display = '';
+    document.getElementById('btn-sesiones')?.addEventListener('click', abrirModalSesiones);
+    cargarSesiones();
+    setInterval(cargarSesiones, 30000);
+  }
+
   // Apariencia oculta hasta implementar modo oscuro y compacto
   document.querySelectorAll(".panel").forEach(p => {
     if (p.querySelector(".panel-title")?.textContent.trim() === "Apariencia") {
@@ -187,7 +201,131 @@ async function guardarPassword() {
   }
 }
 
+// ── Exportar todo a Excel (admin) ────────────────────────────────────────
+async function exportarTodo() {
+  const btn = document.getElementById('btn-exportar-todo');
+  const txt = btn.textContent;
+  btn.textContent = 'Generando...'; btn.disabled = true;
+  try {
+    const res = await fetch(API + '/admin/exportar-todo', MASCATE.authGet());
+    if (!res.ok) { alert('No se pudo generar la exportación.'); return; }
+    const blob = await res.blob();
+    const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1]
+      || 'cuidatutecho_export.xlsx';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch(e) {
+    alert('Error de conexión al exportar.');
+  } finally {
+    btn.textContent = txt; btn.disabled = false;
+  }
+}
+
+// ── Verificación en dos pasos (admin) ────────────────────────────────────
+function pintar2FA(activo, habilitadoServidor) {
+  const chk = document.getElementById('chk-2fa');
+  chk.checked = activo;
+  document.getElementById('lbl-2fa').textContent = activo ? 'Activada' : 'Desactivada';
+  const sub = document.getElementById('sub-2fa');
+  if (!habilitadoServidor) {
+    chk.disabled = true;
+    sub.textContent = 'Apagada en el servidor (ADMIN_2FA=false en el .env).';
+  } else {
+    sub.textContent = activo
+      ? 'Al iniciar sesión se pide un código enviado a tu correo.'
+      : 'Tu cuenta solo pide contraseña. Actívala para mayor seguridad.';
+  }
+}
+
+async function cargar2FA() {
+  try {
+    const res = await fetch(API + '/auth/2fa', MASCATE.authGet());
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('row-2fa').style.display = '';
+    pintar2FA(d.activo, d.habilitado_servidor);
+    document.getElementById('chk-2fa').addEventListener('change', async e => {
+      if (e.target.checked) {
+        await guardar2FA(true);
+      } else {
+        e.target.checked = true;          // no se apaga hasta confirmar la contraseña
+        document.getElementById('pw-2fa').value = '';
+        document.getElementById('error-2fa').style.display = 'none';
+        document.getElementById('modal-2fa-overlay').style.display = 'flex';
+        document.getElementById('pw-2fa').focus();
+      }
+    });
+  } catch(e) {}
+}
+
+async function guardar2FA(activo, password) {
+  const res = await fetch(API + '/auth/2fa', {
+    method: 'PUT', headers: MASCATE.authHeaders(),
+    body: JSON.stringify({ activo, password: password || null }),
+  });
+  const d = await res.json().catch(() => ({}));
+  if (res.ok) pintar2FA(d.activo, true);
+  return { ok: res.ok, detail: d.detail };
+}
+
+async function confirmarDesactivar2FA() {
+  const pw  = document.getElementById('pw-2fa').value;
+  const err = document.getElementById('error-2fa');
+  if (!pw) { err.textContent = 'Escribe tu contraseña.'; err.style.display = 'block'; return; }
+  const r = await guardar2FA(false, pw);
+  if (r.ok) cerrarModal2FA();
+  else { err.textContent = r.detail || 'No se pudo desactivar.'; err.style.display = 'block'; }
+}
+
+function cerrarModal2FA() {
+  document.getElementById('modal-2fa-overlay').style.display = 'none';
+}
+
+// ── Sesiones activas (admin) ─────────────────────────────────────────────
+async function cargarSesiones() {
+  let lista;
+  try {
+    const res = await fetch(API + '/admin/sesiones-activas', MASCATE.authGet());
+    if (!res.ok) return;
+    lista = await res.json();
+  } catch(e) { return; }
+
+  set('sesiones-count', lista.length);
+  const cont = document.getElementById('sesiones-list');
+  if (!cont) return;
+  if (!lista.length) {
+    cont.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem">No hay nadie conectado en este momento.</div>';
+    return;
+  }
+  const hace = s => s < 60 ? 'Activo ahora' : `Hace ${Math.floor(s / 60)} min`;
+  cont.innerHTML = lista.map(u => `<div class="list-row">
+      <div class="list-avatar" style="font-size:0.75rem">${ini(u.nombre)}</div>
+      <div class="list-info">
+        <div class="list-name">${u.nombre}${u.email === MASCATE.email ? ' <span style="font-weight:400;color:var(--on-bg-muted)">(tú)</span>' : ''}</div>
+        <div class="list-sub">${ROL_LABELS[u.rol] ?? u.rol} · ${u.email}</div>
+      </div>
+      <span class="tag ${u.hace_segundos < 60 ? 'green' : 'mustard'}">${hace(u.hace_segundos)}</span>
+    </div>`).join('');
+}
+
+function abrirModalSesiones() {
+  const overlay = document.getElementById('modal-sesiones-overlay');
+  if (overlay) overlay.style.display = 'flex';
+  cargarSesiones();
+}
+
+function cerrarModalSesiones() {
+  const overlay = document.getElementById('modal-sesiones-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
 // Cerrar modal al click fuera
 document.getElementById('modal-pw-overlay')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-pw-overlay')) cerrarModalPw();
+});
+document.getElementById('modal-sesiones-overlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-sesiones-overlay')) cerrarModalSesiones();
 });

@@ -2,7 +2,6 @@
 Router de beneficiarios: perfil propio, edición y actividades.
 """
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import date as date_type
 from database import get_db
@@ -193,65 +192,6 @@ def inscribirse(
     db.commit()
 
     return InscripcionResponse(mensaje="Inscripción exitosa", actividad_id=data.actividad_id)
-
-
-class AsignarPrescriptorRequest(BaseModel):
-    prescriptor_id: int | None = None
-
-
-# ────────────────────────── PUT /asignar-prescriptor ──────────────────────────
-@router.put("/{beneficiario_id}/asignar-prescriptor")
-def asignar_prescriptor(
-    beneficiario_id: int,
-    data: AsignarPrescriptorRequest,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol not in ("admin", "dispositivo"):
-        raise HTTPException(status_code=403, detail="Solo admin o dispositivo pueden asignar prescriptores")
-
-    benef = db.query(Beneficiario).filter(Beneficiario.id == beneficiario_id).first()
-    if not benef:
-        raise HTTPException(status_code=404, detail="Beneficiario no encontrado")
-
-    prescriptor_id = data.prescriptor_id
-    if prescriptor_id:
-        presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
-        if not presc:
-            raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
-        # Verificar que el prescriptor pertenece al mismo dispositivo que el beneficiario
-        if current_user.rol == "dispositivo":
-            disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
-            if disp and presc.dispositivo_id != disp.id:
-                raise HTTPException(status_code=403, detail="El prescriptor no pertenece a tu dispositivo")
-
-    benef.prescriptor_id = prescriptor_id
-    db.commit()
-    return {"mensaje": "Prescriptor asignado correctamente", "beneficiario_id": beneficiario_id, "prescriptor_id": prescriptor_id}
-
-
-# ────────────────────────── POST /solicitar-dispositivo ──────────────────────────
-@router.post("/solicitar-dispositivo/{dispositivo_id}")
-def solicitar_dispositivo(
-    dispositivo_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol != "beneficiario":
-        raise HTTPException(status_code=403, detail="Solo beneficiarios pueden solicitar unirse")
-
-    benef = _get_beneficiario(db, current_user)
-
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if not disp:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-
-    if benef.dispositivo_id == dispositivo_id:
-        raise HTTPException(status_code=400, detail="Ya perteneces a este dispositivo")
-
-    benef.dispositivo_id = dispositivo_id
-    db.commit()
-    return {"msg": f"Te has unido a {disp.nombre} correctamente."}
 
 
 # ────────────────────────── GET /mis-prescriptores ──────────────────────────

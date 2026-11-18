@@ -1,7 +1,8 @@
+import json
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -150,9 +151,13 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_migrations()
     seed_admin()
-    seed_datos()
+    # Los usuarios de prueba (clave conocida Test1234!) nunca se crean en producción
+    if not ES_PRODUCCION:
+        seed_datos()
     yield
 
+
+ES_PRODUCCION = settings.app_env.lower() == "production"
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 app = FastAPI(
@@ -162,19 +167,84 @@ app = FastAPI(
         "Prescriptxres y Beneficiarixs. Autenticación JWT + roles."
     ),
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # En producción no se publica el mapa de la API
+    docs_url=None if ES_PRODUCCION else "/docs",
+    redoc_url=None if ES_PRODUCCION else "/redoc",
+    openapi_url=None if ES_PRODUCCION else "/openapi.json",
     lifespan=lifespan,
 )
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
+# La interfaz se sirve desde el mismo dominio; en producción solo se acepta ese origen.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[settings.app_base_url.rstrip("/")] if ES_PRODUCCION else ["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ─── Seguridad: rechazar HTML en los datos que llegan ────────────────────────
+# Ningún campo de texto de la plataforma necesita "<" o ">". Bloquearlos impide
+# que alguien guarde código (p. ej. <script>) que luego se ejecute en el
+# navegador de otra persona. Las contraseñas y códigos quedan exentos.
+_CLAVES_EXENTAS = ("password", "codigo", "token", "desafio")
+
+
+def _tiene_html(valor, clave: str = "") -> bool:
+    if any(x in clave.lower() for x in _CLAVES_EXENTAS):
+        return False
+    if isinstance(valor, str):
+        return "<" in valor or ">" in valor
+    if isinstance(valor, dict):
+        return any(_tiene_html(v, str(k)) for k, v in valor.items())
+    if isinstance(valor, list):
+        return any(_tiene_html(v, clave) for v in valor)
+    return False
+
+
+@app.middleware("http")
+async def bloquear_html_en_datos(request, call_next):
+    if request.method in ("POST", "PUT", "PATCH") and \
+            request.headers.get("content-type", "").startswith("application/json"):
+        cuerpo = await request.body()
+        if cuerpo:
+            try:
+                datos = json.loads(cuerpo)
+            except ValueError:
+                datos = None
+            if _tiene_html(datos):
+                return JSONResponse(
+                    status_code=422,
+                    content={"detail": "Los textos no pueden contener los caracteres < ni >."},
+                )
+    return await call_next(request)
+
+
+# ─── Seguridad: encabezados HTTP ─────────────────────────────────────────────
+@app.middleware("http")
+async def encabezados_seguridad(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"      # no adivinar tipos de archivo
+    response.headers["X-Frame-Options"] = "DENY"                # no se puede incrustar en otra web
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
+    return response
+
+
+# ─── Sin caché para páginas, JS y CSS ─────────────────────────────────────────
+# Evita que el navegador muestre versiones viejas después de actualizar el sistema
+# (siempre revalida con el servidor; si no cambió, responde 304 sin descargar).
+@app.middleware("http")
+async def no_cache_paginas(request, call_next):
+    response = await call_next(request)
+    tipo = response.headers.get("content-type", "")
+    if tipo.startswith(("text/html", "application/javascript", "text/javascript", "text/css")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 from fastapi.staticfiles import StaticFiles
@@ -243,10 +313,6 @@ def dispositivos_admin_page():
 @app.get("/mis-prescriptores", include_in_schema=False)
 def mis_prescriptores_page():
     return FileResponse("templates/mis-prescriptores.html")
-
-@app.get("/mi-dispositivo", include_in_schema=False)
-def mi_dispositivo_page():
-    return FileResponse("templates/mi-dispositivo.html")
 
 @app.get("/mis-seguimientos", include_in_schema=False)
 def mis_seguimientos_page():

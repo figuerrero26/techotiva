@@ -26,7 +26,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   // admin
   await cargarUsuarios();
   await cargarPendientes();
-  await cargarSolicitudesPrescriptor();
   initFiltros();
 });
 
@@ -50,6 +49,34 @@ async function cargarUsuarios() {
   } catch(e) { console.error('Error cargando usuarios:', e); }
 }
 
+// ── Tarjetas para dispositivo y prescriptor: total + semáforo de seguimiento ──
+function pintarStatsBeneficiarios(lista) {
+  document.querySelectorAll('.stat-card')[3]?.remove();       // sobra la 4ª tarjeta
+  document.querySelector('.stats-row')?.classList.replace('cols-4', 'cols-3');
+  const cards = document.querySelectorAll('.stat-card');
+  // Texto de ayuda al pasar el mouse. El prescriptor cuenta desde SU último
+  // seguimiento; el dispositivo, desde el último de cualquier prescriptor.
+  const desde = MASCATE.rol === 'prescriptor' ? 'tu último seguimiento' : 'el último seguimiento';
+  const config = [
+    { icon: '🌱', cls: 'green',   label: 'Beneficiarixs', val: lista.length,
+      ayuda: 'Total de personas en la lista, incluidas las de proceso finalizado.' },
+    { icon: '🔴', cls: 'rust',    label: 'Urgentes',      val: lista.filter(a => a.estado === 'urgente').length,
+      ayuda: `Han pasado 14 días o más desde ${desde}, o aún no tienen ningún seguimiento. No cuenta procesos finalizados.` },
+    { icon: '🟡', cls: 'mustard', label: 'Por revisar',   val: lista.filter(a => a.estado === 'revisar').length,
+      ayuda: `Han pasado entre 7 y 13 días desde ${desde}. No cuenta procesos finalizados.` },
+  ];
+  config.forEach((c, i) => {
+    const card = cards[i];
+    if (!card) return;
+    card.title = c.ayuda;
+    card.style.cursor = 'help';
+    card.querySelector('.stat-icon').textContent = c.icon;
+    card.querySelector('.stat-icon').className = 'stat-icon ' + c.cls;
+    card.querySelector('.stat-val').textContent = c.val;
+    card.querySelector('.stat-label').textContent = c.label;
+  });
+}
+
 // ── Cargar beneficiarios del dispositivo ────────────────────────────────
 async function cargarBeneficiariosDispositivo() {
   try {
@@ -69,20 +96,7 @@ async function cargarBeneficiariosDispositivo() {
     const p = document.querySelector('.page-header p');
     if (p) p.textContent = 'Personas registradas y vinculadas a este dispositivo.';
 
-    document.querySelectorAll('.stat-card')[2]?.remove();
-    document.querySelectorAll('.stat-card')[2]?.remove();
-
-    const urgentes = todosLosUsuarios.filter(a => a.estado === 'urgente').length;
-    setStats([
-      { id:'stat-0', val: todosLosUsuarios.length },
-      { id:'stat-1', val: todosLosUsuarios.length },
-      { id:'stat-2', val: urgentes },
-    ]);
-
-    const labels = document.querySelectorAll('.stat-label');
-    if (labels[0]) labels[0].textContent = 'Total';
-    if (labels[1]) labels[1].textContent = 'Beneficiarixs';
-    if (labels[2]) labels[2].textContent = 'Urgentes';
+    pintarStatsBeneficiarios(todosLosUsuarios);
 
     document.getElementById('panel-pendientes')?.remove();
 
@@ -93,77 +107,6 @@ async function cargarBeneficiariosDispositivo() {
 
     renderTablaAsignados(todosLosUsuarios);
   } catch(e) { console.error('Error cargando beneficiarios del dispositivo:', e); }
-}
-
-// ── Cargar solicitudes de prescriptores (admin) ──────────────────────────
-async function cargarSolicitudesPrescriptor() {
-  if (MASCATE.rol !== 'admin') return;
-  try {
-    const sol = await fetch(API + '/admin/solicitudes-prescriptor', MASCATE.authGet()).then(r => r.json());
-    window._solicitudesPrescriptor = Array.isArray(sol) ? sol : [];
-    const panel = document.getElementById('panel-solicitudes-presc');
-    const lista  = document.getElementById('solicitudes-list');
-    const count  = document.getElementById('solicitudes-count');
-
-    if (!Array.isArray(sol) || !sol.length) {
-      if (panel) panel.style.display = 'none';
-      return;
-    }
-
-    if (panel) panel.style.display = 'block';
-    if (count) count.textContent = sol.length;
-
-    if (lista) {
-      lista.innerHTML = sol.map(s => `
-        <div class="list-row" style="padding:0.65rem 0;border-bottom:1px solid var(--border)">
-          <div class="list-avatar" style="background:var(--violet-dim);color:var(--violet);flex-shrink:0">
-            ${(s.nombre_completo||'??').substring(0,2).toUpperCase()}
-          </div>
-          <div class="list-info">
-            <div class="list-name">${campo(s.nombre_completo, s.email)}</div>
-            <div class="list-sub">
-              Quiere unirse a: <strong>${campo(s.solicitud_nombre)}</strong>
-              ${s.dispositivo_nombre_actual ? ' · Actual: ' + s.dispositivo_nombre_actual : ''}
-            </div>
-          </div>
-          <div style="display:flex;gap:0.4rem;flex-shrink:0">
-            <button class="btn btn-sm btn-green"
-              onclick="adminAprobarSolicitud(${s.prescriptor_id})">✓ Aprobar</button>
-            <button class="btn btn-sm btn-outline"
-              style="color:var(--error);border-color:var(--error)"
-              onclick="adminRechazarSolicitud(${s.prescriptor_id})">✕ Rechazar</button>
-          </div>
-        </div>`).join('');
-    }
-  } catch(e) { console.error('Error solicitudes prescriptor:', e); }
-}
-
-async function adminAprobarSolicitud(prescriptorId) {
-  try {
-    const res = await fetch(API + '/admin/prescriptores/' + prescriptorId + '/aprobar-solicitud',
-      { method: 'POST', headers: MASCATE.authHeaders() });
-    if (res.ok) {
-      await cargarUsuarios();
-      await cargarSolicitudesPrescriptor();
-    } else {
-      const d = await res.json().catch(() => ({}));
-      alert('Error: ' + (d.detail || 'No se pudo aprobar.'));
-    }
-  } catch(e) { console.error(e); }
-}
-
-async function adminRechazarSolicitud(prescriptorId) {
-  if (!confirm('¿Rechazar esta solicitud?')) return;
-  try {
-    const res = await fetch(API + '/admin/prescriptores/' + prescriptorId + '/rechazar-solicitud',
-      { method: 'POST', headers: MASCATE.authHeaders() });
-    if (res.ok) {
-      await cargarSolicitudesPrescriptor();
-    } else {
-      const d = await res.json().catch(() => ({}));
-      alert('Error: ' + (d.detail || 'No se pudo rechazar.'));
-    }
-  } catch(e) { console.error(e); }
 }
 
 // ── Cargar pendientes de aprobación ──────────────────────────────────────
@@ -217,11 +160,10 @@ async function aprobarUsuario(id) {
 }
 
 async function rechazarUsuario(id) {
-  if (!confirm('¿Desactivar este usuario?')) return;
+  if (!confirm('¿Rechazar esta solicitud? La cuenta se eliminará y la persona podrá volver a registrarse con ese correo.')) return;
   try {
-    const res = await fetch(API + '/admin/usuarios/' + id + '/estado',
-      { method: 'PUT', headers: MASCATE.authHeaders(),
-        body: JSON.stringify({ status: 'inactivo' }) });
+    const res = await fetch(API + '/admin/usuarios/' + id + '/rechazar',
+      { method: 'POST', headers: MASCATE.authHeaders() });
     if (res.ok) { await cargarUsuarios(); await cargarPendientes(); }
     else {
       const d = await res.json();
@@ -281,9 +223,9 @@ function renderTabla(lista) {
         ${MASCATE.rol !== 'prescriptor' ? `<button class="btn btn-sm btn-outline" onclick="abrirModal(${u.id})">Editar</button>` : ''}
         ${u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-outline" style="color:var(--primary);border-color:var(--primary)" onclick="abrirFicha(${u.beneficiario_id})">Ficha</button>` : ''}
         ${u.rol === 'prescriptor' && MASCATE.rol === 'admin' ? `<button class="btn btn-sm btn-outline" style="color:var(--primary);border-color:var(--primary)" onclick="abrirFichaPresc(${u.id})">Ficha</button>` : ''}
-        ${MASCATE.rol === 'prescriptor' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem" onclick="irASeguimiento(${u.beneficiario_id},'${(u.nombre||u.email).replace(/'/g,"\\'")}')">+ Seguimiento</button>` : ''}
-        ${MASCATE.rol === 'admin' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem" onclick="verSeguimientosUsu(${u.beneficiario_id}, '${(u.nombre||u.email).replace(/'/g,"\\'")}')">Seguimientos</button>` : ''}
-        ${MASCATE.rol === 'admin' && u.proceso_finalizado ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:var(--secondary);border-color:var(--secondary)" onclick="reactivarBeneficiario(${u.id}, '${(u.nombre||u.email).replace(/'/g,"\\'")}')">Reactivar</button>` : ''}
+        ${MASCATE.rol === 'prescriptor' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem" onclick="irASeguimiento(${u.beneficiario_id},'${jsq((u.nombre||u.email))}')">+ Seguimiento</button>` : ''}
+        ${MASCATE.rol === 'admin' && u.rol === 'beneficiario' && u.beneficiario_id ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem" onclick="verSeguimientosUsu(${u.beneficiario_id}, '${jsq((u.nombre||u.email))}')">Seguimientos</button>` : ''}
+        ${MASCATE.rol === 'admin' && u.proceso_finalizado ? `<button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:var(--secondary);border-color:var(--secondary)" onclick="reactivarBeneficiario(${u.id}, '${jsq((u.nombre||u.email))}')">Reactivar</button>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -296,9 +238,15 @@ function initFiltros() {
   const statusSelect = document.getElementById('status-select');
   const rol          = MASCATE.rol;
 
-  // Para prescriptor y dispositivo el rol es siempre beneficiario → ocultar filtro rol
-  if (rol === 'prescriptor' || rol === 'dispositivo') {
+  // Prescriptor y dispositivo ven solo beneficiarios: sin filtro de rol, y el de
+  // estado usa el semáforo de seguimiento en vez de activo/pendiente/inactivo
+  const vistaAsignados = rol === 'prescriptor' || rol === 'dispositivo';
+  if (vistaAsignados) {
     roleSelect?.closest('div')?.remove();
+    if (statusSelect) {
+      statusSelect.innerHTML = [['todos', 'Todos'], ...Object.entries(ESTADO_PRESC).map(([k, v]) => [k, v.label])]
+        .map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+    }
   }
 
   function filtrar() {
@@ -307,14 +255,15 @@ function initFiltros() {
     const st = statusSelect?.value  ?? 'todos';
 
     const filtrados = todosLosUsuarios.filter(u => {
-      const txt    = (u.nombre || u.email || '').toLowerCase();
+      // Busca por nombre y por correo (la lista de asignados trae el nombre en nombre_apodo)
+      const txt    = `${u.nombre || u.nombre_apodo || ''} ${u.email || ''}`.toLowerCase();
       const matchQ = txt.includes(q);
-      const matchR = r  === 'todos' || u.rol    === r;
-      const matchS = st === 'todos' || u.status === st;
+      const matchR = vistaAsignados || r === 'todos' || u.rol === r;
+      const matchS = st === 'todos' || (vistaAsignados ? u.estado : u.status) === st;
       return matchQ && matchR && matchS;
     });
 
-    if (rol === 'prescriptor') {
+    if (vistaAsignados) {
       renderTablaAsignados(filtrados);
     } else {
       renderTabla(filtrados);
@@ -346,7 +295,6 @@ async function abrirModal(id) {
   // Bloque dispositivo: solo para prescriptores
   const dispWrap = document.getElementById('modal-dispositivo-wrap');
   const dispSel  = document.getElementById('modal-dispositivo');
-  const solInfo  = document.getElementById('modal-solicitud-info');
 
   // Cargar lista de dispositivos si no está cargada (usada por prescriptores y beneficiarios)
   if (!_dispositivosLista.length) {
@@ -368,14 +316,8 @@ async function abrirModal(id) {
         if (match) dispSel.value = String(match.id);
       }
     }
-    if (solInfo) {
-      const solData = (window._solicitudesPrescriptor || []).find(s => s.prescriptor_id === u.prescriptor_id);
-      solInfo.innerHTML = solData?.solicitud_nombre
-        ? `⏳ Solicitud pendiente en <strong>${solData.solicitud_nombre}</strong>` : '';
-    }
   } else if (dispWrap) {
     dispWrap.style.display = 'none';
-    if (solInfo) solInfo.textContent = '';
   }
 
   // Bloque dispositivo para BENEFICIARIOS
@@ -442,8 +384,6 @@ async function desasociarDispositivoAdmin() {
     if (res.ok) {
       const dispSel = document.getElementById('modal-dispositivo');
       if (dispSel) dispSel.value = '';
-      const solInfo = document.getElementById('modal-solicitud-info');
-      if (solInfo) solInfo.textContent = '';
       usuarioEditando.dispositivo_nombre = null;
     } else {
       const d = await res.json();
@@ -550,26 +490,6 @@ async function guardarCambiosUsuario() {
   }
 }
 
-async function crearPerfilDispositivo(userId) {
-  try {
-    const res = await fetch(API + '/admin/usuarios/' + userId + '/crear-dispositivo', {
-      method: 'POST', headers: MASCATE.authHeaders()
-    });
-    const data = await res.json();
-    if (res.ok) {
-      // Actualizar caché y reabrir modal
-      const idx = todosLosUsuarios.findIndex(u => u.id === userId);
-      if (idx !== -1) todosLosUsuarios[idx] = data;
-      usuarioEditando = data;
-      abrirModal(userId);
-    } else {
-      alert('Error: ' + (data.detail || 'No se pudo crear el perfil.'));
-    }
-  } catch(e) {
-    alert('Error de conexión.');
-  }
-}
-
 async function eliminarUsuario() {
   if (!usuarioEditando) return;
   const nombre = usuarioEditando.nombre || usuarioEditando.email;
@@ -641,20 +561,7 @@ async function cargarAsignados() {
     const p = document.querySelector('.page-header p');
     if (p) p.textContent = 'Personas a tu cargo y estado de seguimiento.';
 
-    document.querySelectorAll('.stat-card')[2]?.remove();
-    document.querySelectorAll('.stat-card')[2]?.remove();
-
-    const urgentes = todosLosUsuarios.filter(a => a.estado === 'urgente').length;
-    setStats([
-      { id:'stat-0', val: todosLosUsuarios.length },
-      { id:'stat-1', val: todosLosUsuarios.length },
-      { id:'stat-2', val: urgentes },
-    ]);
-
-    const labels = document.querySelectorAll('.stat-label');
-    if (labels[0]) labels[0].textContent = 'Total';
-    if (labels[1]) labels[1].textContent = 'Beneficiarixs';
-    if (labels[2]) labels[2].textContent = 'Urgentes';
+    pintarStatsBeneficiarios(todosLosUsuarios);
 
     document.getElementById('panel-pendientes')?.remove();
 
@@ -667,6 +574,7 @@ const ESTADO_PRESC = {
   revisar:      { label: 'Revisar',      cls: 'mustard' },
   urgente:      { label: 'Urgente',      cls: 'rust'    },
   desvinculado: { label: 'Desvinculado', cls: 'gray'    },
+  finalizado:   { label: 'Proceso finalizado', cls: 'blue' },
 };
 
 function renderTablaAsignados(lista) {
@@ -682,7 +590,7 @@ function renderTablaAsignados(lista) {
       ? new Date(a.ultima_sesion).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })
       : '—';
     const diasLabel = a.dias_sin_sesion != null ? `${a.dias_sin_sesion} días` : '—';
-    const nomEsc   = (a.nombre_apodo || '').replace(/'/g, "\\'");
+    const nomEsc   = jsq(a.nombre_apodo || '');
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:0.6rem">
         <div class="list-avatar" style="width:1.8rem;height:1.8rem;font-size:0.7rem;flex-shrink:0">${ini(a.nombre_apodo)}</div>
@@ -694,8 +602,8 @@ function renderTablaAsignados(lista) {
       <td style="font-size:0.85rem">${diasLabel}</td>
       <td><span class="tag ${est.cls}">${est.label}</span></td>
       <td style="display:flex;gap:0.4rem;flex-wrap:wrap">
-        <button class="btn btn-sm btn-green" style="font-size:0.78rem"
-          onclick="irASeguimiento(${a.id},'${nomEsc}')">+ Seguimiento</button>
+        ${a.estado !== 'finalizado' ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem"
+          onclick="irASeguimiento(${a.id},'${nomEsc}')">+ Seguimiento</button>` : ''}
         <button class="btn btn-sm btn-outline" style="font-size:0.78rem"
           onclick="verSeguimientosUsu(${a.id}, '${nomEsc}')">Seguimientos</button>
         <button class="btn btn-sm btn-outline" style="color:var(--primary);border-color:var(--primary);font-size:0.78rem"
@@ -718,11 +626,8 @@ async function abrirFicha(beneficiarioId) {
   set('ficha-titulo', nombre);
 
   // Ocultar form, mostrar overlay en modo vista
-  document.getElementById('ficha-form').style.display = 'none';
   document.getElementById('ficha-view').style.display = 'block';
   document.getElementById('ficha-btn-editar').style.display = 'none';
-  document.getElementById('ficha-btn-guardar').style.display = 'none';
-  document.getElementById('ficha-btn-cancelar').style.display = 'none';
   document.getElementById('ficha-view').innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>';
 
   const overlay = document.getElementById('ficha-overlay');
@@ -768,72 +673,67 @@ function renderFichaView(pc) {
     : '';
   const sec = (titulo) => `<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--on-bg-muted);margin:1rem 0 0.5rem;border-top:1px solid var(--border);padding-top:0.75rem">${titulo}</div>`;
   const grid = (...items) => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.25rem">${items.join('')}</div>`;
+  const chips = (l, v) => v ? `<div style="margin-top:0.5rem">${l ? `<div style="font-size:0.73rem;color:var(--on-bg-muted);margin-bottom:0.2rem">${l}</div>` : ''}<div style="font-size:0.85rem;line-height:1.7">${v.split(' | ').map(s => `<span style="display:inline-block;background:var(--primary-dim);color:var(--primary);border-radius:4px;padding:0.15rem 0.45rem;margin:0.1rem;font-size:0.78rem">${s}</span>`).join('')}</div></div>` : '';
   const bloque = (l, v) => v ? `<div style="margin-top:0.6rem"><div style="font-size:0.73rem;color:var(--on-bg-muted);margin-bottom:0.2rem">${l}</div><div style="font-size:0.85rem;line-height:1.5;white-space:pre-wrap">${v}</div></div>` : '';
 
   const dir = [pc.clase_via, pc.numero_via_principal, pc.letra_via_principal, '#', pc.numero_via_generadora, pc.letra_via_generadora, '-', pc.numero_predio]
     .filter(Boolean).join(' ').replace('# -', '#').trim();
 
   document.getElementById('ficha-view').innerHTML = `
-    ${sec('Datos personales')}
+    ${sec('1. Registro del contacto · ' + fecha)}
+    ${marcaTemporal ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.4rem">🕐 Registrado el ${marcaTemporal}</div>` : ''}
     ${grid(
+      f('Hora', pc.hora_contacto),
+      f('Caso #', pc.numero_caso),
+      f('Forma de contacto', pc.forma_contacto),
+      f('Tipo de contacto', pc.tipo_contacto),
+      f('Lugar del contacto', pc.lugar_contacto),
+      f('Localidad', pc.localidad),
+      f('UPZ', pc.upz),
+      f('Barrio', pc.barrio),
+      f('Convenio', pc.convenio_515),
+      f('DBC', pc.tipo_dbc),
+    )}
+
+    ${sec('2. Información del beneficiario')}
+    ${grid(
+      f('Info dada por el beneficiario', pc.info_por_beneficiario),
       f('Fecha de nacimiento', fnac),
       f('Edad', edad),
       f('Género', pc.genero),
       f('Teléfono', pc.telefono),
-      f('Localidad', pc.localidad),
-      f('Estado civil', pc.estado_civil),
-      f('N.º hijos', pc.num_hijos),
       f('Pertenencia étnica', pc.pertenencia_etnica),
       f('Etnia', pc.etnia),
       f('Religión', pc.religion),
-    )}
-
-    ${sec('Evento de contacto · ' + fecha)}
-    ${marcaTemporal ? `<div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.4rem">🕐 Registrado el ${marcaTemporal}</div>` : ''}
-    ${grid(
-      f('Hora', pc.hora_contacto),
-      f('UPZ', pc.upz),
-      f('Barrio', pc.barrio),
-      f('Forma de contacto', pc.forma_contacto),
-    )}
-    ${dir ? `<div style="margin-top:0.5rem">${f('Dirección', dir)}</div>` : ''}
-    ${f('Con quién vive', pc.con_quien_vive)}
-
-    ${sec('Convenio y DBC')}
-    ${grid(
-      f('Convenio', pc.convenio_515),
-      f('DBC', pc.tipo_dbc),
-      f('Número de caso', pc.numero_caso),
       f('Procesos previos', pc.procesos_previos),
     )}
-
-    ${sec('Fuente de información')}
+    ${dir ? `<div style="margin-top:0.5rem">${f('Dirección', dir)}</div>` : ''}
+    ${chips('Poblaciones de especial interés', pc.poblaciones_especiales)}
+    ${(pc.nombre_fuente || pc.telefono_fuente) ? `
+    <div style="font-size:0.78rem;font-weight:600;color:var(--on-bg-muted);margin-top:0.6rem">Fuente de información</div>
     ${grid(
       f('Fuente', pc.nombre_fuente),
       f('Teléfono fuente', pc.telefono_fuente),
       f('Género fuente', pc.genero_fuente),
       f('Vínculo fuente', pc.vinculo_fuente),
-    )}
+    )}` : ''}
 
-    ${sec('Educación y trabajo')}
+    ${sec('3. Entorno familiar y social')}
     ${grid(
-      f('Sabe leer/escribir', pc.sabe_leer_escribir),
-      f('Usa computador', pc.sabe_usar_computador),
-      f('Escolaridad', pc.escolaridad),
-      f('Ocupación', pc.ocupacion),
-    )}
-
-    ${sec('Redes de apoyo')}
-    ${grid(
+      f('Estado civil', pc.estado_civil),
+      f('N.º hijos', pc.num_hijos),
+      f('Con quién vive', pc.con_quien_vive),
+      f('Personas cercanas', pc.apoyo_personas_cercanas),
+      f('Interés de otros', pc.apoyo_interes_otros),
+      f('Ayuda de vecinos', pc.apoyo_ayuda_vecinos),
       f('Apoyo familiar', pc.apoyo_familiar),
       f('Apoyo comunitario', pc.apoyo_comunitario),
       f('Apoyo institucional', pc.apoyo_institucional),
       f('Otro actor social', pc.apoyo_otro_actor),
       f('¿Cuál actor?', pc.cual_actor_social),
     )}
-
     ${(pc.tiene_persona_apoyo) ? `
-    ${sec('Persona de apoyo')}
+    <div style="font-size:0.78rem;font-weight:600;color:var(--on-bg-muted);margin-top:0.6rem">Persona de apoyo</div>
     ${grid(
       f('Nombre', pc.nombre_persona_apoyo),
       f('Teléfono', pc.telefono_persona_apoyo),
@@ -842,26 +742,33 @@ function renderFichaView(pc) {
       f('Género', pc.genero_apoyo),
     )}` : ''}
 
-    ${sec('Recreación y participación')}
+    ${sec('4. Educación y ocupación')}
     ${grid(
+      f('Escolaridad', pc.escolaridad),
+      f('Ocupación', pc.ocupacion),
+      f('Sabe leer/escribir', pc.sabe_leer_escribir),
+      f('Usa computador', pc.sabe_usar_computador),
+    )}
+
+    ${sec('5. Bienestar y estilo de vida')}
+    ${grid(
+      f('Alimentación', pc.alimentacion),
       f('Practica deporte', pc.practica_deporte),
       f('Tiene tiempo rec.', pc.tiene_tiempo_recreacion),
       f('Cuánto tiempo', pc.cuanto_tiempo_recreacion),
       f('Conoce espacios', pc.conoce_espacios),
       f('Ha participado', pc.ha_participado),
     )}
+    ${chips('Emociones', pc.emociones)}
 
-    ${pc.situaciones_presentes ? `
-    ${sec('Situaciones presentes')}
-    <div style="font-size:0.85rem;line-height:1.7">${pc.situaciones_presentes.split(' | ').map(s => `<span style="display:inline-block;background:var(--primary-dim);color:var(--primary);border-radius:4px;padding:0.15rem 0.45rem;margin:0.1rem;font-size:0.78rem">${s}</span>`).join('')}</div>` : ''}
+    ${pc.situaciones_presentes ? `${sec('6. Situaciones presentes')}${chips('', pc.situaciones_presentes)}` : ''}
+    ${pc.peticiones ? `${sec('7. Peticiones y necesidades')}${chips('', pc.peticiones)}` : ''}
+    ${pc.descripcion_caso ? `${sec('8. Descripción del caso')}${bloque('', pc.descripcion_caso)}` : ''}
 
-    ${bloque('Peticiones', pc.peticiones)}
-    ${bloque('Descripción del caso', pc.descripcion_caso)}
-
-    ${sec('Registrador')}
+    ${sec('9. Quien diligencia')}
     ${grid(
-      f('Rol', pc.rol_registrador),
       f('Nombre', pc.nombre_registrador),
+      f('Rol', pc.rol_registrador),
       f('Teléfono', pc.telefono_registrador),
     )}
 
@@ -883,106 +790,17 @@ function calcEdad(fnac) {
   return edad;
 }
 
-function toggleEditarFicha() {
-  // Cargar los datos actuales en el form
-  const pcs = [];  // Recuperar del _fichaPcId si es necesario
-  document.getElementById('ficha-view').style.display = 'none';
-  document.getElementById('ficha-form').style.display = 'block';
-  document.getElementById('ficha-btn-editar').style.display = 'none';
-  document.getElementById('ficha-btn-guardar').style.display = 'inline-flex';
-  document.getElementById('ficha-btn-cancelar').style.display = 'inline-flex';
-
-  // Rellenar form con datos actuales del view (re-fetch para tener datos frescos)
-  fetch(API + '/primer-contacto/' + _fichaPcId, MASCATE.authGet())
-    .then(r => r.json())
-    .then(pc => {
-      v('fe-fnac',       pc.fecha_nacimiento || '');
-      v('fe-genero',     pc.genero || '');
-      v('fe-telefono',   pc.telefono || '');
-      v('fe-localidad',  pc.localidad || '');
-      v('fe-fecha',      pc.fecha_contacto || '');
-      v('fe-hora',       pc.hora_contacto || '');
-      v('fe-upz',        pc.upz || '');
-      v('fe-barrio',     pc.barrio || '');
-      v('fe-forma',      pc.forma_contacto || '');
-      v('fe-fuente',     pc.nombre_fuente || '');
-      v('fe-vinculo',    pc.vinculo_fuente || '');
-      v('fe-procesos',   pc.procesos_previos ?? '');
-      v('fe-situaciones',pc.situaciones_presentes || '');
-      v('fe-peticiones', pc.peticiones || '');
-      v('fe-descripcion',pc.descripcion_caso || '');
-    })
-    .catch(console.error);
-}
-
-function v(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.value = val;
-}
-
-function cancelarEditarFicha() {
-  document.getElementById('ficha-form').style.display = 'none';
-  document.getElementById('ficha-view').style.display = 'block';
-  document.getElementById('ficha-btn-editar').style.display = 'inline-flex';
-  document.getElementById('ficha-btn-guardar').style.display = 'none';
-  document.getElementById('ficha-btn-cancelar').style.display = 'none';
-}
-
-async function guardarFicha() {
-  if (!_fichaPcId) return;
-  const btn = document.getElementById('ficha-btn-guardar');
-  btn.textContent = 'Guardando...'; btn.disabled = true;
-
-  const payload = {
-    fecha_nacimiento:      g('fe-fnac')        || null,
-    genero:                g('fe-genero')       || null,
-    telefono:              g('fe-telefono')     || null,
-    localidad:             g('fe-localidad')    || null,
-    fecha_contacto:        g('fe-fecha')        || null,
-    hora_contacto:         g('fe-hora')         || null,
-    upz:                   g('fe-upz')          || null,
-    barrio:                g('fe-barrio')       || null,
-    forma_contacto:        g('fe-forma')        || null,
-    nombre_fuente:         g('fe-fuente')       || null,
-    vinculo_fuente:        g('fe-vinculo')      || null,
-    procesos_previos:      g('fe-procesos') ? parseInt(g('fe-procesos')) : null,
-    situaciones_presentes: g('fe-situaciones')  || null,
-    peticiones:            g('fe-peticiones')   || null,
-    descripcion_caso:      g('fe-descripcion')  || null,
-  };
-
-  try {
-    const res = await fetch(API + '/primer-contacto/' + _fichaPcId, {
-      method: 'PUT',
-      headers: MASCATE.authHeaders(),
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      const pc = await res.json();
-      cancelarEditarFicha();
-      renderFichaView(pc);
-    } else {
-      const d = await res.json().catch(() => ({}));
-      alert('Error: ' + (d.detail || 'No se pudo guardar.'));
-    }
-  } catch(e) { console.error(e); alert('Error de conexión.'); }
-
-  btn.textContent = 'Guardar'; btn.disabled = false;
-}
-
-function g(id) {
-  return document.getElementById(id)?.value || '';
+// "Editar" abre la Hoja de Primer Contacto completa con los datos guardados
+function editarFichaCompleta() {
+  if (_fichaPcId) window.location.href = '/reportar-info?editar_pc=' + _fichaPcId;
 }
 
 function cerrarFicha() {
   document.getElementById('ficha-overlay').style.display = 'none';
   _fichaPcId = null;
   _fichaBenefId = null;
-  document.getElementById('ficha-form').style.display = 'none';
   document.getElementById('ficha-view').style.display = 'block';
   document.getElementById('ficha-btn-editar').style.display = 'none';
-  document.getElementById('ficha-btn-guardar').style.display = 'none';
-  document.getElementById('ficha-btn-cancelar').style.display = 'none';
 }
 
 // ── Ficha prescriptor ────────────────────────────────────────────────────
@@ -991,11 +809,8 @@ function abrirFichaPresc(usuarioId) {
   if (!u) return;
 
   set('ficha-titulo', u.nombre || u.email);
-  document.getElementById('ficha-form').style.display = 'none';
   document.getElementById('ficha-view').style.display = 'block';
   document.getElementById('ficha-btn-editar').style.display = 'none';
-  document.getElementById('ficha-btn-guardar').style.display = 'none';
-  document.getElementById('ficha-btn-cancelar').style.display = 'none';
   renderFichaPrescView(u);
   document.getElementById('ficha-overlay').style.display = 'flex';
 }
@@ -1057,15 +872,6 @@ function irASeguimiento(benefId, nombre) {
 // ═══════════════════════════════════════════════════════════════
 // SEGUIMIENTO DESDE TABLA DE USUARIOS (prescriptor)
 // ═══════════════════════════════════════════════════════════════
-function abrirModalSegUsu(benefId, nombre) {
-  document.getElementById('seg-usu-benef-id').value = benefId;
-  document.getElementById('seg-usu-nombre').textContent = nombre;
-  document.getElementById('seg-usu-tipo').value = '';
-  document.getElementById('seg-usu-observaciones').value = '';
-  document.getElementById('seg-usu-error').style.display = 'none';
-  document.getElementById('modal-seg-usu-overlay').style.display = 'flex';
-}
-
 async function verSeguimientosUsu(benefId, nombre) {
   document.getElementById('ver-segs-titulo').textContent = nombre;
   document.getElementById('ver-segs-count').textContent  = '...';
@@ -1116,32 +922,3 @@ async function reactivarBeneficiario(usuarioId, nombre) {
   } catch(e) { alert('Error de conexión.'); }
 }
 
-async function guardarSeguimientoUsu() {
-  const tipo    = document.getElementById('seg-usu-tipo').value.trim();
-  const obs     = document.getElementById('seg-usu-observaciones').value.trim();
-  const benefId = parseInt(document.getElementById('seg-usu-benef-id').value);
-  const errEl   = document.getElementById('seg-usu-error');
-  errEl.style.display = 'none';
-
-  if (!tipo) { errEl.textContent = 'Selecciona el tipo de registro.'; errEl.style.display = 'block'; return; }
-
-  try {
-    const res = await fetch(API + '/prescriptores/seguimientos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...MASCATE.authHeaders() },
-      body: JSON.stringify({ beneficiario_id: benefId, tipo_registro: tipo, observaciones: obs || null }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      document.getElementById('modal-seg-usu-overlay').style.display = 'none';
-      const t = document.createElement('div');
-      t.textContent = '✓ Seguimiento guardado';
-      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:2000;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
-    } else {
-      errEl.textContent = data.detail || 'Error al guardar.';
-      errEl.style.display = 'block';
-    }
-  } catch(e) { errEl.textContent = 'Error de conexión.'; errEl.style.display = 'block'; }
-}

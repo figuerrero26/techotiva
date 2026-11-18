@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Boolean, Text,
-    DateTime, ForeignKey, Date, Time, func,
+    DateTime, ForeignKey, Date, Time,
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -15,14 +15,6 @@ class Estados:
     RECHAZADO  = "rechazado"
     SUSPENDIDO = "suspendido"
     FINALIZADO = "finalizado"
-
-
-# ── Tipos de entidad ───────────────────────────────────────────────────────
-class TipoEntidad:
-    USUARIO      = "usuario"
-    DISPOSITIVO  = "dispositivo"
-    PRESCRIPTOR  = "prescriptor"
-    BENEFICIARIO = "beneficiario"
 
 
 # ── ESTADO REGISTRO (tabla de auditoría universal) ─────────────────────────
@@ -62,6 +54,14 @@ class Usuario(Base):
     password_reset_token        = Column(String(100), nullable=True)
     password_reset_token_expiry = Column(DateTime, nullable=True)
     politica_privacidad_at      = Column(DateTime, nullable=True)
+    ultima_actividad            = Column(DateTime, nullable=True)  # UTC naive; para "conectados ahora"
+    # Verificación en dos pasos (admin): se guardan solo hashes, nunca el código
+    dosfa_desafio               = Column(String(64), nullable=True, index=True)
+    dosfa_codigo                = Column(String(64), nullable=True)
+    dosfa_expira                = Column(DateTime, nullable=True)  # UTC naive
+    dosfa_enviado               = Column(DateTime, nullable=True)  # UTC naive; para limitar reenvíos
+    dosfa_intentos              = Column(Integer, default=0, nullable=True)
+    dosfa_activo                = Column(Boolean, default=True, nullable=True)  # el admin puede apagarla
 
     estado_actual = relationship(
         "EstadoRegistro",
@@ -125,13 +125,12 @@ class Prescriptor(Base):
     perfil_disciplina = Column(String(100))
     telefono          = Column(String(30))
     dispositivo_id           = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
-    solicitud_dispositivo_id = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)
+    solicitud_dispositivo_id = Column(Integer, ForeignKey("dispositivos.id"), nullable=True)  # sin uso; se conserva para no alterar la BD
     estado_actual_id         = Column(Integer, ForeignKey("estado_registro.id"), nullable=True)
 
     estado_actual        = relationship("EstadoRegistro", foreign_keys=[estado_actual_id], lazy="joined")
     usuario              = relationship("Usuario", back_populates="prescriptor")
     dispositivo          = relationship("Dispositivo", foreign_keys=[dispositivo_id], back_populates="prescriptores")
-    dispositivo_solicitud = relationship("Dispositivo", foreign_keys=[solicitud_dispositivo_id])
     seguimientos  = relationship("Seguimiento", back_populates="prescriptor", cascade="all, delete-orphan")
 
     @property
@@ -304,6 +303,17 @@ class PrimerContacto(Base):
     rol_registrador      = Column(String(100), nullable=True)
     nombre_registrador   = Column(String(200), nullable=True)
     telefono_registrador = Column(String(30), nullable=True)
+
+    # Campos añadidos (alineación con formulario malspa)
+    tipo_contacto           = Column(String(60), nullable=True)
+    lugar_contacto          = Column(String(100), nullable=True)
+    info_por_beneficiario   = Column(String(5), nullable=True)   # Sí / No
+    poblaciones_especiales  = Column(Text, nullable=True)        # " | " separado
+    apoyo_personas_cercanas = Column(String(30), nullable=True)  # escala 1-5
+    apoyo_interes_otros     = Column(String(30), nullable=True)  # escala 1-5
+    apoyo_ayuda_vecinos     = Column(String(30), nullable=True)  # escala 1-5
+    alimentacion            = Column(String(60), nullable=True)
+    emociones               = Column(Text, nullable=True)        # " | " separado
 
     beneficiario = relationship("Beneficiario", back_populates="primeros_contactos")
     dispositivo  = relationship("Dispositivo",  back_populates="primeros_contactos")

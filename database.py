@@ -117,6 +117,25 @@ def run_migrations():
         ("primer_contacto", "telefono_registrador",     "VARCHAR(30)"),
         # PrimerContacto — marca temporal
         ("primer_contacto", "created_at",               "DATETIME"),
+        # Usuario — última actividad (sesiones activas)
+        ("usuarios",        "ultima_actividad",         "DATETIME"),
+        # Usuario — verificación en dos pasos (admin)
+        ("usuarios",        "dosfa_desafio",            "VARCHAR(64)"),
+        ("usuarios",        "dosfa_codigo",             "VARCHAR(64)"),
+        ("usuarios",        "dosfa_expira",             "DATETIME"),
+        ("usuarios",        "dosfa_enviado",            "DATETIME"),
+        ("usuarios",        "dosfa_intentos",           "INTEGER DEFAULT 0"),
+        ("usuarios",        "dosfa_activo",             "BOOLEAN DEFAULT 1"),
+        # PrimerContacto — campos alineados con formulario malspa
+        ("primer_contacto", "tipo_contacto",            "VARCHAR(60)"),
+        ("primer_contacto", "lugar_contacto",           "VARCHAR(100)"),
+        ("primer_contacto", "info_por_beneficiario",    "VARCHAR(5)"),
+        ("primer_contacto", "poblaciones_especiales",   "TEXT"),
+        ("primer_contacto", "apoyo_personas_cercanas",  "VARCHAR(30)"),
+        ("primer_contacto", "apoyo_interes_otros",      "VARCHAR(30)"),
+        ("primer_contacto", "apoyo_ayuda_vecinos",      "VARCHAR(30)"),
+        ("primer_contacto", "alimentacion",             "VARCHAR(60)"),
+        ("primer_contacto", "emociones",                "TEXT"),
         # Beneficiario — pertenencia étnica
         ("beneficiarios",   "pertenencia_etnica",       "VARCHAR(5)"),
     ]

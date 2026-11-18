@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone, date as ddate, time as dtime
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -47,7 +47,19 @@ _PC_FIELDS = (
     "situaciones_presentes", "peticiones", "descripcion_caso",
     "procesos_previos",
     "rol_registrador", "nombre_registrador", "telefono_registrador",
+    "tipo_contacto", "lugar_contacto", "info_por_beneficiario",
+    "poblaciones_especiales", "apoyo_personas_cercanas", "apoyo_interes_otros",
+    "apoyo_ayuda_vecinos", "alimentacion", "emociones",
 )
+
+
+# Campos que quedan fijos al editar: sección 1 (registro del contacto) y 9 (quien diligencia)
+_NO_EDITABLES = {
+    "fecha_contacto", "hora_contacto", "numero_caso", "forma_contacto", "tipo_contacto",
+    "lugar_contacto", "localidad", "upz", "barrio", "convenio_515", "tipo_dbc",
+    "politica_privacidad", "dispositivo_id",
+    "nombre_registrador", "rol_registrador", "telefono_registrador",
+}
 
 
 class PrimerContactoSinCuenta(_PCBase):
@@ -63,9 +75,42 @@ def _get_prescriptor_opt(db: Session, user: Usuario) -> Optional[Prescriptor]:
     return db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
 
 
+def _dispositivo_de(db: Session, user: Usuario) -> Optional[int]:
+    """Dispositivo al que pertenece un prescriptor o una cuenta de dispositivo."""
+    if user.rol == "prescriptor":
+        presc = _get_prescriptor_opt(db, user)
+        return presc.dispositivo_id if presc else None
+    if user.rol == "dispositivo":
+        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == user.id).first()
+        return disp.id if disp else None
+    return None
+
+
+def _exigir_acceso(db: Session, user: Usuario, pc: Optional[PrimerContacto] = None,
+                   benef: Optional[Beneficiario] = None) -> None:
+    """
+    Admin ve todo. Prescriptor y dispositivo solo ven registros de su dispositivo:
+    el contacto lo hizo su dispositivo o el beneficiario pertenece a él.
+    """
+    if user.rol == "admin":
+        return
+    mi_disp = _dispositivo_de(db, user)
+    if mi_disp and ((pc and pc.dispositivo_id == mi_disp) or (benef and benef.dispositivo_id == mi_disp)):
+        return
+    raise HTTPException(status_code=403, detail="No tienes acceso a este registro")
+
+
 def _marcar_privacidad(db: Session, usuario: Usuario) -> None:
     if usuario and not usuario.politica_privacidad_at:
         usuario.politica_privacidad_at = datetime.now(timezone.utc)
+
+
+def _exigir_privacidad(data: _PCBase) -> None:
+    if data.politica_privacidad != 'Sí':
+        raise HTTPException(
+            status_code=422,
+            detail="La persona debe aceptar la política de privacidad para continuar.",
+        )
 
 
 def _parse_fecha(s: Optional[str]) -> Optional[ddate]:
@@ -147,6 +192,16 @@ def _to_out(pc: PrimerContacto, benef: Optional[Beneficiario]) -> PrimerContacto
         rol_registrador=pc.rol_registrador,
         nombre_registrador=pc.nombre_registrador,
         telefono_registrador=pc.telefono_registrador,
+        # Campos alineados con formulario malspa
+        tipo_contacto=pc.tipo_contacto,
+        lugar_contacto=pc.lugar_contacto,
+        info_por_beneficiario=pc.info_por_beneficiario,
+        poblaciones_especiales=pc.poblaciones_especiales,
+        apoyo_personas_cercanas=pc.apoyo_personas_cercanas,
+        apoyo_interes_otros=pc.apoyo_interes_otros,
+        apoyo_ayuda_vecinos=pc.apoyo_ayuda_vecinos,
+        alimentacion=pc.alimentacion,
+        emociones=pc.emociones,
         # Beneficiario
         nombre_beneficiario=benef.nombre_apodo if benef else None,
         fecha_nacimiento=benef.fecha_nacimiento if benef else None,
@@ -191,6 +246,7 @@ def crear_primer_contacto(
 ):
     if current_user.rol not in ("prescriptor", "dispositivo", "admin"):
         raise HTTPException(status_code=403, detail="Sin permiso para registrar primer contacto")
+    _exigir_privacidad(data)
 
     benef = db.query(Beneficiario).filter(Beneficiario.id == data.beneficiario_id).first()
     if not benef:
@@ -201,6 +257,15 @@ def crear_primer_contacto(
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
 
     presc = _get_prescriptor_opt(db, current_user)
+
+    # Fuera del admin, solo se registra a nombre del propio dispositivo y para
+    # beneficiarios de ese dispositivo (o asignados a este prescriptor)
+    if current_user.rol != "admin":
+        if data.dispositivo_id != _dispositivo_de(db, current_user):
+            raise HTTPException(status_code=403, detail="Solo puedes registrar contactos de tu propio dispositivo")
+        propio = benef.dispositivo_id == data.dispositivo_id or (presc and benef.prescriptor_id == presc.id)
+        if not propio:
+            raise HTTPException(status_code=403, detail="No tienes acceso a este beneficiario")
 
     pc = PrimerContacto(
         beneficiario_id=data.beneficiario_id,
@@ -231,10 +296,13 @@ def crear_primer_contacto_sin_cuenta(
 ):
     if current_user.rol not in ("prescriptor", "dispositivo", "admin"):
         raise HTTPException(status_code=403, detail="Sin permiso para registrar primer contacto")
+    _exigir_privacidad(data)
 
     disp = db.query(Dispositivo).filter(Dispositivo.id == data.dispositivo_id).first()
     if not disp:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    if current_user.rol != "admin" and data.dispositivo_id != _dispositivo_de(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo puedes registrar contactos de tu propio dispositivo")
 
     if data.email:
         if db.query(Usuario).filter(Usuario.email == data.email).first():
@@ -333,16 +401,18 @@ def listar_primer_contacto(
 
     q = db.query(PrimerContacto)
 
-    if current_user.rol == "prescriptor":
-        presc = _get_prescriptor_opt(db, current_user)
-        # When loading a specific beneficiario's ficha, skip the dispositivo filter
-        # so prescriptors can see primer contactos regardless of which dispositivo created them
-        if presc and presc.dispositivo_id and not beneficiario_id:
-            q = q.filter(PrimerContacto.dispositivo_id == presc.dispositivo_id)
-    elif current_user.rol == "dispositivo":
-        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
-        if disp:
-            q = q.filter(PrimerContacto.dispositivo_id == disp.id)
+    if current_user.rol != "admin":
+        mi_disp = _dispositivo_de(db, current_user)
+        if beneficiario_id:
+            # Ficha de un beneficiario: todos sus contactos (aunque los haya hecho
+            # otro dispositivo), siempre que el beneficiario sea de mi dispositivo
+            benef = db.query(Beneficiario).filter(Beneficiario.id == beneficiario_id).first()
+            if benef and benef.dispositivo_id == mi_disp:
+                pass
+            else:
+                q = q.filter(PrimerContacto.dispositivo_id == mi_disp)
+        else:
+            q = q.filter(PrimerContacto.dispositivo_id == mi_disp)
 
     if beneficiario_id:
         q = q.filter(PrimerContacto.beneficiario_id == beneficiario_id)
@@ -372,6 +442,7 @@ def obtener_primer_contacto(
         raise HTTPException(status_code=404, detail="Registro no encontrado")
 
     benef = db.query(Beneficiario).filter(Beneficiario.id == pc.beneficiario_id).first()
+    _exigir_acceso(db, current_user, pc, benef)
     return _to_out(pc, benef)
 
 
@@ -393,19 +464,25 @@ def actualizar_primer_contacto(
     pc = db.query(PrimerContacto).filter(PrimerContacto.id == pc_id).first()
     if not pc:
         raise HTTPException(status_code=404, detail="Registro no encontrado")
+    _exigir_acceso(db, current_user, pc,
+                   db.query(Beneficiario).filter(Beneficiario.id == pc.beneficiario_id).first())
 
-    if data.fecha_contacto is not None:
-        pc.fecha_contacto = data.fecha_contacto
-    if data.hora_contacto is not None:
-        pc.hora_contacto = _parse_hora(data.hora_contacto)
-
-    _apply_pc_fields(pc, data)
+    # Edición: se guardan todos los campos que llegan, incluidos los vacíos,
+    # para que se pueda borrar un dato (p. ej. desmarcar una emoción).
+    # Los datos del registro del contacto (sección 1) y de quien diligenció
+    # (sección 9) no se modifican después de creado el registro.
+    enviados = data.model_fields_set - _NO_EDITABLES
+    for campo in _PC_FIELDS:
+        if campo in enviados:
+            setattr(pc, campo, getattr(data, campo))
 
     benef = db.query(Beneficiario).filter(Beneficiario.id == pc.beneficiario_id).first()
     if benef:
-        _apply_benef_fields(benef, data)
-        if data.politica_privacidad == 'Sí' and benef.usuario:
-            _marcar_privacidad(db, benef.usuario)
+        if "fecha_nacimiento" in enviados:
+            benef.fecha_nacimiento = _parse_fecha(data.fecha_nacimiento)
+        for campo in _BENEF_FIELDS:
+            if campo in enviados:
+                setattr(benef, campo, getattr(data, campo))
 
     db.commit()
     db.refresh(pc)

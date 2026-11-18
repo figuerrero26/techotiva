@@ -98,7 +98,6 @@ function abrirModalAct(act = null) {
 
   document.getElementById('act-nombre').value      = act?.nombre       ?? '';
   document.getElementById('act-tipo').value        = act?.tipo         ?? '';
-  document.getElementById('act-emoji').value       = act?.emoji        ?? '';
   document.getElementById('act-lugar').value       = act?.lugar        ?? '';
   document.getElementById('act-hora').value        = act?.hora         ?? '';
   document.getElementById('act-cupo').value        = act?.cupo_maximo  ?? '';
@@ -133,7 +132,6 @@ async function guardarActividad() {
   const payload = {
     nombre,
     tipo:         document.getElementById('act-tipo').value        || null,
-    emoji:        document.getElementById('act-emoji').value       || '📋',
     lugar:        document.getElementById('act-lugar').value       || null,
     dia_semana:   null,
     hora:         document.getElementById('act-hora').value        || null,
@@ -205,7 +203,7 @@ window.verDetalleAct = function verDetalleAct(act) {
   } else if (rol === 'dispositivo' || rol === 'admin') {
     btns = `
       <button class="btn btn-sm btn-outline" style="color:var(--primary);border-color:var(--primary)"
-        onclick="document.getElementById('modal-det-overlay').style.display='none';verInscritos(${act.id},'${act.nombre.replace(/'/g,"\\'")}')">
+        onclick="document.getElementById('modal-det-overlay').style.display='none';verInscritos(${act.id},'${jsq(act.nombre)}')">
         👥 Ver inscritos${act.total_inscritos ? ' (' + act.total_inscritos + ')' : ''}
       </button>
       <button class="btn btn-sm btn-outline"
@@ -297,7 +295,7 @@ function renderActTabla(tbodyId, acts) {
     const ins         = a.total_inscritos ?? 0;
     const disponibles = a.cupo_maximo != null ? a.cupo_maximo - ins : null;
     const cupoColor   = disponibles != null && disponibles <= 0 ? 'var(--error)' : disponibles != null && disponibles <= 3 ? 'var(--warning,#e6a817)' : 'var(--primary)';
-    const actJson     = JSON.stringify(a).replace(/'/g, "\\'");
+    const actJson     = jsonAttr(a);
 
     const inscritosCell = esBenef
       ? `<td><span class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor};cursor:default">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</span></td>`
@@ -313,7 +311,7 @@ function renderActTabla(tbodyId, acts) {
       : '';
 
     const inscritosDispCell = esDisp
-      ? `<td><button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor}" onclick="verInscritos(${a.id},'${a.nombre.replace(/'/g,"\\'")}')">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</button></td>`
+      ? `<td><button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor}" onclick="verInscritos(${a.id},'${jsq(a.nombre)}')">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</button></td>`
       : '';
 
     return `<tr>

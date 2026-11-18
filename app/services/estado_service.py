@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from app.models.models import EstadoRegistro
 from app.repositories.estado_repository import EstadoRepository # Ajusta la ruta según tu proyecto
 
 class EstadoService:

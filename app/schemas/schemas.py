@@ -2,26 +2,12 @@
 Schemas Pydantic para request / response de la API MASCATE.
 """
 
-from datetime import datetime, date, time
+from datetime import datetime, date
 from typing import Optional, List, Literal
 from pydantic import BaseModel, EmailStr
 
 
 # ════════════════════ AUTH ════════════════════
-
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    rol: str
-    nombre: str
-    user_id: int
-
-
-class RegisterResponse(BaseModel):
-    message: str
-    user_id: int
-    rol: str
-
 
 # ════════════════════ DISPOSITIVO ════════════════════
 
@@ -232,8 +218,6 @@ class PrescriptorMe(BaseModel):
     email: str
     dispositivo_id: Optional[int] = None
     dispositivo_nombre: Optional[str] = None
-    solicitud_dispositivo_id: Optional[int] = None
-    solicitud_dispositivo_nombre: Optional[str] = None
     fecha_registro: datetime
 
     class Config:
@@ -380,6 +364,16 @@ class _PCBase(BaseModel):
     rol_registrador:      Optional[str] = None
     nombre_registrador:   Optional[str] = None
     telefono_registrador: Optional[str] = None
+    # Campos alineados con formulario malspa
+    tipo_contacto:           Optional[str] = None
+    lugar_contacto:          Optional[str] = None
+    info_por_beneficiario:   Optional[str] = None
+    poblaciones_especiales:  Optional[str] = None
+    apoyo_personas_cercanas: Optional[str] = None
+    apoyo_interes_otros:     Optional[str] = None
+    apoyo_ayuda_vecinos:     Optional[str] = None
+    alimentacion:            Optional[str] = None
+    emociones:               Optional[str] = None
     # Datos demográficos del beneficiario (actualizan el registro Beneficiario)
     genero:                   Optional[str]  = None
     telefono:                 Optional[str]  = None
@@ -458,6 +452,16 @@ class PrimerContactoOut(BaseModel):
     rol_registrador:      Optional[str] = None
     nombre_registrador:   Optional[str] = None
     telefono_registrador: Optional[str] = None
+    # Campos alineados con formulario malspa
+    tipo_contacto:           Optional[str] = None
+    lugar_contacto:          Optional[str] = None
+    info_por_beneficiario:   Optional[str] = None
+    poblaciones_especiales:  Optional[str] = None
+    apoyo_personas_cercanas: Optional[str] = None
+    apoyo_interes_otros:     Optional[str] = None
+    apoyo_ayuda_vecinos:     Optional[str] = None
+    alimentacion:            Optional[str] = None
+    emociones:               Optional[str] = None
     # Beneficiario (denormalizado)
     nombre_beneficiario:      Optional[str]  = None
     fecha_nacimiento:         Optional[date] = None

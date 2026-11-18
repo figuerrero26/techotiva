@@ -4,9 +4,9 @@ MASCATE.guardAuth();
 
 let asignadosData          = [];
 let _delSegId              = null;
-let _delPcId               = null;
 let _miDispositivoId       = null;
 let _prescriptorDispositId = null;  // dispositivo_id del prescriptor logueado
+let _editPcId              = null;  // id del primer contacto que se está editando (desde la ficha)
 
 // ── Inicialización ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
@@ -49,12 +49,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   const qTab = qp.get('tab');
   const qBid = qp.get('bid');
   const qNom = qp.get('bnombre');
+  const qEditar = parseInt(qp.get('editar_pc'));
+  if (qEditar) { await iniciarEdicionPC(qEditar); return; }
+
   if (qTab === 'seguimiento' && MASCATE.rol !== 'dispositivo') {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-seguimiento')?.classList.add('active');
     document.querySelector('[data-tab="seguimiento"]')?.classList.add('active');
-    if (qBid && qNom) seleccionarPersonaSeg(parseInt(qBid), decodeURIComponent(qNom));
+    // URLSearchParams ya entrega el nombre decodificado
+    if (qBid && qNom) seleccionarPersonaSeg(parseInt(qBid), qNom);
   }
 });
 
@@ -66,7 +70,7 @@ async function initPCDbc() {
     try {
       const me = await fetch(API + '/dispositivos/me', MASCATE.authGet()).then(r => r.json());
       _miDispositivoId = me.id;
-      wrap.innerHTML = `<input type="text" id="pc-dbc" value="${me.nombre}" readonly
+      wrap.innerHTML = `<input type="text" id="pc-dbc" value="${esc(me.nombre)}" readonly
         style="width:100%;background:var(--bg-alt,#f5f5f5);color:var(--on-bg);cursor:default">`;
     } catch(e) {
       wrap.innerHTML = `<input type="text" id="pc-dbc" placeholder="No se pudo cargar" readonly style="width:100%">`;
@@ -76,7 +80,7 @@ async function initPCDbc() {
       const disps = await fetch(API + '/dispositivos/', MASCATE.authGet()).then(r => r.json());
       if (Array.isArray(disps) && disps.length) {
         const opts = disps.map(d =>
-          `<option value="${d.id}" data-nombre="${d.nombre}">${d.nombre}</option>`
+          `<option value="${d.id}" data-nombre="${esc(d.nombre)}">${esc(d.nombre)}</option>`
         ).join('');
         wrap.innerHTML = `<select id="pc-dbc" style="width:100%">
           <option value="">-- Seleccionar DBC --</option>${opts}</select>`;
@@ -87,7 +91,7 @@ async function initPCDbc() {
       const me = await fetch(API + '/prescriptores/me', MASCATE.authGet()).then(r => r.json());
       if (me.dispositivo_id && me.dispositivo_nombre) {
         _miDispositivoId = me.dispositivo_id;
-        wrap.innerHTML = `<input type="text" id="pc-dbc" value="${me.dispositivo_nombre}" readonly
+        wrap.innerHTML = `<input type="text" id="pc-dbc" value="${esc(me.dispositivo_nombre)}" readonly
           style="width:100%;background:var(--bg-alt,#f5f5f5);color:var(--on-bg);cursor:default">`;
       } else {
         wrap.innerHTML = `<input type="text" id="pc-dbc" placeholder="Sin dispositivo asignado" readonly
@@ -240,7 +244,16 @@ async function guardarSeguimiento() {
   const btn     = document.getElementById('btn-guardar-seg');
   if (errorEl) errorEl.style.display = 'none';
 
-  const personaId     = document.getElementById('seg-persona')?.value;
+  let personaId       = document.getElementById('seg-persona')?.value;
+  // Si no se eligió del desplegable pero el nombre escrito coincide con una sola persona, se usa esa
+  if (!personaId) {
+    const txt = (document.getElementById('seg-persona-txt')?.value || '').trim().toLowerCase();
+    const coinciden = asignadosData.filter(a => (a.nombre_apodo || '').trim().toLowerCase() === txt);
+    if (txt && coinciden.length === 1) {
+      personaId = String(coinciden[0].id);
+      document.getElementById('seg-persona').value = personaId;
+    }
+  }
   const tipoRegistro  = document.getElementById('seg-tipo')?.value;
   const observaciones = document.getElementById('seg-observaciones')?.value.trim();
 
@@ -384,7 +397,19 @@ function toggleCualActor(val) {
 }
 function toggleCualEtnico(val) {
   const w = document.getElementById('pc-cual-etnico-wrap');
-  if (w) w.style.display = val === 'Sí' ? 'flex' : 'none';
+  if (w) w.style.display = val === 'Sí' ? 'block' : 'none';
+}
+function toggleFuenteWrap(val) {
+  const w = document.getElementById('pc-fuente-wrap');
+  if (w) w.style.display = val === 'No' ? 'block' : 'none';
+}
+// Valores marcados de un grupo de checkboxes, unidos con " | " (+ texto extra opcional)
+function _checks(containerId, extraId) {
+  const vals = [...document.querySelectorAll('#' + containerId + ' input[type="checkbox"]:checked')]
+    .map(c => c.value);
+  const extra = extraId ? _val(extraId) : null;
+  if (extra) vals.push(extra);
+  return vals.join(' | ') || null;
 }
 
 async function guardarPrimerContacto() {
@@ -394,14 +419,19 @@ async function guardarPrimerContacto() {
 
   const fecha    = document.getElementById('pc-fecha')?.value;
   const pcModoV  = document.getElementById('pc-modo')?.value ?? 'nueva';
-  const esNueva  = pcModoV === 'nueva';
+  const esNueva  = !_editPcId && pcModoV === 'nueva';
 
   if (esNueva && !_val('pc-nuevo-nombre')) {
     if (errorEl) { errorEl.textContent = 'Ingresa el nombre y apellidos de la persona.'; errorEl.style.display = 'block'; }
     return;
   }
-  if (!fecha) {
+  if (!_editPcId && !fecha) {
     if (errorEl) { errorEl.textContent = 'Ingresa la fecha del contacto.'; errorEl.style.display = 'block'; }
+    return;
+  }
+  if (!_editPcId && !document.getElementById('pc-politica-privacidad')?.checked) {
+    if (errorEl) { errorEl.textContent = 'La persona debe aceptar la política de privacidad para continuar.'; errorEl.style.display = 'block'; }
+    document.getElementById('pc-politica-privacidad')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
@@ -409,7 +439,9 @@ async function guardarPrimerContacto() {
   let dispositivoId = _miDispositivoId;
   let dbcNombre     = null;
 
-  if (MASCATE.rol === 'admin') {
+  if (_editPcId) {
+    // Edición: el dispositivo del registro no cambia
+  } else if (MASCATE.rol === 'admin') {
     const dbcEl = document.getElementById('pc-dbc');
     if (dbcEl && dbcEl.tagName === 'SELECT') {
       const opt = dbcEl.options[dbcEl.selectedIndex];
@@ -436,7 +468,7 @@ async function guardarPrimerContacto() {
     dbcNombre = document.getElementById('pc-dbc')?.value || null;
   }
 
-  if (!dispositivoId) {
+  if (!_editPcId && !dispositivoId) {
     if (errorEl) { errorEl.textContent = 'No se pudo determinar el dispositivo. Asegúrate de estar asignado a uno.'; errorEl.style.display = 'block'; }
     return;
   }
@@ -454,11 +486,22 @@ async function guardarPrimerContacto() {
     upz:                   _sel('pc-upz'),
     barrio:                _val('pc-barrio'),
     forma_contacto:        _sel('pc-forma'),
-    // § 3 Fuente
+    tipo_contacto:         _sel('pc-tipo-contacto'),
+    lugar_contacto:        _sel('pc-lugar-contacto'),
+    // § 3 Fuente (solo si la info no la da el beneficiario)
+    info_por_beneficiario: _sel('pc-info-benef'),
     nombre_fuente:         _val('pc-fuente'),
     telefono_fuente:       _val('pc-tel-fuente'),
     genero_fuente:         _sel('pc-genero-fuente'),
-    vinculo_fuente:        _sel('pc-vinculo'),
+    vinculo_fuente:        _sel('pc-info-benef') === 'Sí' ? 'Es la misma persona' : _sel('pc-vinculo'),
+    poblaciones_especiales: _checks('pc-poblaciones-checks'),
+    // Percepción de apoyo social
+    apoyo_personas_cercanas: _sel('pc-apoyo-cercanas'),
+    apoyo_interes_otros:     _sel('pc-apoyo-interes'),
+    apoyo_ayuda_vecinos:     _sel('pc-apoyo-vecinos'),
+    // Bienestar
+    alimentacion:          _sel('pc-alimentacion'),
+    emociones:             _checks('pc-emociones-checks'),
     // § 4 Beneficiario — datos compartidos
     genero:                _sel('pc-nuevo-genero'),
     telefono:              _val('pc-nuevo-telefono'),
@@ -507,13 +550,8 @@ async function guardarPrimerContacto() {
     conoce_espacios:       _sel('pc-conoce-espacios'),
     ha_participado:        _sel('pc-ha-participado'),
     // § 11 Situación actual
-    situaciones_presentes: (() => {
-      const checks = [...document.querySelectorAll('#pc-situaciones-checks input[type="checkbox"]:checked')]
-        .map(c => c.value);
-      const extra = _val('pc-situaciones');
-      return [...checks, ...(extra ? [extra] : [])].join(' | ') || null;
-    })(),
-    peticiones:            _val('pc-peticiones'),
+    situaciones_presentes: _checks('pc-situaciones-checks', 'pc-situaciones'),
+    peticiones:            _checks('pc-peticiones-checks', 'pc-peticiones'),
     descripcion_caso:      _val('pc-descripcion'),
     // § 12 Registrador
     rol_registrador:       _val('pc-rol-registrador'),
@@ -521,19 +559,31 @@ async function guardarPrimerContacto() {
     telefono_registrador:  _val('pc-tel-registrador'),
   };
 
-  const endpoint = esNueva
-    ? API + '/primer-contacto/sin-cuenta'
-    : API + '/primer-contacto/';
-  const payload = esNueva
-    ? { ...contactoBase, nombre_apodo: _val('pc-nuevo-nombre'), email: _val('pc-nuevo-email') }
-    : { ...contactoBase, beneficiario_id: parseInt(pcModoV) };
+  let endpoint, payload, metodo = 'POST';
+  if (_editPcId) {
+    endpoint = API + '/primer-contacto/' + _editPcId;
+    metodo   = 'PUT';
+    payload  = { ...contactoBase };
+    // Secciones 1 (registro del contacto) y 9 (quien diligencia) no se editan
+    PC_NO_EDITABLES.forEach(k => delete payload[k]);
+  } else {
+    endpoint = esNueva ? API + '/primer-contacto/sin-cuenta' : API + '/primer-contacto/';
+    payload  = esNueva
+      ? { ...contactoBase, nombre_apodo: _val('pc-nuevo-nombre'), email: _val('pc-nuevo-email') }
+      : { ...contactoBase, beneficiario_id: parseInt(pcModoV) };
+  }
 
   if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
   try {
     const res = await fetch(endpoint, {
-      method: 'POST', headers: MASCATE.authHeaders(), body: JSON.stringify(payload),
+      method: metodo, headers: MASCATE.authHeaders(), body: JSON.stringify(payload),
     });
     const data = await res.json();
+    if (res.ok && _editPcId) {
+      toast('✓ Cambios guardados');
+      setTimeout(() => { window.location.href = '/usuarios'; }, 1200);
+      return;
+    }
     if (res.ok) {
       limpiarPC();
       await cargarPrimeroContactos();
@@ -544,7 +594,207 @@ async function guardarPrimerContacto() {
   } catch(e) {
     if (errorEl) { errorEl.textContent = 'Error de conexión.'; errorEl.style.display = 'block'; }
   }
-  if (btn) { btn.textContent = 'Guardar primer contacto'; btn.disabled = false; }
+  if (btn) { btn.textContent = _editPcId ? 'Guardar cambios' : 'Guardar primer contacto'; btn.disabled = false; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// EDITAR PRIMER CONTACTO (desde "Editar" en la ficha del beneficiario)
+// ══════════════════════════════════════════════════════════════════════════
+
+// Campos fijos al editar (el servidor también los ignora)
+const PC_NO_EDITABLES = [
+  'dispositivo_id', 'tipo_dbc', 'convenio_515', 'numero_caso', 'politica_privacidad',
+  'fecha_contacto', 'hora_contacto', 'upz', 'barrio', 'forma_contacto', 'tipo_contacto',
+  'lugar_contacto', 'localidad',
+  'rol_registrador', 'nombre_registrador', 'telefono_registrador',
+];
+
+// Bloquea una sección del formulario (por el título de su panel)
+function _bloquearSeccion(textoTitulo) {
+  const panel = [...document.querySelectorAll('#tab-primer-contacto .panel')]
+    .find(p => p.querySelector('.panel-title')?.textContent.includes(textoTitulo));
+  if (!panel) return;
+  panel.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; });
+  panel.style.opacity = '0.75';
+  const head = panel.querySelector('.panel-head');
+  if (head && !head.querySelector('.tag-no-editable')) {
+    head.insertAdjacentHTML('beforeend', '<span class="tag tag-no-editable" style="font-size:0.7rem">🔒 No editable</span>');
+  }
+}
+
+// Pone un valor en un campo. Los Sí/No se guardan como true/false; si un select
+// no tiene la opción (dato antiguo), se agrega para no perder el valor.
+function _setCampo(id, valor) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const v = valor === true ? 'Sí' : valor === false ? 'No' : (valor ?? '');
+  if (el.tagName === 'SELECT' && v !== '' && ![...el.options].some(o => o.value === String(v))) {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = String(v);
+    el.appendChild(opt);
+  }
+  el.value = String(v);
+}
+
+// Marca las casillas guardadas como "A | B | C". Lo que no coincide con ninguna
+// casilla (texto libre de "otras") va al campo de texto indicado.
+function _marcarChecks(contenedorId, valor, extraId, normalizar) {
+  const casillas = [...document.querySelectorAll('#' + contenedorId + ' input[type="checkbox"]')];
+  const sobrantes = [];
+  (valor || '').split(' | ').map(x => x.trim()).filter(Boolean).forEach(item => {
+    const buscado = normalizar ? normalizar(item) : item;
+    const c = casillas.find(x => x.value === buscado);
+    if (c) c.checked = true; else sobrantes.push(item);
+  });
+  if (extraId) _setCampo(extraId, sobrantes.join(' | '));
+}
+
+function rellenarFormularioPC(pc) {
+  // 1. Registro del contacto
+  _setCampo('pc-fecha', pc.fecha_contacto);
+  _setCampo('pc-hora', pc.hora_contacto);
+  _setCampo('pc-num-caso', pc.numero_caso);
+  _setCampo('pc-forma', pc.forma_contacto);
+  _setCampo('pc-tipo-contacto', pc.tipo_contacto);
+  _setCampo('pc-lugar-contacto', pc.lugar_contacto);
+  _setCampo('pc-nuevo-localidad', pc.localidad);
+  _setCampo('pc-upz', pc.upz);
+  _setCampo('pc-barrio', pc.barrio);
+  _setCampo('pc-convenio515', pc.convenio_515);
+  const pol = document.getElementById('pc-politica-privacidad');
+  if (pol) pol.checked = pc.politica_privacidad === 'Sí';
+
+  // 2. Información del beneficiario
+  _setCampo('pc-info-benef', pc.info_por_beneficiario);
+  toggleFuenteWrap(pc.info_por_beneficiario || '');
+  _setCampo('pc-fuente', pc.nombre_fuente);
+  _setCampo('pc-tel-fuente', pc.telefono_fuente);
+  _setCampo('pc-genero-fuente', pc.genero_fuente);
+  if (pc.vinculo_fuente !== 'Es la misma persona') _setCampo('pc-vinculo', pc.vinculo_fuente);
+  _setCampo('pc-nuevo-fnac', pc.fecha_nacimiento);
+  calcularEdadPC(pc.fecha_nacimiento || '');
+  if (pc.edad_benef != null) _setCampo('pc-edad', pc.edad_benef);
+  _setCampo('pc-nuevo-genero', pc.genero);
+  _setCampo('pc-nuevo-telefono', pc.telefono);
+  _setCampo('pc-clase-via', pc.clase_via);
+  _setCampo('pc-num-via-ppal', pc.numero_via_principal);
+  _setCampo('pc-letra-via-ppal', pc.letra_via_principal);
+  _setCampo('pc-id-sector', pc.identificador_sector);
+  _setCampo('pc-num-via-gen', pc.numero_via_generadora);
+  _setCampo('pc-letra-via-gen', pc.letra_via_generadora);
+  _setCampo('pc-num-predio', pc.numero_predio);
+  _setCampo('pc-otras-caract', pc.otras_caracteristicas_dir);
+  _setCampo('pc-grupo-etnico', pc.pertenencia_etnica);
+  toggleCualEtnico(pc.pertenencia_etnica || '');
+  _setCampo('pc-cual-etnico', pc.etnia);
+  _setCampo('pc-religion', pc.religion);
+  _marcarChecks('pc-poblaciones-checks', pc.poblaciones_especiales);
+  _setCampo('pc-procesos', pc.procesos_previos ?? 0);
+
+  // 3. Entorno familiar y social
+  _setCampo('pc-estado-civil', pc.estado_civil);
+  _setCampo('pc-num-hijos', pc.num_hijos);
+  _setCampo('pc-con-quien-vive', pc.con_quien_vive);
+  _setCampo('pc-apoyo-cercanas', pc.apoyo_personas_cercanas);
+  _setCampo('pc-apoyo-interes', pc.apoyo_interes_otros);
+  _setCampo('pc-apoyo-vecinos', pc.apoyo_ayuda_vecinos);
+  _setCampo('pc-apoyo-fam', pc.apoyo_familiar);
+  _setCampo('pc-apoyo-com', pc.apoyo_comunitario);
+  _setCampo('pc-apoyo-inst', pc.apoyo_institucional);
+  _setCampo('pc-apoyo-actor', pc.apoyo_otro_actor);
+  toggleCualActor(pc.apoyo_otro_actor === true ? 'Sí' : '');
+  _setCampo('pc-cual-actor', pc.cual_actor_social);
+  _setCampo('pc-persona-apoyo', pc.tiene_persona_apoyo);
+  toggleApoyoWrap(pc.tiene_persona_apoyo === true ? 'Sí' : '');
+  _setCampo('pc-nombre-apoyo', pc.nombre_persona_apoyo);
+  _setCampo('pc-tel-apoyo', pc.telefono_persona_apoyo);
+  _setCampo('pc-tipo-vinculo-txt', pc.vinculo_persona_apoyo);
+  _setCampo('pc-tipo-vinculo-cod', pc.tipo_vinculo_codigo);
+  _setCampo('pc-genero-apoyo', pc.genero_apoyo);
+
+  // 4. Educación y ocupación
+  _setCampo('pc-escolaridad', pc.escolaridad);
+  _setCampo('pc-ocupacion', pc.ocupacion);
+  _setCampo('pc-sabe-leer', pc.sabe_leer_escribir);
+  _setCampo('pc-sabe-pc', pc.sabe_usar_computador);
+
+  // 5. Bienestar y estilo de vida
+  _setCampo('pc-alimentacion', pc.alimentacion);
+  _setCampo('pc-practica-deporte', pc.practica_deporte);
+  _setCampo('pc-tiene-tiempo-rec', pc.tiene_tiempo_recreacion);
+  _setCampo('pc-cuanto-tiempo', pc.cuanto_tiempo_recreacion);
+  _setCampo('pc-conoce-espacios', pc.conoce_espacios);
+  _setCampo('pc-ha-participado', pc.ha_participado);
+  // Registros antiguos guardaban solo la emoción ("Alegría"): se toma el nivel medio
+  _marcarChecks('pc-emociones-checks', pc.emociones, null, e => e.includes(' - ') ? e : `${e} - ${e}`);
+
+  // 6–9
+  _marcarChecks('pc-situaciones-checks', pc.situaciones_presentes, 'pc-situaciones');
+  _marcarChecks('pc-peticiones-checks', pc.peticiones, 'pc-peticiones');
+  _setCampo('pc-descripcion', pc.descripcion_caso);
+  _setCampo('pc-nombre-registrador', pc.nombre_registrador);
+  _setCampo('pc-rol-registrador', pc.rol_registrador);
+  _setCampo('pc-tel-registrador', pc.telefono_registrador);
+}
+
+async function iniciarEdicionPC(pcId) {
+  let pc;
+  try {
+    const res = await fetch(API + '/primer-contacto/' + pcId, MASCATE.authGet());
+    if (!res.ok) { toast('No tienes acceso a ese registro o ya no existe.', 'error'); return; }
+    pc = await res.json();
+  } catch(e) { toast('Error de conexión', 'error'); return; }
+
+  _editPcId = pcId;
+
+  // Mostrar la pestaña de primer contacto
+  document.querySelectorAll('.tab-pane').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-primer-contacto')?.classList.add('active');
+  document.querySelector('[data-tab="primer-contacto"]')?.classList.add('active');
+
+  // Aviso de edición, con el nombre (el nombre y el correo no se editan aquí)
+  const fecha = pc.fecha_contacto
+    ? new Date(pc.fecha_contacto + 'T00:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' })
+    : '';
+  const aviso = document.createElement('div');
+  aviso.className = 'panel';
+  aviso.style.cssText = 'border:1.5px solid var(--primary);background:var(--primary-dim)';
+  aviso.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <div><div style="font-weight:700">✏️ Editando la Hoja de Primer Contacto</div>
+      <div style="font-size:0.85rem;color:var(--on-bg-muted)">${esc(pc.nombre_beneficiario || '')}${fecha ? ' · registrada el ' + fecha : ''}</div></div>
+      <button class="btn btn-sm btn-outline" onclick="window.location.href='/usuarios'">Cancelar edición</button>
+    </div>`;
+  const columna = document.querySelector('#tab-primer-contacto .grid-2 > div');
+  columna?.prepend(aviso);
+
+  document.getElementById('pc-modo')?.closest('.field')?.style.setProperty('display', 'none');
+  const wrapNombre = document.getElementById('pc-nuevo-nombre-wrap');
+  if (wrapNombre) wrapNombre.style.display = 'none';
+
+  // El DBC del registro se muestra pero no se cambia
+  const dbc = document.getElementById('pc-dbc');
+  if (dbc) {
+    if (dbc.tagName === 'SELECT') _setCampo('pc-dbc', pc.dispositivo_id);
+    else dbc.value = pc.tipo_dbc || dbc.value;
+    dbc.disabled = true;
+  }
+
+  rellenarFormularioPC(pc);
+  _bloquearSeccion('1. Datos de registro del contacto');
+  _bloquearSeccion('9. Datos de quien diligencia');
+
+  // Botones: "Guardar cambios" y "Cancelar" (vuelve a Usuarios sin guardar)
+  const btnGuardar = document.getElementById('btn-guardar-pc');
+  if (btnGuardar) btnGuardar.textContent = 'Guardar cambios';
+  const btnLimpiar = document.getElementById('btn-limpiar-pc');
+  if (btnLimpiar) {
+    const cancelar = btnLimpiar.cloneNode(true);   // quita el evento de "Limpiar"
+    cancelar.textContent = 'Cancelar';
+    cancelar.addEventListener('click', () => { window.location.href = '/usuarios'; });
+    btnLimpiar.replaceWith(cancelar);
+  }
+  window.scrollTo({ top: 0 });
 }
 
 function limpiarPC() {
@@ -573,6 +823,8 @@ function limpiarPC() {
     'pc-sabe-leer','pc-sabe-pc','pc-escolaridad','pc-ocupacion',
     'pc-apoyo-fam','pc-apoyo-com','pc-apoyo-inst','pc-apoyo-actor',
     'pc-practica-deporte','pc-tiene-tiempo-rec','pc-conoce-espacios','pc-ha-participado',
+    'pc-tipo-contacto','pc-lugar-contacto','pc-info-benef',
+    'pc-apoyo-cercanas','pc-apoyo-interes','pc-apoyo-vecinos','pc-alimentacion',
   ];
   selIds.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
@@ -583,8 +835,12 @@ function limpiarPC() {
   const numH = document.getElementById('pc-num-hijos');
   if (numH) numH.value = '';
 
-  document.querySelectorAll('#pc-situaciones-checks input[type="checkbox"]')
-    .forEach(c => c.checked = false);
+  document.querySelectorAll(
+    '#pc-situaciones-checks input[type="checkbox"], #pc-peticiones-checks input[type="checkbox"], ' +
+    '#pc-poblaciones-checks input[type="checkbox"], #pc-emociones-checks input[type="checkbox"]'
+  ).forEach(c => c.checked = false);
+  const fWrap = document.getElementById('pc-fuente-wrap');
+  if (fWrap) fWrap.style.display = 'none';
   const polCheck = document.getElementById('pc-politica-privacidad');
   if (polCheck) polCheck.checked = false;
 
@@ -603,39 +859,7 @@ function limpiarPC() {
   if (err) err.style.display = 'none';
 }
 
-function pedirDelPC(id) {
-  _delPcId = id;
-  const m = document.getElementById('modal-del-pc');
-  if (m) m.style.display = 'flex';
-}
-
-async function confirmarDelPC() {
-  if (!_delPcId) return;
-  const btn = document.getElementById('btn-del-pc');
-  if (btn) { btn.textContent = 'Eliminando...'; btn.disabled = true; }
-  try {
-    const res = await fetch(API + '/primer-contacto/' + _delPcId, {
-      method: 'DELETE', headers: MASCATE.authHeaders(),
-    });
-    if (res.ok || res.status === 204) {
-      cerrarModales();
-      await cargarPrimeroContactos();
-      toast('✓ Registro eliminado', 'error');
-    } else {
-      cerrarModales();
-    }
-  } catch(e) { console.error(e); cerrarModales(); }
-  if (btn) { btn.textContent = 'Sí, eliminar'; btn.disabled = false; }
-}
-
 // ── Buscador de persona en seguimiento ────────────────────────────────────
-
-function _itemDropdownSeg(label, isHeader) {
-  const base = 'padding:0.5rem 0.75rem;font-size:0.85rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s';
-  return isHeader
-    ? `style="${base};font-weight:700;color:var(--primary)"`
-    : `style="${base}"`;
-}
 
 function _renderDropdownSeg(txt) {
   const lista = document.getElementById('seg-personas-lista');
@@ -655,7 +879,7 @@ function _renderDropdownSeg(txt) {
     ? filtrados.map(a =>
         `<div style="${itemStyle}"
           onmouseover="this.style.background='var(--primary-dim)'" onmouseout="this.style.background=''"
-          onmousedown="seleccionarPersonaSeg(${a.id},'${a.nombre_apodo.replace(/'/g,"\\'")}')">
+          onmousedown="seleccionarPersonaSeg(${a.id},'${jsq(a.nombre_apodo)}')">
           ${a.nombre_apodo}</div>`
       ).join('')
     : `<div style="padding:0.5rem 0.75rem;font-size:0.85rem;color:var(--on-bg-muted)">Sin resultados</div>`;
@@ -665,7 +889,7 @@ function _renderDropdownSeg(txt) {
 }
 
 function mostrarTodasPersonasSeg() {
-  document.getElementById('seg-persona').value = '';   // limpiar selección al reabrir
+  // Solo muestra la lista; entrar al campo no borra la persona ya elegida
   _renderDropdownSeg('');
 }
 
@@ -702,6 +926,8 @@ function cerrarFormNuevoSeg() {
   });
   const gnEl = document.getElementById('seg-nuevo-genero');
   if (gnEl) gnEl.value = '';
+  const polSeg = document.getElementById('seg-politica-privacidad');
+  if (polSeg) polSeg.checked = false;
   document.getElementById('seg-persona').value     = '';
   document.getElementById('seg-persona-txt').value = '';
 }
@@ -717,6 +943,10 @@ async function crearPersonaSeg() {
   }
   if (!email) {
     if (errorEl) { errorEl.textContent = 'El correo electrónico es obligatorio.'; errorEl.style.display = 'block'; }
+    return;
+  }
+  if (!document.getElementById('seg-politica-privacidad')?.checked) {
+    if (errorEl) { errorEl.textContent = 'La persona debe aceptar la política de privacidad para continuar.'; errorEl.style.display = 'block'; }
     return;
   }
 
@@ -749,6 +979,7 @@ async function crearPersonaSeg() {
         nombre_apodo:    nombre,
         email:           email,
         dispositivo_id:  dispId,
+        politica_privacidad: 'Sí',
         fecha_nacimiento: document.getElementById('seg-nuevo-fnac')?.value || null,
         genero:           document.getElementById('seg-nuevo-genero')?.value || null,
         telefono:         document.getElementById('seg-nuevo-telefono')?.value.trim() || null,
@@ -775,11 +1006,9 @@ async function crearPersonaSeg() {
 
 // ── Modales y helpers ──────────────────────────────────────────────────────
 function cerrarModales() {
-  _delSegId = null; _delPcId = null;
-  ['modal-del-seg','modal-del-pc'].forEach(id => {
-    const m = document.getElementById(id);
-    if (m) m.style.display = 'none';
-  });
+  _delSegId = null;
+  const m = document.getElementById('modal-del-seg');
+  if (m) m.style.display = 'none';
 }
 
 function toast(msg, type) {
@@ -801,17 +1030,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-limpiar-pc')?.addEventListener('click', limpiarPC);
   document.getElementById('btn-guardar-pc')?.addEventListener('click', guardarPrimerContacto);
 
-  // Modales seguimiento
+  // Modal eliminar seguimiento
   document.getElementById('btn-cancel-seg')?.addEventListener('click', cerrarModales);
   document.getElementById('btn-del-seg')?.addEventListener('click', confirmarDelSeg);
 
-  // Modales primer contacto
-  document.getElementById('btn-cancel-pc')?.addEventListener('click', cerrarModales);
-  document.getElementById('btn-del-pc')?.addEventListener('click', confirmarDelPC);
-
   // Cerrar modal al hacer clic fuera
-  ['modal-del-seg','modal-del-pc'].forEach(id => {
-    const m = document.getElementById(id);
-    if (m) m.addEventListener('click', e => { if (e.target === m) cerrarModales(); });
-  });
+  const modalSeg = document.getElementById('modal-del-seg');
+  if (modalSeg) modalSeg.addEventListener('click', e => { if (e.target === modalSeg) cerrarModales(); });
 });

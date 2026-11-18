@@ -23,15 +23,6 @@
     </div>
     <div class="content">
 
-      <!-- SOLICITUDES DE PRESCRIPTORES -->
-      <div id="panel-solicitudes-presc" style="display:none" class="panel" style="border:1.5px solid var(--secondary)">
-        <div class="panel-head">
-          <span class="panel-title">📨 Solicitudes de asociación a dispositivo</span>
-          <span id="solicitudes-count" class="tag blue">0</span>
-        </div>
-        <div id="solicitudes-list"></div>
-      </div>
-
       <!-- PENDIENTES DE APROBACIÓN -->
       <div id="panel-pendientes" style="display:none" class="panel" style="border:1.5px solid var(--error);background:var(--error-dim)">
         <div class="panel-head">
@@ -156,7 +147,6 @@
           style="white-space:nowrap;color:var(--error);border-color:var(--error)"
           onclick="desasociarDispositivoAdmin()">Quitar</button>
       </div>
-      <div id="modal-solicitud-info" style="font-size:0.78rem;color:var(--on-bg-muted);margin-top:0.35rem"></div>
     </div>
 
     <!-- Política de privacidad -->
@@ -183,75 +173,13 @@
     <div class="panel-head">
       <span class="panel-title" id="ficha-titulo">Ficha de beneficiarix</span>
       <div style="display:flex;gap:0.5rem">
-        <button class="btn btn-sm btn-outline" id="ficha-btn-editar" onclick="toggleEditarFicha()" style="display:none">✏️ Editar</button>
-        <button class="btn btn-sm btn-green" id="ficha-btn-guardar" onclick="guardarFicha()" style="display:none">Guardar</button>
-        <button class="btn btn-sm btn-outline" id="ficha-btn-cancelar" onclick="cancelarEditarFicha()" style="display:none">Cancelar</button>
+        <button class="btn btn-sm btn-outline" id="ficha-btn-editar" onclick="editarFichaCompleta()" style="display:none">✏️ Editar</button>
       </div>
     </div>
 
     <!-- Vista -->
     <div id="ficha-view"></div>
 
-    <!-- Formulario de edición -->
-    <div id="ficha-form" style="display:none">
-      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--on-bg-muted);margin-bottom:0.75rem">Datos sociodemográficos</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
-        <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Fecha de nacimiento</label><input id="fe-fnac" type="date" style="width:100%"></div>
-        <div>
-          <label style="font-size:0.78rem;color:var(--on-bg-muted)">Género</label>
-          <select id="fe-genero" style="width:100%">
-            <option value="">— Sin especificar —</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="No binario">No binario</option>
-            <option value="Prefiero no decir">Prefiero no decir</option>
-          </select>
-        </div>
-        <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Teléfono</label><input id="fe-telefono" type="tel" style="width:100%"></div>
-        <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Localidad</label>
-          <select id="fe-localidad" style="width:100%">
-            <option value="">-- Seleccionar --</option>
-            <option>Usaquén</option><option>Chapinero</option>
-            <option>Santa Fe</option><option>San Cristóbal</option>
-            <option>Usme</option><option>Tunjuelito</option>
-            <option>Bosa</option><option>Kennedy</option>
-            <option>Fontibón</option><option>Engativá</option>
-            <option>Suba</option><option>Barrios Unidos</option>
-            <option>Teusaquillo</option><option>Los Mártires</option>
-            <option>Antonio Nariño</option><option>Puente Aranda</option>
-            <option>La Candelaria</option><option>Rafael Uribe Uribe</option>
-            <option>Ciudad Bolívar</option><option>Sumapaz</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:0.75rem">
-        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--on-bg-muted);margin-bottom:0.75rem">Datos del primer contacto</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Fecha de contacto</label><input id="fe-fecha" type="date" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Hora</label><input id="fe-hora" type="time" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">UPZ</label><input id="fe-upz" type="text" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Barrio</label><input id="fe-barrio" type="text" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Localidad contacto</label><input id="fe-localidad-pc" type="text" style="width:100%" placeholder="Localidad donde se hizo el contacto"></div>
-          <div>
-            <label style="font-size:0.78rem;color:var(--on-bg-muted)">Forma de contacto</label>
-            <select id="fe-forma" style="width:100%">
-              <option value="">— Seleccionar —</option>
-              <option value="Derivación">Derivación</option>
-              <option value="Demanda espontánea">Demanda espontánea</option>
-              <option value="Trabajo de calle">Trabajo de calle</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Nombre fuente</label><input id="fe-fuente" type="text" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Vínculo fuente</label><input id="fe-vinculo" type="text" style="width:100%"></div>
-          <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Procesos previos</label><input id="fe-procesos" type="number" min="0" style="width:100%"></div>
-        </div>
-        <div style="margin-bottom:0.75rem"><label style="font-size:0.78rem;color:var(--on-bg-muted)">Situaciones presentes</label><textarea id="fe-situaciones" rows="2" style="width:100%;resize:vertical"></textarea></div>
-        <div style="margin-bottom:0.75rem"><label style="font-size:0.78rem;color:var(--on-bg-muted)">Peticiones</label><textarea id="fe-peticiones" rows="2" style="width:100%;resize:vertical"></textarea></div>
-        <div><label style="font-size:0.78rem;color:var(--on-bg-muted)">Descripción del caso</label><textarea id="fe-descripcion" rows="3" style="width:100%;resize:vertical"></textarea></div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -268,42 +196,7 @@
   </div>
 </div>
 
-<!-- ═══ MODAL + SEGUIMIENTO (prescriptor) ═══ -->
-<div id="modal-seg-usu-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1200;align-items:center;justify-content:center;padding:1rem">
-  <div class="panel" style="width:100%;max-width:460px;position:relative">
-    <button onclick="document.getElementById('modal-seg-usu-overlay').style.display='none'"
-      style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
-    <div class="panel-head">
-      <span class="panel-title">+ Seguimiento</span>
-      <span class="tag mustard" id="seg-usu-nombre" style="font-size:0.78rem">—</span>
-    </div>
-    <input type="hidden" id="seg-usu-benef-id">
-    <div style="display:flex;flex-direction:column;gap:0.75rem">
-      <div class="field">
-        <label>Tipo de registro *</label>
-        <select id="seg-usu-tipo" style="width:100%">
-          <option value="">Selecciona...</option>
-          <option value="visita">Visita</option>
-          <option value="llamada">Llamada</option>
-          <option value="reunion">Reunión</option>
-          <option value="derivacion">Derivación</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Observaciones</label>
-        <textarea id="seg-usu-observaciones" placeholder="Notas de la sesión..." style="width:100%;min-height:100px;resize:vertical"></textarea>
-      </div>
-    </div>
-    <div id="seg-usu-error" style="display:none;color:var(--error);font-size:0.82rem;margin:0.5rem 0;background:var(--error-dim);padding:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
-    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.25rem">
-      <button class="btn btn-sm btn-outline" onclick="document.getElementById('modal-seg-usu-overlay').style.display='none'">Cancelar</button>
-      <button class="btn btn-sm btn-green" onclick="guardarSeguimientoUsu()">Guardar seguimiento</button>
-    </div>
-  </div>
-</div>
-
-<script src="/static/js/mascate-utils.js"></script>
-<script src="/static/js/usuarios.js"></script>
+<script src="/static/js/mascate-utils.js?v=20261118"></script>
+<script src="/static/js/usuarios.js?v=20261118"></script>
 </body>
 </html>

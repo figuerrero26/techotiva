@@ -54,43 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function renderTablaActsBenef(tbodyId, acts) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  if (!acts?.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--on-bg-muted);text-align:center;padding:1rem">Sin actividades disponibles.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = acts.map(a => {
-    const actJson   = JSON.stringify(a).replace(/'/g, "\\'");
-    const ins       = a.total_inscritos ?? 0;
-    const disponibles = a.cupo_maximo != null ? a.cupo_maximo - ins : null;
-    const cupoColor = disponibles != null && disponibles <= 0 ? 'var(--error)' : disponibles != null && disponibles <= 3 ? 'var(--warning,#e6a817)' : 'var(--primary)';
-    const inscritosTexto = `<span class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor};cursor:default">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</span>`;
-    return `<tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:0.5rem">
-          <span style="font-size:1.1rem">${a.emoji||'📅'}</span>
-          <span style="font-weight:600">${a.nombre}</span>
-        </div>
-      </td>
-      <td><span class="tag ${TAG_COLOR[a.tipo]||'mustard'}">${a.tipo||'—'}</span></td>
-      <td style="font-size:0.82rem;color:var(--on-bg-muted)">${a.dispositivo_nombre||'—'}</td>
-      <td>${a.lugar||'—'}</td>
-      <td>${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
-      <td>${a.hora||'—'}</td>
-      <td>${inscritosTexto}</td>
-      <td><span class="tag ${a.activa !== false ? 'green' : ''}" style="${a.activa !== false ? '' : 'background:var(--on-bg-muted,#aaa);color:#fff'}">${a.activa !== false ? 'Activa' : 'Inactiva'}</span></td>
-      <td>
-        <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
-          <button class="btn btn-sm btn-outline" style="font-size:0.78rem" onclick='verDetalleAct(${actJson})'>🔍 Ver detalle</button>
-          <button class="btn btn-sm btn-green" style="font-size:0.78rem" onclick="inscribirse(${a.id})">✓ Inscribirme</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
 // ─────────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   const { rol, nombre, email } = MASCATE;
@@ -319,7 +282,7 @@ function renderTablaActsDisp(tbodyId, acts) {
     const ins         = a.total_inscritos ?? 0;
     const disponibles = a.cupo_maximo != null ? a.cupo_maximo - ins : null;
     const cupoColor   = disponibles != null && disponibles <= 0 ? 'var(--error)' : disponibles != null && disponibles <= 3 ? 'var(--warning,#e6a817)' : 'var(--primary)';
-    const actJson     = JSON.stringify(a).replace(/'/g, "\\'");
+    const actJson     = jsonAttr(a);
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:0.5rem">
@@ -331,7 +294,7 @@ function renderTablaActsDisp(tbodyId, acts) {
       <td>${a.lugar||'—'}</td>
       <td>${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
       <td>${a.hora||'—'}</td>
-      <td><button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor}" onclick="verInscritosDisp(${a.id},'${a.nombre.replace(/'/g,"\\'")}')">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</button></td>
+      <td><button class="btn btn-sm btn-outline" style="font-size:0.78rem;color:${cupoColor};border-color:${cupoColor}" onclick="verInscritosDisp(${a.id},'${jsq(a.nombre)}')">👥 ${ins}${a.cupo_maximo ? '/'+a.cupo_maximo : ''}</button></td>
       <td><span class="tag ${a.activa !== false ? 'green' : ''}" style="${a.activa !== false ? '' : 'background:var(--on-bg-muted,#aaa);color:#fff'}">${a.activa !== false ? 'Activa' : 'Inactiva'}</span></td>
       <td>
         <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
@@ -374,7 +337,6 @@ function abrirModalActDisp(act = null) {
   document.getElementById('dact-btn-guardar').textContent      = esEditar ? 'Guardar cambios'  : 'Crear actividad';
   document.getElementById('dact-nombre').value      = act?.nombre       ?? '';
   document.getElementById('dact-tipo').value        = act?.tipo         ?? '';
-  document.getElementById('dact-emoji').value       = act?.emoji        ?? '';
   document.getElementById('dact-lugar').value       = act?.lugar        ?? '';
   document.getElementById('dact-fecha').value       = act?.fecha_inicio ?? '';
   document.getElementById('dact-hora').value        = act?.hora         ?? '';
@@ -407,7 +369,6 @@ async function guardarActividadDisp() {
 
   const payload = {
     nombre, tipo, lugar, hora,
-    emoji:       document.getElementById('dact-emoji').value       || '📋',
     fecha_inicio: fecha || null,
     cupo_maximo: document.getElementById('dact-cupo').value ? parseInt(document.getElementById('dact-cupo').value) : null,
     descripcion: document.getElementById('dact-descripcion').value || null,
@@ -544,10 +505,10 @@ function abrirModalEdit() {
       </select>`;
     } else if (f.type === 'textarea') {
       input = `<textarea id="${f.id}" style="width:100%;min-height:70px;resize:vertical"
-        placeholder="">${val ?? ''}</textarea>`;
+        placeholder="">${esc(val)}</textarea>`;
     } else {
       input = `<input type="${f.type}" id="${f.id}" style="width:100%"
-        value="${val ?? ''}">`;
+        value="${esc(val)}">`;
     }
     return `<div style="${span}"><label style="font-size:0.78rem;color:var(--on-bg-muted)">${f.label}</label>${input}</div>`;
   }).join('');
@@ -659,9 +620,9 @@ function renderTablaBenefPresc(tbodyId, asignados) {
       <td><span class="tag ${est.cls}">${est.label}</span></td>
       <td style="display:flex;gap:0.5rem;flex-wrap:wrap">
         ${b.estado !== 'finalizado' ? `<button class="btn btn-sm btn-green" style="font-size:0.78rem"
-          onclick="abrirModalSeg(${b.id}, '${b.nombre_apodo.replace(/'/g,"\\'")}')">+ Seguimiento</button>` : ''}
+          onclick="abrirModalSeg(${b.id}, '${jsq(b.nombre_apodo)}')">+ Seguimiento</button>` : ''}
         <button class="btn btn-sm btn-outline" style="font-size:0.78rem"
-          onclick="verSeguimientosBenef(${b.id}, '${b.nombre_apodo.replace(/'/g,"\\'")}')">Ficha</button>
+          onclick="verSeguimientosBenef(${b.id}, '${jsq(b.nombre_apodo)}')">Ficha</button>
       </td>
     </tr>`;
   }).join('');
@@ -736,23 +697,3 @@ async function verSeguimientosBenef(benefId, nombre) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TABLA SEGUIMIENTOS (beneficiario)
-// ═══════════════════════════════════════════════════════════════
-function renderTablaSegsbenef(tbodyId, segs) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  if (!segs.length) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--on-bg-muted)">Aún no tienes seguimientos registrados.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = segs.map(s => {
-    const fecha = new Date(s.fecha).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' });
-    return `<tr>
-      <td style="font-size:0.85rem;color:var(--on-bg-muted)">${fecha}</td>
-      <td><span class="tag mustard" style="font-size:0.72rem">${s.tipo_registro || '—'}</span></td>
-      <td style="font-size:0.85rem">${s.nombre_beneficiario || '—'}</td>
-      <td style="font-size:0.85rem;color:var(--on-bg-muted)">${s.observaciones || '—'}</td>
-    </tr>`;
-  }).join('');
-}

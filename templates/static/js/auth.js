@@ -25,11 +25,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     const disps = await res.json();
     const sel = document.getElementById('regPrescDisp');
     sel.innerHTML = '<option value="">Selecciona dispositivo...</option>';
-    disps.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.nombre}</option>`; });
+    disps.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = d.nombre;   // textContent: nunca interpreta HTML
+      sel.appendChild(opt);
+    });
   } catch(e) { console.log('Sin conexion al backend'); }
 });
 
-const ALL_VIEWS = ['loginView','registerView','successView','recoveryView','resetView'];
+const ALL_VIEWS = ['loginView','registerView','successView','recoveryView','resetView','twofaView'];
 
 function hideAllViews() {
   ALL_VIEWS.forEach(id => {
@@ -141,16 +146,78 @@ async function doLogin() {
     });
     const data = await res.json();
     if (!res.ok) { showToast(data.detail || 'Credenciales incorrectas', true); return; }
-    localStorage.setItem('mascate_token', data.access_token);
-    localStorage.setItem('mascate_rol', data.rol);
-    localStorage.setItem('mascate_nombre', data.nombre);
-    localStorage.setItem('mascate_email', email);
-    showToast('Bienvenidx, ' + data.nombre + '!');
-    setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+    if (data.requiere_2fa) { mostrar2FA(data, email); return; }
+    iniciarSesion(data, email);
   } catch(e) {
     showToast('Error de conexion con el servidor', true);
   }
 }
+
+function iniciarSesion(data, email) {
+  localStorage.setItem('mascate_token', data.access_token);
+  localStorage.setItem('mascate_rol', data.rol);
+  localStorage.setItem('mascate_nombre', data.nombre);
+  localStorage.setItem('mascate_email', email);
+  showToast('Bienvenidx, ' + data.nombre + '!');
+  setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+}
+
+// ── Verificación en dos pasos (admin) ──
+let _desafio2FA = null;
+let _email2FA   = null;
+
+function mostrar2FA(data, email) {
+  _desafio2FA = data.desafio;
+  _email2FA   = email;
+  hideAllViews();
+  document.getElementById('twofaSub').textContent =
+    `Te enviamos un código de 6 dígitos a ${data.correo}. Vence en ${data.minutos} minutos.`;
+  document.getElementById('twofaView').style.display = 'block';
+  const inp = document.getElementById('twofaCodigo');
+  inp.value = '';
+  inp.focus();
+  showToast('Código enviado a tu correo');
+}
+
+async function doVerificar2FA() {
+  const codigo = val('twofaCodigo').replace(/\D/g, '');
+  if (codigo.length !== 6) { showToast('Escribe los 6 dígitos del código', true); return; }
+  try {
+    const res = await fetch(API + '/auth/verificar-2fa', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ desafio: _desafio2FA, codigo })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.detail || 'Código incorrecto', true);
+      // Si el código ya no sirve, volver al login para pedir uno nuevo
+      if (/Inicia sesión de nuevo/.test(data.detail || '')) setTimeout(() => switchTab('login'), 2500);
+      return;
+    }
+    iniciarSesion(data, _email2FA);
+  } catch(e) {
+    showToast('Error de conexion con el servidor', true);
+  }
+}
+
+async function reenviar2FA() {
+  try {
+    const res = await fetch(API + '/auth/reenviar-2fa', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ desafio: _desafio2FA })
+    });
+    const data = await res.json();
+    showToast(res.ok ? data.mensaje : (data.detail || 'No se pudo reenviar'), !res.ok);
+  } catch(e) {
+    showToast('Error de conexion con el servidor', true);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('twofaCodigo')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doVerificar2FA();
+  });
+});
 
 // Campos requeridos por rol
 const ROL_FIELDS = {
@@ -227,12 +294,40 @@ async function doRegister() {
     }
     document.getElementById('loginView').style.display = 'none';
     document.getElementById('registerView').style.display = 'none';
+    pintarPasosRegistro(selectedRole, p.email);
     const sv = document.getElementById('successView');
     sv.style.display = 'flex'; sv.classList.add('visible');
   } catch(e) {
     showToast('Error de conexion con el servidor', true);
   }
 }
+
+// Mensaje después de registrarse, según el rol
+function pintarPasosRegistro(rol, email) {
+  const revisor = { prescriptor: 'el dispositivo', dispositivo: 'el administrador' }[rol];
+  document.getElementById('successTitulo').textContent =
+    revisor ? '¡Solicitud enviada!' : '¡Bienvenidx a Cuida Tu Techo!';
+  document.getElementById('successIntro').textContent = revisor
+    ? `Cuando ${revisor} apruebe tu cuenta te llegará un correo a ${email} para activarla.`
+    : `Revisa tu correo (${email}) y haz clic en "Verificar correo" para ingresar.`;
+}
+
+// Mensaje al volver del enlace "Verificar correo" (?verificado=...)
+window.addEventListener('DOMContentLoaded', () => {
+  const v = new URLSearchParams(window.location.search).get('verificado');
+  if (!v) return;
+  const mensajes = {
+    ok:       ['✓ Correo verificado. Ya puedes iniciar sesión.', false],
+    revision: ['✓ Correo verificado. Tu cuenta está en revisión: te avisaremos por correo cuando sea aprobada.', false],
+    invalido: ['El enlace de verificación no es válido o ya fue usado.', true],
+  };
+  const [msg, error] = mensajes[v] || mensajes.invalido;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error ? ' error' : '') + ' show';
+  setTimeout(() => t.classList.remove('show'), 8000);
+  window.history.replaceState({}, '', '/login');
+});
 
 function goToLogin() {
   document.getElementById('successView').classList.remove('visible');

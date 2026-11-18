@@ -27,7 +27,43 @@
     user-select:none; transition:background .1s;
   }
   .check-opt:hover { background:var(--primary-dim,#e8f5e9); }
+  .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.25rem 1rem; margin-top:0.25rem; }
+  .pc-grupo { font-size:0.78rem; font-weight:700; color:var(--primary); margin:0.75rem 0 0.15rem; text-transform:uppercase; letter-spacing:0.03em; }
+  .pc-grupo:first-child { margin-top:0.25rem; }
+  .emo-row { display:grid; grid-template-columns:8.5rem 1fr; align-items:center; gap:0.5rem; padding:0.2rem 0; border-bottom:1px dashed var(--outline-variant); }
+  .emo-row:last-child { border-bottom:none; }
+  .emo-name { font-size:0.82rem; font-weight:600; border-left:4px solid; padding-left:0.5rem; }
+  .emo-levels { display:flex; flex-wrap:wrap; gap:0.15rem 0.75rem; }
+  .pc-sub { font-size:0.8rem; font-weight:600; margin:0.6rem 0 0.25rem; color:var(--on-bg-muted); }
+  @media (max-width:600px) { .check-grid { grid-template-columns:1fr; } }
   .check-opt input[type="checkbox"] { accent-color:var(--primary); width:14px; height:14px; flex-shrink:0; cursor:pointer; }
+  /* ── Primer contacto: espaciado y columnas adaptables ── */
+  #tab-primer-contacto > .grid-2 { grid-template-columns:minmax(0,2fr) minmax(260px,1fr); gap:1.25rem; }
+  #tab-primer-contacto .panel { padding-bottom:1.25rem; }
+  #tab-primer-contacto .panel-head { margin-bottom:0.9rem; }
+  #tab-primer-contacto .field { margin:0 0 0.9rem; min-width:0; }
+  #tab-primer-contacto .field > label { display:block; line-height:1.35; margin-bottom:0.3rem; }
+  #tab-primer-contacto input:not([type="checkbox"]),
+  #tab-primer-contacto select,
+  #tab-primer-contacto textarea { box-sizing:border-box; min-width:0; }
+  /* Las filas con grid inline se adaptan al ancho disponible en vez de apretarse */
+  #tab-primer-contacto div[style*="display:grid"] {
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)) !important;
+    gap:0 1rem !important; align-items:end;
+  }
+  #tab-primer-contacto div[style*="display:grid"] > .field { margin-bottom:0.9rem !important; }
+  #tab-primer-contacto .check-grid {
+    grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)) !important;
+    gap:0.3rem 1rem !important; align-items:start;
+  }
+  #tab-primer-contacto .check-opt { padding:0.35rem 0.45rem; font-size:0.82rem; line-height:1.3; }
+  #tab-primer-contacto .pc-grupo { margin-top:1.1rem; padding-top:0.6rem; border-top:1px solid var(--outline-variant); }
+  #tab-primer-contacto .pc-grupo:first-child { border-top:none; padding-top:0; margin-top:0.25rem; }
+  #tab-primer-contacto .pc-sub { margin:1rem 0 0.5rem; padding-top:0.6rem; border-top:1px solid var(--outline-variant); }
+  @media (max-width:900px) {
+    #tab-primer-contacto > .grid-2 { grid-template-columns:1fr; }
+    #tab-primer-contacto > .grid-2 > .panel[style*="sticky"] { position:static !important; }
+  }
   /* Ocultar tab seguimiento para dispositivo antes de que cargue el JS */
   .rol-dispositivo .tab-btn[data-tab="seguimiento"] { display:none !important; }
   .rol-dispositivo #tab-seguimiento                 { display:none !important; }
@@ -124,6 +160,10 @@
                   </div>
                 </div>
                 <p style="font-size:0.75rem;color:var(--on-bg-muted);margin:0 0 0.5rem">Recibirá un enlace por correo para configurar su contraseña e iniciar sesión.</p>
+                <label style="display:flex;align-items:flex-start;gap:0.6rem;margin:0 0 0.6rem;font-size:0.8rem;cursor:pointer">
+                  <input type="checkbox" id="seg-politica-privacidad" style="margin-top:0.15rem;accent-color:var(--secondary,#2a7f62);flex-shrink:0">
+                  <span style="color:var(--secondary,#2a7f62);font-weight:600">La persona acepta el tratamiento de sus datos personales conforme a la política de privacidad de Cuida Tu Techo. *</span>
+                </label>
                 <div style="display:flex;gap:0.5rem">
                   <button class="btn btn-sm btn-green" id="btn-crear-persona-seg" onclick="crearPersonaSeg()">Crear y seleccionar</button>
                   <button class="btn btn-sm btn-outline" onclick="cerrarFormNuevoSeg()">Cancelar</button>
@@ -189,52 +229,58 @@
           <!-- Columna izquierda: formulario -->
           <div style="display:flex;flex-direction:column;gap:0.75rem">
 
-            <!-- § 1 Datos del beneficiario -->
+            <!-- § 1 Datos de registro del contacto -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">👤 Datos del beneficiario</span></div>
-              <div class="field">
-                <label>Registrar para</label>
-                <select id="pc-modo" style="width:100%" onchange="togglePCModo(this.value)">
-                  <option value="nueva">+ Nueva persona</option>
-                </select>
-              </div>
-              <div id="pc-nuevo-nombre-wrap">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-                  <div class="field">
-                    <label>Nombre y apellidos *</label>
-                    <input type="text" id="pc-nuevo-nombre" placeholder="Nombre completo" style="width:100%">
-                  </div>
-                  <div class="field">
-                    <label>Correo electrónico</label>
-                    <input type="email" id="pc-nuevo-email" placeholder="correo@ejemplo.com" style="width:100%">
-                  </div>
-                </div>
-                <p style="font-size:0.74rem;color:var(--on-bg-muted);margin:0.15rem 0 0.5rem">Si ingresas un correo, recibirá un enlace para activar su cuenta y hacer seguimiento en la plataforma.</p>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+              <div class="panel-head"><span class="panel-title">📍 1. Datos de registro del contacto</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
                 <div class="field">
-                  <label>Identidad de género</label>
-                  <select id="pc-nuevo-genero" style="width:100%">
+                  <label>Fecha *</label>
+                  <input type="date" id="pc-fecha" style="width:100%">
+                </div>
+                <div class="field">
+                  <label>Hora</label>
+                  <input type="time" id="pc-hora" style="width:100%">
+                </div>
+                <div class="field">
+                  <label>Caso #</label>
+                  <input type="text" id="pc-num-caso" style="width:100%">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Forma de contacto</label>
+                  <select id="pc-forma" style="width:100%">
                     <option value="">-- Seleccionar --</option>
-                    <option>Femenino</option><option>Masculino</option>
-                    <option>No binario</option><option>Transgénero</option>
-                    <option>No responde</option>
+                    <option>En la calle</option>
+                    <option>Institución</option>
+                    <option>Por teléfono</option>
+                    <option>Junta de acción comunal</option>
+                    <option>En la casa de la persona</option>
+                    <option>Salón comunal</option>
+                    <option>Referencia</option>
+                    <option>Organización</option>
                   </select>
                 </div>
                 <div class="field">
-                  <label>Teléfono</label>
-                  <input type="tel" id="pc-nuevo-telefono" placeholder="300 000 0000" style="width:100%">
+                  <label>Tipo de contacto</label>
+                  <select id="pc-tipo-contacto" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Presencial</option>
+                    <option>Telefónico</option>
+                    <option>Virtual</option>
+                  </select>
                 </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
-                  <label>Fecha de nacimiento</label>
-                  <input type="date" id="pc-nuevo-fnac" style="width:100%" oninput="calcularEdadPC(this.value)">
-                </div>
-                <div class="field">
-                  <label>Edad</label>
-                  <input type="number" id="pc-edad" min="0" max="120" placeholder="—" readonly
-                         style="width:100%;background:var(--bg-alt,#f5f5f5);cursor:default">
+                  <label>Lugar del contacto</label>
+                  <select id="pc-lugar-contacto" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Espacio público</option>
+                    <option>Vivienda</option>
+                    <option>Sede del dispositivo</option>
+                    <option>Institución</option>
+                    <option>Salón comunal</option>
+                    <option>Otro</option>
+                  </select>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
@@ -254,71 +300,6 @@
                     <option>Ciudad Bolívar</option><option>Sumapaz</option>
                   </select>
                 </div>
-                <div class="field">
-                  <label>Estado civil</label>
-                  <select id="pc-estado-civil" style="width:100%">
-                    <option value="">--</option>
-                    <option>Soltero(a)</option><option>Unión libre</option>
-                    <option>Casado(a)</option><option>Divorciado(a)</option>
-                    <option>Viudo(a)</option><option>Indefinido</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>N.º hijos(as)</label>
-                  <input type="number" id="pc-num-hijos" min="0" style="width:100%">
-                </div>
-              </div>
-              <div class="field">
-                <label>N.º de procesos de atención previos</label>
-                <input type="number" id="pc-procesos" value="0" min="0" style="width:6rem;text-align:center">
-              </div>
-            </div>
-
-            <!-- § 2 Convenio -->
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">📄 Convenio</span></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
-                <div class="field">
-                  <label>Convenio</label>
-                  <select id="pc-convenio515" style="width:100%">
-                    <option value="">-- Seleccionar --</option>
-                    <option>Nuevo</option>
-                    <option>Antiguo</option>
-                    <option>Pionero</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>DBC</label>
-                  <div id="pc-dbc-wrap">
-                    <input type="text" id="pc-dbc" placeholder="Cargando…" style="width:100%" readonly
-                           style="background:var(--bg-alt,#f5f5f5);cursor:default">
-                  </div>
-                </div>
-                <div class="field">
-                  <label>Número de caso</label>
-                  <input type="text" id="pc-num-caso" style="width:100%">
-                </div>
-              </div>
-              <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-top:0.75rem;font-size:0.82rem;color:var(--on-bg-muted);cursor:pointer">
-                <input type="checkbox" id="pc-politica-privacidad" style="margin-top:0.15rem;accent-color:var(--primary);flex-shrink:0">
-                <span>La persona acepta el tratamiento de sus datos personales conforme a la política de privacidad de Cuida Tu Techo.</span>
-              </label>
-            </div>
-
-            <!-- § 3 Evento de contacto -->
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">📍 Evento de contacto</span></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-                <div class="field">
-                  <label>Fecha *</label>
-                  <input type="date" id="pc-fecha" style="width:100%">
-                </div>
-                <div class="field">
-                  <label>Hora</label>
-                  <input type="time" id="pc-hora" style="width:100%">
-                </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
                   <label>UPZ</label>
                   <select id="pc-upz" style="width:100%">
@@ -341,39 +322,113 @@
                   <input type="text" id="pc-barrio" placeholder="Ej: Kennedy Central" style="width:100%">
                 </div>
               </div>
-              <div class="field">
-                <label>Forma de contacto</label>
-                <select id="pc-forma" style="width:100%">
-                  <option value="">-- Seleccionar --</option>
-                  <option>En la calle</option>
-                  <option>Institución</option>
-                  <option>Por teléfono</option>
-                  <option>Junta de acción comunal</option>
-                  <option>En la casa de la persona</option>
-                  <option>Salón comunal</option>
-                  <option>Referencia</option>
-                  <option>Organización</option>
-                </select>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Convenio</label>
+                  <select id="pc-convenio515" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Nuevo</option>
+                    <option>Antiguo</option>
+                    <option>Pionero</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>DBC</label>
+                  <div id="pc-dbc-wrap">
+                    <input type="text" id="pc-dbc" placeholder="Cargando…" readonly
+                           style="width:100%;background:var(--bg-alt,#f5f5f5);cursor:default">
+                  </div>
+                </div>
               </div>
+              <label style="display:flex;align-items:flex-start;gap:0.6rem;margin-top:0.5rem;font-size:0.82rem;color:var(--on-bg-muted);cursor:pointer">
+                <input type="checkbox" id="pc-politica-privacidad" style="margin-top:0.15rem;accent-color:var(--secondary,#2a7f62);flex-shrink:0">
+                <span style="color:var(--secondary,#2a7f62);font-weight:600">La persona acepta el tratamiento de sus datos personales conforme a la política de privacidad de Cuida Tu Techo. *</span>
+              </label>
             </div>
 
-            <!-- § 4 Fuente de información -->
+            <!-- § 2 Información del beneficiario -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">🤝 Fuente de información</span></div>
+              <div class="panel-head"><span class="panel-title">👤 2. Información del beneficiario</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
-                  <label>Quién es la fuente</label>
-                  <input type="text" id="pc-fuente" placeholder="Nombre o institución" style="width:100%">
+                  <label>Registrar para</label>
+                  <select id="pc-modo" style="width:100%" onchange="togglePCModo(this.value)">
+                    <option value="nueva">+ Nueva persona</option>
+                  </select>
                 </div>
                 <div class="field">
-                  <label>Teléfono fuente</label>
-                  <input type="tel" id="pc-tel-fuente" placeholder="300 000 0000" style="width:100%">
+                  <label>¿La información la da el mismo beneficiario?</label>
+                  <select id="pc-info-benef" style="width:100%" onchange="toggleFuenteWrap(this.value)">
+                    <option value="">--</option><option>Sí</option><option>No</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Fuente de información (solo si la info no la da el beneficiario) -->
+              <div id="pc-fuente-wrap" style="display:none;border:1px dashed var(--outline-variant);border-radius:var(--radius-sm);padding:0.5rem 0.75rem;margin-bottom:0.5rem">
+                <p class="pc-sub" style="margin-top:0">🤝 Fuente de información</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                  <div class="field">
+                    <label>Quién es la fuente</label>
+                    <input type="text" id="pc-fuente" placeholder="Nombre o institución" style="width:100%">
+                  </div>
+                  <div class="field">
+                    <label>Teléfono fuente</label>
+                    <input type="tel" id="pc-tel-fuente" placeholder="300 000 0000" style="width:100%">
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                  <div class="field">
+                    <label>Identidad de género (fuente)</label>
+                    <select id="pc-genero-fuente" style="width:100%">
+                      <option value="">-- Seleccionar --</option>
+                      <option>Femenino</option><option>Masculino</option>
+                      <option>No binario</option><option>Transgénero</option>
+                      <option>No responde</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Vínculo con la persona</label>
+                    <select id="pc-vinculo" style="width:100%">
+                      <option value="">-- Seleccionar --</option>
+                      <option>Conocido(a)</option><option>Desconocido(a)</option>
+                      <option>Familiar</option><option>Amigo(a)</option>
+                      <option>Integrante de un colectivo</option>
+                      <option>Integrante de una institución</option>
+                      <option>Habitante de calle</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="pc-nuevo-nombre-wrap">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                  <div class="field">
+                    <label>Nombre y apellidos *</label>
+                    <input type="text" id="pc-nuevo-nombre" placeholder="Nombre completo" style="width:100%">
+                  </div>
+                  <div class="field">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="pc-nuevo-email" placeholder="correo@ejemplo.com" style="width:100%">
+                  </div>
+                </div>
+                <p style="font-size:0.74rem;color:var(--on-bg-muted);margin:0.15rem 0 0.5rem">Si ingresas un correo, recibirá un enlace para activar su cuenta y hacer seguimiento en la plataforma.</p>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Fecha de nacimiento</label>
+                  <input type="date" id="pc-nuevo-fnac" style="width:100%" oninput="calcularEdadPC(this.value)">
+                </div>
+                <div class="field">
+                  <label>Edad</label>
+                  <input type="number" id="pc-edad" min="0" max="120" placeholder="—" readonly
+                         style="width:100%;background:var(--bg-alt,#f5f5f5);cursor:default">
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
-                  <label>Identidad de género (fuente)</label>
-                  <select id="pc-genero-fuente" style="width:100%">
+                  <label>Identidad de género</label>
+                  <select id="pc-nuevo-genero" style="width:100%">
                     <option value="">-- Seleccionar --</option>
                     <option>Femenino</option><option>Masculino</option>
                     <option>No binario</option><option>Transgénero</option>
@@ -381,51 +436,186 @@
                   </select>
                 </div>
                 <div class="field">
-                  <label>Vínculo con la persona</label>
-                  <select id="pc-vinculo" style="width:100%">
-                    <option value="">-- Seleccionar --</option>
-                    <option>Es la misma persona</option>
-                    <option>Conocido(a)</option><option>Desconocido(a)</option>
-                    <option>Familiar</option><option>Amigo(a)</option>
-                    <option>Integrante de un colectivo</option>
-                    <option>Integrante de una institución</option>
-                    <option>Habitante de calle</option>
-                  </select>
+                  <label>Teléfono</label>
+                  <input type="tel" id="pc-nuevo-telefono" placeholder="300 000 0000" style="width:100%">
                 </div>
               </div>
-            </div>
 
-            <!-- § 5 Identidad y cultura -->
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">🌍 Identidad y cultura</span></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+              <p class="pc-sub">Dirección</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem">
+                <div class="field" style="margin:0">
+                  <label>Clase de vía</label>
+                  <select id="pc-clase-via" style="width:100%">
+                    <option value="">--</option>
+                    <option>Carrera</option><option>Calle</option>
+                    <option>Diagonal</option><option>Transversal</option><option>Avenida</option>
+                  </select>
+                </div>
+                <div class="field" style="margin:0">
+                  <label>N.º vía principal</label>
+                  <input type="text" id="pc-num-via-ppal" style="width:100%">
+                </div>
+                <div class="field" style="margin:0">
+                  <label>Letra</label>
+                  <input type="text" id="pc-letra-via-ppal" maxlength="3" style="width:100%">
+                </div>
+                <div class="field" style="margin:0">
+                  <label>Sector</label>
+                  <input type="text" id="pc-id-sector" style="width:100%">
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem;margin-top:0.4rem">
+                <div class="field" style="margin:0">
+                  <label>N.º vía generadora</label>
+                  <input type="text" id="pc-num-via-gen" style="width:100%">
+                </div>
+                <div class="field" style="margin:0">
+                  <label>Letra</label>
+                  <input type="text" id="pc-letra-via-gen" maxlength="3" style="width:100%">
+                </div>
+                <div class="field" style="margin:0">
+                  <label>N.º predio</label>
+                  <input type="text" id="pc-num-predio" style="width:100%">
+                </div>
+                <div class="field" style="margin:0">
+                  <label>Otras características</label>
+                  <input type="text" id="pc-otras-caract" style="width:100%">
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-top:0.5rem">
                 <div class="field">
                   <label>Pertenencia a grupo étnico</label>
                   <select id="pc-grupo-etnico" style="width:100%" onchange="toggleCualEtnico(this.value)">
                     <option value="">--</option><option>Sí</option><option>No</option>
                   </select>
                 </div>
-                <div class="field" id="pc-cual-etnico-wrap">
+                <div class="field" id="pc-cual-etnico-wrap" style="display:none">
                   <label>Cuál</label>
                   <input type="text" id="pc-cual-etnico" placeholder="Ej: Afrocolombiano(a)" style="width:100%">
                 </div>
+                <div class="field">
+                  <label>Religión que profesa</label>
+                  <select id="pc-religion" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Católica</option><option>Cristiana</option>
+                    <option>Evangélica</option><option>Ninguna</option>
+                    <option>Sin respuesta</option><option>Ateo(a)</option>
+                    <option>Agnóstico</option><option>Budista</option>
+                    <option>Otra</option>
+                  </select>
+                </div>
               </div>
+
               <div class="field">
-                <label>Religión que profesa</label>
-                <select id="pc-religion" style="width:100%">
-                  <option value="">-- Seleccionar --</option>
-                  <option>Católica</option><option>Cristiana</option>
-                  <option>Evangélica</option><option>Ninguna</option>
-                  <option>Sin respuesta</option><option>Ateo(a)</option>
-                  <option>Agnóstico</option><option>Budista</option>
-                  <option>Otra</option>
-                </select>
+                <label>Poblaciones de especial interés <span style="font-weight:400;color:var(--on-bg-muted)">(selecciona todas las que apliquen)</span></label>
+                <div id="pc-poblaciones-checks" class="check-grid" style="grid-template-columns:1fr 1fr 1fr">
+                  <label class="check-opt"><input type="checkbox" value="Migración"> Migración</label>
+                  <label class="check-opt"><input type="checkbox" value="Discapacidad"> Discapacidad</label>
+                  <label class="check-opt"><input type="checkbox" value="Adulto mayor"> Adulto mayor</label>
+                  <label class="check-opt"><input type="checkbox" value="Infancia"> Infancia</label>
+                  <label class="check-opt"><input type="checkbox" value="Adolescencia"> Adolescencia</label>
+                  <label class="check-opt"><input type="checkbox" value="LGBTIQ+"> LGBTIQ+</label>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>N.º de procesos de atención previos</label>
+                <input type="number" id="pc-procesos" value="0" min="0" style="width:6rem;text-align:center">
               </div>
             </div>
 
-            <!-- § 6 Persona de apoyo -->
+            <!-- § 3 Entorno familiar y social -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">🫂 Persona de apoyo</span></div>
+              <div class="panel-head"><span class="panel-title">🫂 3. Entorno familiar y social</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Estado civil</label>
+                  <select id="pc-estado-civil" style="width:100%">
+                    <option value="">--</option>
+                    <option>Soltero(a)</option><option>Unión libre</option>
+                    <option>Casado(a)</option><option>Divorciado(a)</option>
+                    <option>Viudo(a)</option><option>Indefinido</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>N.º hijos(as)</label>
+                  <input type="number" id="pc-num-hijos" min="0" style="width:100%">
+                </div>
+                <div class="field">
+                  <label>Con quién vive</label>
+                  <select id="pc-con-quien-vive" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Padres (papá y/o mamá)</option>
+                    <option>Otros familiares (familia extensa)</option>
+                    <option>Vive solo(a)</option>
+                    <option>Vive con hijos(as)</option>
+                    <option>Vive con la pareja</option>
+                  </select>
+                </div>
+              </div>
+
+              <p class="pc-sub">Percepción de apoyo social</p>
+              <div class="field">
+                <label>¿Cuántas personas son tan cercanas a ti que puedes contar con ellas si tienes grandes problemas personales?</label>
+                <select id="pc-apoyo-cercanas" style="width:100%">
+                  <option value="">--</option>
+                  <option>Ninguna</option><option>1-2</option><option>3-5</option>
+                  <option>5 o 7</option><option>7 o más</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>¿Cuánto interés y preocupación muestra la gente por lo que haces?</label>
+                <select id="pc-apoyo-interes" style="width:100%">
+                  <option value="">--</option>
+                  <option>Ninguna</option><option>Poco</option><option>Incierto</option>
+                  <option>Algo</option><option>Mucho</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>¿Qué tan fácil es obtener ayuda práctica de los vecinos si la necesitaras?</label>
+                <select id="pc-apoyo-vecinos" style="width:100%">
+                  <option value="">--</option>
+                  <option>Muy difícil</option><option>Difícil</option><option>Posible</option>
+                  <option>Fácil</option><option>Muy fácil</option>
+                </select>
+              </div>
+
+              <p class="pc-sub">Redes de apoyo</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Apoyo de su familia</label>
+                  <select id="pc-apoyo-fam" style="width:100%">
+                    <option value="">--</option><option>Sí</option><option>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Apoyo de la comunidad</label>
+                  <select id="pc-apoyo-com" style="width:100%">
+                    <option value="">--</option><option>Sí</option><option>No</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Apoyo de institución pública</label>
+                  <select id="pc-apoyo-inst" style="width:100%">
+                    <option value="">--</option><option>Sí</option><option>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Apoyo de otro actor social</label>
+                  <select id="pc-apoyo-actor" style="width:100%" onchange="toggleCualActor(this.value)">
+                    <option value="">--</option><option>Sí</option><option>No</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" id="pc-cual-actor-wrap" style="display:none">
+                <label>Cuál actor social</label>
+                <input type="text" id="pc-cual-actor" style="width:100%">
+              </div>
+
+              <p class="pc-sub">Persona de apoyo</p>
               <div class="field">
                 <label>¿Tiene persona de apoyo?</label>
                 <select id="pc-persona-apoyo" style="width:100%" onchange="toggleApoyoWrap(this.value)">
@@ -471,80 +661,9 @@
               </div>
             </div>
 
-            <!-- § 7 Condiciones de vida -->
+            <!-- § 4 Educación y ocupación -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">🏠 Condiciones de vida</span></div>
-              <div class="field">
-                <label>Con quién vive</label>
-                <select id="pc-con-quien-vive" style="width:100%">
-                  <option value="">-- Seleccionar --</option>
-                  <option>Padres (papá y/o mamá)</option>
-                  <option>Otros familiares (familia extensa)</option>
-                  <option>Vive solo(a)</option>
-                  <option>Vive con hijos(as)</option>
-                  <option>Vive con la pareja</option>
-                </select>
-              </div>
-              <p style="font-size:0.8rem;font-weight:600;margin:0.5rem 0 0.25rem;color:var(--on-bg-muted)">Dirección</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem">
-                <div class="field" style="margin:0">
-                  <label>Clase de vía</label>
-                  <select id="pc-clase-via" style="width:100%">
-                    <option value="">--</option>
-                    <option>Carrera</option><option>Calle</option>
-                    <option>Diagonal</option><option>Transversal</option><option>Avenida</option>
-                  </select>
-                </div>
-                <div class="field" style="margin:0">
-                  <label>N.º vía principal</label>
-                  <input type="text" id="pc-num-via-ppal" style="width:100%">
-                </div>
-                <div class="field" style="margin:0">
-                  <label>Letra</label>
-                  <input type="text" id="pc-letra-via-ppal" maxlength="3" style="width:100%">
-                </div>
-                <div class="field" style="margin:0">
-                  <label>Sector</label>
-                  <input type="text" id="pc-id-sector" style="width:100%">
-                </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.4rem;margin-top:0.4rem">
-                <div class="field" style="margin:0">
-                  <label>N.º vía generadora</label>
-                  <input type="text" id="pc-num-via-gen" style="width:100%">
-                </div>
-                <div class="field" style="margin:0">
-                  <label>Letra</label>
-                  <input type="text" id="pc-letra-via-gen" maxlength="3" style="width:100%">
-                </div>
-                <div class="field" style="margin:0">
-                  <label>N.º predio</label>
-                  <input type="text" id="pc-num-predio" style="width:100%">
-                </div>
-                <div class="field" style="margin:0">
-                  <label>Otras características</label>
-                  <input type="text" id="pc-otras-caract" style="width:100%">
-                </div>
-              </div>
-            </div>
-
-            <!-- § 8 Educación y trabajo -->
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">📚 Educación y trabajo</span></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-                <div class="field">
-                  <label>Sabe leer y escribir</label>
-                  <select id="pc-sabe-leer" style="width:100%">
-                    <option value="">--</option><option>Sí</option><option>No</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Sabe usar un computador</label>
-                  <select id="pc-sabe-pc" style="width:100%">
-                    <option value="">--</option><option>Sí</option><option>No</option>
-                  </select>
-                </div>
-              </div>
+              <div class="panel-head"><span class="panel-title">📚 4. Educación y ocupación</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
                   <label>Escolaridad</label>
@@ -568,65 +687,52 @@
                   </select>
                 </div>
               </div>
-            </div>
-
-            <!-- § 9 Redes de apoyo -->
-            <div class="panel">
-              <div class="panel-head"><span class="panel-title">🌐 Redes de apoyo</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
-                  <label>Apoyo de su familia</label>
-                  <select id="pc-apoyo-fam" style="width:100%">
+                  <label>Sabe leer y escribir</label>
+                  <select id="pc-sabe-leer" style="width:100%">
                     <option value="">--</option><option>Sí</option><option>No</option>
                   </select>
                 </div>
                 <div class="field">
-                  <label>Apoyo de la comunidad</label>
-                  <select id="pc-apoyo-com" style="width:100%">
+                  <label>Sabe usar un computador</label>
+                  <select id="pc-sabe-pc" style="width:100%">
                     <option value="">--</option><option>Sí</option><option>No</option>
                   </select>
                 </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-                <div class="field">
-                  <label>Apoyo de institución pública</label>
-                  <select id="pc-apoyo-inst" style="width:100%">
-                    <option value="">--</option><option>Sí</option><option>No</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Apoyo de otro actor social</label>
-                  <select id="pc-apoyo-actor" style="width:100%" onchange="toggleCualActor(this.value)">
-                    <option value="">--</option><option>Sí</option><option>No</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field" id="pc-cual-actor-wrap" style="display:none">
-                <label>Cuál actor social</label>
-                <input type="text" id="pc-cual-actor" style="width:100%">
               </div>
             </div>
 
-            <!-- § 10 Recreación y participación -->
+            <!-- § 5 Bienestar y estilo de vida -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">⚽ Recreación y participación</span></div>
+              <div class="panel-head"><span class="panel-title">⚽ 5. Bienestar y estilo de vida</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                <div class="field">
+                  <label>Alimentación</label>
+                  <select id="pc-alimentacion" style="width:100%">
+                    <option value="">-- Seleccionar --</option>
+                    <option>Consume 3 o más comidas al día</option>
+                    <option>Consume 2 o menos comidas al día</option>
+                  </select>
+                </div>
                 <div class="field">
                   <label>Practica deporte / pasatiempo</label>
                   <select id="pc-practica-deporte" style="width:100%">
                     <option value="">--</option><option>Sí</option><option>No</option>
                   </select>
                 </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
                   <label>Tiene tiempo para recreación</label>
                   <select id="pc-tiene-tiempo-rec" style="width:100%">
                     <option value="">--</option><option>Sí</option><option>No</option>
                   </select>
                 </div>
-              </div>
-              <div class="field">
-                <label>Cuánto tiempo al día</label>
-                <input type="text" id="pc-cuanto-tiempo" placeholder="Ej: 2 horas" style="width:100%">
+                <div class="field">
+                  <label>Cuánto tiempo al día</label>
+                  <input type="text" id="pc-cuanto-tiempo" placeholder="Ej: 2 horas" style="width:100%">
+                </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                 <div class="field">
@@ -642,79 +748,157 @@
                   </select>
                 </div>
               </div>
+              <div class="field">
+                <label>¿Cómo se siente hoy? <span style="font-weight:400;color:var(--on-bg-muted)">(rueda de emociones de Plutchik)</span></label>
+                <p style="font-size:0.75rem;color:var(--on-bg-muted);margin:0 0 0.4rem">Marca la emoción en el nivel de intensidad que mejor la describe (de leve a intensa). Puedes marcar varias.</p>
+                <div id="pc-emociones-checks">
+                  <div class="emo-row"><span class="emo-name" style="border-color:#facc15">😊 Alegría</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Alegría - Serenidad"> Serenidad</label><label class="check-opt"><input type="checkbox" value="Alegría - Alegría"> Alegría</label><label class="check-opt"><input type="checkbox" value="Alegría - Éxtasis"> Éxtasis</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#4ade80">🤝 Confianza</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Confianza - Aceptación"> Aceptación</label><label class="check-opt"><input type="checkbox" value="Confianza - Confianza"> Confianza</label><label class="check-opt"><input type="checkbox" value="Confianza - Admiración"> Admiración</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#15803d">😨 Miedo</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Miedo - Aprensión"> Aprensión</label><label class="check-opt"><input type="checkbox" value="Miedo - Miedo"> Miedo</label><label class="check-opt"><input type="checkbox" value="Miedo - Terror"> Terror</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#22d3ee">😮 Sorpresa</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Sorpresa - Distracción"> Distracción</label><label class="check-opt"><input type="checkbox" value="Sorpresa - Sorpresa"> Sorpresa</label><label class="check-opt"><input type="checkbox" value="Sorpresa - Asombro"> Asombro</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#2563eb">😢 Tristeza</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Tristeza - Pensativo"> Pensativo</label><label class="check-opt"><input type="checkbox" value="Tristeza - Tristeza"> Tristeza</label><label class="check-opt"><input type="checkbox" value="Tristeza - Pena"> Pena</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#9333ea">😖 Disgusto</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Disgusto - Aburrimiento"> Aburrimiento</label><label class="check-opt"><input type="checkbox" value="Disgusto - Disgusto"> Disgusto</label><label class="check-opt"><input type="checkbox" value="Disgusto - Aversión"> Aversión</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#dc2626">😠 Ira</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Ira - Molestia"> Molestia</label><label class="check-opt"><input type="checkbox" value="Ira - Ira"> Ira</label><label class="check-opt"><input type="checkbox" value="Ira - Furia"> Furia</label></div></div>
+                  <div class="emo-row"><span class="emo-name" style="border-color:#f97316">🤔 Anticipación</span><div class="emo-levels"><label class="check-opt"><input type="checkbox" value="Anticipación - Interés"> Interés</label><label class="check-opt"><input type="checkbox" value="Anticipación - Anticipación"> Anticipación</label><label class="check-opt"><input type="checkbox" value="Anticipación - Vigilancia"> Vigilancia</label></div></div>
+                </div>
+              </div>
             </div>
 
-            <!-- § 11 Situación actual -->
+            <!-- § 6 Situaciones presentes -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">📋 Situación al momento del contacto</span></div>
-              <div class="field">
-                <label>Situaciones presentes <span style="font-weight:400;color:var(--on-bg-muted)">(selecciona todas las que apliquen)</span></label>
-                <div id="pc-situaciones-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 1rem;margin-top:0.35rem">
-                  <label class="check-opt"><input type="checkbox" value="Analfabetismo"> Analfabetismo</label>
-                  <label class="check-opt"><input type="checkbox" value="Ansiedad / Depresión"> Ansiedad / Depresión</label>
-                  <label class="check-opt"><input type="checkbox" value="Apoyo a su comunidad"> Apoyo a su comunidad</label>
-                  <label class="check-opt"><input type="checkbox" value="Barrismo social"> Barrismo social</label>
-                  <label class="check-opt"><input type="checkbox" value="Condición psiquiátrica"> Condición psiquiátrica</label>
+              <div class="panel-head"><span class="panel-title">📋 6. Situaciones presentes</span></div>
+              <p style="font-size:0.78rem;color:var(--on-bg-muted);margin:0 0 0.25rem">Selecciona todas las que apliquen.</p>
+              <div id="pc-situaciones-checks">
+                <p class="pc-grupo">Salud física y mental</p>
+                <div class="check-grid">
                   <label class="check-opt"><input type="checkbox" value="Crisis psicológica"> Crisis psicológica</label>
-                  <label class="check-opt"><input type="checkbox" value="Depresión"> Depresión</label>
-                  <label class="check-opt"><input type="checkbox" value="Desplazamiento forzado"> Desplazamiento forzado</label>
-                  <label class="check-opt"><input type="checkbox" value="Dificultades económicas"> Dificultades económicas</label>
+                  <label class="check-opt"><input type="checkbox" value="Condición psiquiátrica"> Condición psiquiátrica</label>
+                  <label class="check-opt"><input type="checkbox" value="Enfermedades"> Enfermedades crónicas</label>
                   <label class="check-opt"><input type="checkbox" value="Discapacidad"> Discapacidad</label>
-                  <label class="check-opt"><input type="checkbox" value="Discriminación"> Discriminación</label>
+                  <label class="check-opt"><input type="checkbox" value="VIH"> VIH</label>
                   <label class="check-opt"><input type="checkbox" value="Embarazo / parto"> Embarazo / parto</label>
-                  <label class="check-opt"><input type="checkbox" value="Enfermedades"> Enfermedades</label>
-                  <label class="check-opt"><input type="checkbox" value="Escasez de alimentos"> Escasez de alimentos</label>
+                  <label class="check-opt"><input type="checkbox" value="Ansiedad / Depresión"> Ansiedad / Depresión</label>
+                  <label class="check-opt"><input type="checkbox" value="Trastorno de estrés postraumático"> Estrés postraumático</label>
+                  <label class="check-opt"><input type="checkbox" value="Proceso de tratamiento interno"> Proceso de tratamiento interno</label>
+                </div>
+
+                <p class="pc-grupo">Consumo de sustancias</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias psicoactivas legales"> SPA legales (alcohol, tabaco)</label>
+                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias psicoactivas ilegales"> SPA ilegales</label>
+                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias vía intravenosa"> Consumo por vía intravenosa</label>
+                </div>
+
+                <p class="pc-grupo">Entorno y convivencia</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Violencia intrafamiliar"> Violencia intrafamiliar</label>
+                  <label class="check-opt"><input type="checkbox" value="Violencia comunitaria"> Violencia comunitaria</label>
+                  <label class="check-opt"><input type="checkbox" value="Problemas de convivencia en el entorno"> Problemas de convivencia</label>
+                  <label class="check-opt"><input type="checkbox" value="Habita la calle de forma permanente"> Habita la calle</label>
+                  <label class="check-opt"><input type="checkbox" value="Discriminación"> Discriminación</label>
+                  <label class="check-opt"><input type="checkbox" value="Barrismo social"> Barrismo social</label>
+                </div>
+
+                <p class="pc-grupo">Situación económica y laboral</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Sin empleo u ocupación"> Sin empleo</label>
+                  <label class="check-opt"><input type="checkbox" value="Dificultades económicas"> Dificultades económicas</label>
+                  <label class="check-opt"><input type="checkbox" value="Pobreza extrema"> Pobreza extrema</label>
+                  <label class="check-opt"><input type="checkbox" value="Hambre"> Hambre</label>
                   <label class="check-opt"><input type="checkbox" value="Estrés laboral"> Estrés laboral</label>
+                  <label class="check-opt"><input type="checkbox" value="Trabajo sexual"> Trabajo sexual</label>
+                </div>
+
+                <p class="pc-grupo">Situación legal y educativa</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Problemas con la justicia"> Problemas con la justicia</label>
+                  <label class="check-opt"><input type="checkbox" value="Malos resultados o deserción escolar"> Deserción escolar</label>
+                  <label class="check-opt"><input type="checkbox" value="Analfabetismo"> Analfabetismo</label>
                   <label class="check-opt"><input type="checkbox" value="Falta de capacitación"> Falta de capacitación</label>
-                  <label class="check-opt"><input type="checkbox" value="Habita la calle de forma permanente"> Habita la calle de forma permanente</label>
-                  <label class="check-opt"><input type="checkbox" value="Malos resultados o deserción escolar"> Malos resultados o deserción escolar</label>
+                  <label class="check-opt"><input type="checkbox" value="Sobrecarga estudio/prácticas laborales"> Sobrecarga estudio/prácticas</label>
+                </div>
+
+                <p class="pc-grupo">Conflicto y movilidad</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Víctima del conflicto"> Víctima del conflicto</label>
+                  <label class="check-opt"><input type="checkbox" value="Desplazamiento forzado"> Desplazamiento forzado</label>
+                  <label class="check-opt"><input type="checkbox" value="Población migrante"> Población migrante</label>
+                </div>
+
+                <p class="pc-grupo">Otras</p>
+                <div class="check-grid">
                   <label class="check-opt"><input type="checkbox" value="Ninguna"> Ninguna</label>
                   <label class="check-opt"><input type="checkbox" value="No me identifico"> No me identifico</label>
-                  <label class="check-opt"><input type="checkbox" value="Población migrante"> Población migrante</label>
-                  <label class="check-opt"><input type="checkbox" value="Pobreza extrema"> Pobreza extrema</label>
-                  <label class="check-opt"><input type="checkbox" value="Prefiere actividades en compañía"> Prefiere actividades en compañía</label>
-                  <label class="check-opt"><input type="checkbox" value="Prefiere actividades solo"> Prefiere actividades solo</label>
-                  <label class="check-opt"><input type="checkbox" value="Problemas con la justicia"> Problemas con la justicia</label>
-                  <label class="check-opt"><input type="checkbox" value="Problemas de convivencia en el entorno"> Problemas de convivencia en el entorno</label>
-                  <label class="check-opt"><input type="checkbox" value="Proceso de tratamiento interno"> Proceso de tratamiento interno</label>
-                  <label class="check-opt"><input type="checkbox" value="Sin empleo u ocupación"> Sin empleo u ocupación</label>
-                  <label class="check-opt"><input type="checkbox" value="Sobrecarga estudio/prácticas laborales"> Sobrecarga estudio/prácticas laborales</label>
-                  <label class="check-opt"><input type="checkbox" value="Trabajo comunitario"> Trabajo comunitario</label>
-                  <label class="check-opt"><input type="checkbox" value="Trabajo sexual"> Trabajo sexual</label>
-                  <label class="check-opt"><input type="checkbox" value="Trastorno de estrés postraumático"> Trastorno de estrés postraumático</label>
-                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias psicoactivas ilegales"> Uso de SPA ilegales</label>
-                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias psicoactivas legales"> Uso de SPA legales</label>
-                  <label class="check-opt"><input type="checkbox" value="Uso de sustancias vía intravenosa"> Uso de SPA vía intravenosa</label>
-                  <label class="check-opt"><input type="checkbox" value="Víctima del conflicto"> Víctima del conflicto</label>
-                  <label class="check-opt"><input type="checkbox" value="Violencia comunitaria"> Violencia comunitaria</label>
-                  <label class="check-opt"><input type="checkbox" value="Violencia intrafamiliar"> Violencia intrafamiliar</label>
                 </div>
               </div>
               <div class="field" style="margin-top:0.5rem">
                 <label>Observaciones adicionales</label>
                 <textarea id="pc-situaciones" placeholder="Información adicional sobre las situaciones…" style="width:100%;min-height:60px;resize:vertical"></textarea>
               </div>
-              <div class="field">
-                <label>Peticiones del beneficiario</label>
-                <textarea id="pc-peticiones" placeholder="¿Qué solicita o necesita?" style="width:100%;min-height:70px;resize:vertical"></textarea>
+            </div>
+
+            <!-- § 7 Peticiones y necesidades -->
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">🙋 7. Peticiones y necesidades</span></div>
+              <div id="pc-peticiones-checks">
+                <p class="pc-grupo">Apoyo psicosocial y salud</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Consejo"> Consejo</label>
+                  <label class="check-opt"><input type="checkbox" value="Apoyo psicosocial"> Apoyo psicosocial</label>
+                  <label class="check-opt"><input type="checkbox" value="Atención médica"> Atención médica</label>
+                  <label class="check-opt"><input type="checkbox" value="Medicamentos"> Medicamentos</label>
+                  <label class="check-opt"><input type="checkbox" value="Atención psiquiátrica"> Atención psiquiátrica</label>
+                </div>
+
+                <p class="pc-grupo">Necesidades básicas</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Alimentación"> Alimentación</label>
+                  <label class="check-opt"><input type="checkbox" value="Kit de higiene"> Kit de higiene</label>
+                  <label class="check-opt"><input type="checkbox" value="Alojamiento temporal"> Alojamiento temporal</label>
+                  <label class="check-opt"><input type="checkbox" value="Ropa"> Ropa</label>
+                </div>
+
+                <p class="pc-grupo">Capacitación y empleo</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Formación técnica"> Formación técnica</label>
+                  <label class="check-opt"><input type="checkbox" value="Apoyo para conseguir empleo"> Apoyo para conseguir empleo</label>
+                  <label class="check-opt"><input type="checkbox" value="Apoyo escolar"> Apoyo escolar</label>
+                  <label class="check-opt"><input type="checkbox" value="Alfabetización"> Alfabetización</label>
+                </div>
+
+                <p class="pc-grupo">Asesoría legal y trámites</p>
+                <div class="check-grid">
+                  <label class="check-opt"><input type="checkbox" value="Acceso a justicia"> Acceso a justicia</label>
+                  <label class="check-opt"><input type="checkbox" value="Apoyo en trámites"> Apoyo en trámites</label>
+                  <label class="check-opt"><input type="checkbox" value="Documentación"> Documentación</label>
+                  <label class="check-opt"><input type="checkbox" value="Asesoría legal"> Asesoría legal</label>
+                </div>
               </div>
-              <div class="field">
-                <label>Descripción del caso</label>
-                <textarea id="pc-descripcion" placeholder="Contexto adicional…" style="width:100%;min-height:80px;resize:vertical"></textarea>
+              <div class="field" style="margin-top:0.5rem">
+                <label>Otras peticiones</label>
+                <textarea id="pc-peticiones" placeholder="¿Qué más solicita o necesita?" style="width:100%;min-height:60px;resize:vertical"></textarea>
               </div>
             </div>
 
-            <!-- § 12 Registrador -->
+            <!-- § 8 Descripción abierta del caso -->
             <div class="panel">
-              <div class="panel-head"><span class="panel-title">✍️ Datos del registrador</span></div>
+              <div class="panel-head"><span class="panel-title">📝 8. Descripción abierta del caso</span></div>
+              <div class="field">
+                <textarea id="pc-descripcion" placeholder="Contexto, relato y observaciones del caso…" style="width:100%;min-height:100px;resize:vertical"></textarea>
+              </div>
+            </div>
+
+            <!-- § 9 Datos de quien diligencia -->
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">✍️ 9. Datos de quien diligencia</span></div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem">
-                <div class="field">
-                  <label>Rol</label>
-                  <input type="text" id="pc-rol-registrador" placeholder="Ej: Educador popular" style="width:100%">
-                </div>
                 <div class="field">
                   <label>Nombre y apellido</label>
                   <input type="text" id="pc-nombre-registrador" style="width:100%">
+                </div>
+                <div class="field">
+                  <label>Rol</label>
+                  <input type="text" id="pc-rol-registrador" placeholder="Ej: Educador popular" style="width:100%">
                 </div>
                 <div class="field">
                   <label>Teléfono</label>
@@ -764,19 +948,7 @@
   </div>
 </div>
 
-<!-- Modal eliminar primer contacto -->
-<div id="modal-del-pc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-  <div class="panel" style="width:100%;max-width:360px;margin:1rem">
-    <div class="panel-head"><span class="panel-title">🗑 Eliminar primer contacto</span></div>
-    <p style="font-size:0.88rem;color:var(--on-bg-muted);margin:0 0 1.25rem">¿Eliminar este registro de primer contacto? Esta acción no se puede deshacer.</p>
-    <div style="display:flex;gap:0.75rem;justify-content:flex-end">
-      <button class="btn btn-sm btn-outline" id="btn-cancel-pc">Cancelar</button>
-      <button class="btn btn-sm" id="btn-del-pc" style="background:var(--error);color:#fff;border-color:var(--error)">Sí, eliminar</button>
-    </div>
-  </div>
-</div>
-
-<script src="/static/js/mascate-utils.js"></script>
-<script src="/static/js/reportar-info.js"></script>
+<script src="/static/js/mascate-utils.js?v=20261118"></script>
+<script src="/static/js/reportar-info.js?v=20261118b"></script>
 </body>
 </html>

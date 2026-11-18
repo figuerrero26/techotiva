@@ -103,28 +103,6 @@ function verDetalle(id) {
   document.getElementById('modal-disp-detalle').style.display = 'flex';
 }
 
-async function solicitarUnirse(dispId, nombre) {
-  if (!confirm(`¿Unirte al dispositivo "${nombre}"?`)) return;
-  try {
-    const res  = await fetch(API + '/beneficiarios/solicitar-dispositivo/' + dispId, {
-      method: 'POST', headers: MASCATE.authHeaders(),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      document.getElementById('modal-disp-detalle').style.display = 'none';
-      const t = document.createElement('div');
-      t.textContent = '✓ ' + data.msg;
-      t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;background:var(--primary);color:#fff;padding:0.75rem 1.25rem;border-radius:var(--radius-md);font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2)';
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 3500);
-    } else {
-      alert(data.detail || 'No se pudo completar la solicitud.');
-    }
-  } catch(e) {
-    alert('Error de conexión.');
-  }
-}
-
 // Cerrar modal al click fuera
 document.getElementById('modal-disp-detalle')?.addEventListener('click', e => {
   if (e.target === document.getElementById('modal-disp-detalle'))

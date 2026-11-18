@@ -16,7 +16,7 @@ from app.models.models import (
 )
 from app.schemas.schemas import (
     AsignadoOut, SeguimientoCreate, SeguimientoOut,
-    PrescriptorMe, PrescriptorUpdate, BeneficiarioResumen, DispositivoOut,
+    PrescriptorMe, PrescriptorUpdate,
 )
 from app.routers._deps import get_current_user
 
@@ -58,13 +58,29 @@ def _get_prescriptor(db: Session, user: Usuario) -> Prescriptor:
     return presc
 
 
-def _calcular_estado(dias: Optional[int]) -> str:
-    """Calcula el estado semáforo según días sin sesión."""
+def _benef_accesible(db: Session, presc: Prescriptor, benef: Beneficiario) -> bool:
+    """Mismo criterio que "mis asignados": de mi dispositivo, asignado a mí o ya atendido por mí."""
+    if presc.dispositivo_id and benef.dispositivo_id == presc.dispositivo_id:
+        return True
+    if benef.prescriptor_id == presc.id:
+        return True
+    return db.query(Seguimiento.id).filter(
+        Seguimiento.prescriptor_id == presc.id, Seguimiento.beneficiario_id == benef.id
+    ).first() is not None
+
+
+# Semáforo de seguimiento (días desde el último seguimiento)
+DIAS_REVISAR = 7    # desde 7 días → amarillo
+DIAS_URGENTE = 14   # desde 14 días → rojo
+
+
+def calcular_estado(dias: Optional[int]) -> str:
+    """Al día < 7 días · Por revisar 7–13 días · Urgente 14+ días o sin ningún seguimiento."""
     if dias is None:
         return "urgente"
-    if dias < 3:
+    if dias < DIAS_REVISAR:
         return "al_dia"
-    if dias <= 7:
+    if dias < DIAS_URGENTE:
         return "revisar"
     return "urgente"
 
@@ -159,7 +175,7 @@ def mis_asignados(
         elif benef.prescriptor_id is None:
             estado = "desvinculado"
         else:
-            estado = _calcular_estado(dias_sin)
+            estado = calcular_estado(dias_sin)
         result.append(AsignadoOut(
             id=benef.id,
             nombre_apodo=benef.nombre_apodo,
@@ -189,6 +205,9 @@ def crear_seguimiento(
     benef = db.query(Beneficiario).filter(Beneficiario.id == data.beneficiario_id).first()
     if not benef:
         raise HTTPException(status_code=404, detail="Beneficiario no encontrado")
+
+    if current_user.rol != "admin" and not _benef_accesible(db, presc, benef):
+        raise HTTPException(status_code=403, detail="No tienes acceso a este beneficiario")
 
     if benef.estado == Estados.FINALIZADO and current_user.rol != "admin":
         raise HTTPException(status_code=403, detail="El proceso de este beneficiario está finalizado. Un administrador debe reactivarlo primero.")
@@ -238,14 +257,25 @@ def listar_seguimientos(
     if current_user.rol not in ("prescriptor", "admin", "dispositivo"):
         raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
 
-    if current_user.rol in ("admin", "dispositivo"):
+    if current_user.rol == "admin":
         q = db.query(Seguimiento)
+        if beneficiario_id:
+            q = q.filter(Seguimiento.beneficiario_id == beneficiario_id)
+    elif current_user.rol == "dispositivo":
+        # Solo seguimientos de beneficiarios de su dispositivo
+        disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == current_user.id).first()
+        q = (db.query(Seguimiento)
+             .join(Beneficiario, Beneficiario.id == Seguimiento.beneficiario_id)
+             .filter(Beneficiario.dispositivo_id == (disp.id if disp else -1)))
         if beneficiario_id:
             q = q.filter(Seguimiento.beneficiario_id == beneficiario_id)
     else:
         presc = _get_prescriptor(db, current_user)
         if beneficiario_id:
-            # Ver ficha de un beneficiario: mostrar todos los seguimientos de ese beneficiario
+            # Ver ficha de un beneficiario: todos sus seguimientos, si es accesible para mí
+            benef = db.query(Beneficiario).filter(Beneficiario.id == beneficiario_id).first()
+            if not benef or not _benef_accesible(db, presc, benef):
+                raise HTTPException(status_code=403, detail="No tienes acceso a este beneficiario")
             q = db.query(Seguimiento).filter(Seguimiento.beneficiario_id == beneficiario_id)
         else:
             # Sin filtro de beneficiario: solo los propios del prescriptor
@@ -278,12 +308,15 @@ def eliminar_seguimiento(
     if current_user.rol not in ("prescriptor", "admin"):
         raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
 
-    presc = _get_prescriptor(db, current_user)
     seg = db.query(Seguimiento).filter(Seguimiento.id == seguimiento_id).first()
     if not seg:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
-    if seg.prescriptor_id != presc.id and current_user.rol != "admin":
-        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este seguimiento")
+    # El admin borra cualquiera; el prescriptor solo los suyos.
+    # (No usar _get_prescriptor aquí: crearía un perfil de prescriptor para el admin.)
+    if current_user.rol != "admin":
+        presc = _get_prescriptor(db, current_user)
+        if seg.prescriptor_id != presc.id:
+            raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este seguimiento")
 
     db.delete(seg)
     db.commit()
@@ -304,11 +337,6 @@ def mi_perfil_prescriptor(
         disp = db.query(Dispositivo).filter(Dispositivo.id == presc.dispositivo_id).first()
         dispositivo_nombre = disp.nombre if disp else None
 
-    solicitud_dispositivo_nombre = None
-    if presc.solicitud_dispositivo_id:
-        d_sol = db.query(Dispositivo).filter(Dispositivo.id == presc.solicitud_dispositivo_id).first()
-        solicitud_dispositivo_nombre = d_sol.nombre if d_sol else None
-
     return PrescriptorMe(
         id=presc.id,
         nombre_completo=presc.nombre_completo,
@@ -317,8 +345,6 @@ def mi_perfil_prescriptor(
         email=current_user.email,
         dispositivo_id=presc.dispositivo_id,
         dispositivo_nombre=dispositivo_nombre,
-        solicitud_dispositivo_id=presc.solicitud_dispositivo_id,
-        solicitud_dispositivo_nombre=solicitud_dispositivo_nombre,
         fecha_registro=current_user.fecha_registro,
     )
 
@@ -345,11 +371,6 @@ def editar_perfil_prescriptor(
         disp = db.query(Dispositivo).filter(Dispositivo.id == presc.dispositivo_id).first()
         dispositivo_nombre = disp.nombre if disp else None
 
-    solicitud_dispositivo_nombre_put = None
-    if presc.solicitud_dispositivo_id:
-        d_sol = db.query(Dispositivo).filter(Dispositivo.id == presc.solicitud_dispositivo_id).first()
-        solicitud_dispositivo_nombre_put = d_sol.nombre if d_sol else None
-
     return PrescriptorMe(
         id=presc.id,
         nombre_completo=presc.nombre_completo,
@@ -358,137 +379,5 @@ def editar_perfil_prescriptor(
         email=current_user.email,
         dispositivo_id=presc.dispositivo_id,
         dispositivo_nombre=dispositivo_nombre,
-        solicitud_dispositivo_id=presc.solicitud_dispositivo_id,
-        solicitud_dispositivo_nombre=solicitud_dispositivo_nombre_put,
         fecha_registro=current_user.fecha_registro,
     )
-
-
-# ────────────────────────── BENEFICIARIOS DEL DISPOSITIVO (prescriptor ve todos) ──────────
-@router.get("/beneficiarios-dispositivo", response_model=list[BeneficiarioResumen])
-def beneficiarios_de_mi_dispositivo(
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol != "prescriptor":
-        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
-
-    presc = _get_prescriptor(db, current_user)
-    if not presc.dispositivo_id:
-        return []
-
-    dispositivo_id = presc.dispositivo_id
-    benef_ids: set = set()
-
-    insc = (
-        db.query(Inscripcion.beneficiario_id)
-        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-        .filter(Actividad.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in insc)
-
-    pc = (
-        db.query(PrimerContacto.beneficiario_id)
-        .filter(PrimerContacto.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in pc)
-
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if disp:
-        presc_ids = [p.id for p in disp.prescriptores]
-        if presc_ids:
-            seg = (
-                db.query(Seguimiento.beneficiario_id)
-                .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-                .all()
-            )
-            benef_ids.update(b[0] for b in seg)
-
-    directo = (
-        db.query(Beneficiario.id)
-        .filter(Beneficiario.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in directo)
-
-    if not benef_ids:
-        return []
-
-    benefs = db.query(Beneficiario).filter(Beneficiario.id.in_(benef_ids)).all()
-    result = []
-    for b in benefs:
-        email = b.usuario.email if b.usuario else None
-        result.append(BeneficiarioResumen(
-            id=b.id,
-            nombre_apodo=b.nombre_apodo,
-            email=email,
-            genero=b.genero,
-            fecha_nacimiento=b.fecha_nacimiento,
-            localidad=b.localidad,
-            telefono=b.telefono,
-            status=b.estado,
-        ))
-    return result
-
-
-# ────────────────────────── DISPOSITIVOS DISPONIBLES ──────────────────────────
-@router.get("/dispositivos-disponibles", response_model=list[DispositivoOut])
-def dispositivos_disponibles(
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol != "prescriptor":
-        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
-
-    disps = (
-        db.query(Dispositivo)
-        .join(Usuario, Usuario.id == Dispositivo.usuario_id)
-        .join(Usuario.estado_actual)
-        .filter(EstadoRegistro.estado == Estados.ACTIVO)
-        .all()
-    )
-    result = []
-    for d in disps:
-        r = DispositivoOut.model_validate(d)
-        r.activo = True
-        result.append(r)
-    return result
-
-
-# ────────────────────────── SOLICITAR UNIRSE A DISPOSITIVO ──────────────────────────
-@router.post("/solicitar-dispositivo/{dispositivo_id}")
-def solicitar_dispositivo(
-    dispositivo_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol != "prescriptor":
-        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
-
-    presc = _get_prescriptor(db, current_user)
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if not disp:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    if presc.dispositivo_id == dispositivo_id:
-        raise HTTPException(status_code=400, detail="Ya perteneces a este dispositivo")
-
-    presc.solicitud_dispositivo_id = dispositivo_id
-    db.commit()
-    return {"msg": f"Solicitud enviada a {disp.nombre}. Esperando aprobación."}
-
-
-# ────────────────────────── CANCELAR SOLICITUD ──────────────────────────
-@router.delete("/cancelar-solicitud")
-def cancelar_solicitud(
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol != "prescriptor":
-        raise HTTPException(status_code=403, detail="Requiere rol prescriptor")
-
-    presc = _get_prescriptor(db, current_user)
-    presc.solicitud_dispositivo_id = None
-    db.commit()
-    return {"msg": "Solicitud cancelada"}

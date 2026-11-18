@@ -94,6 +94,23 @@
         <div style="text-align:center"><button class="link-btn" onclick="switchTab('register')">Crear cuenta</button></div>
       </div>
 
+      <!-- VERIFICACIÓN EN DOS PASOS (admin) -->
+      <div id="twofaView" style="display:none">
+        <div class="form-title">Verificación en dos pasos</div>
+        <div class="form-sub" id="twofaSub">Te enviamos un código de 6 dígitos a tu correo.</div>
+        <div class="field">
+          <label>Código de verificación</label>
+          <input type="text" id="twofaCodigo" inputmode="numeric" autocomplete="one-time-code"
+                 maxlength="6" placeholder="000000"
+                 style="letter-spacing:0.5rem;font-size:1.3rem;text-align:center">
+        </div>
+        <button class="btn-primary" onclick="doVerificar2FA()">Verificar →</button>
+        <div style="text-align:center;margin-top:0.75rem;display:flex;flex-direction:column;gap:0.4rem">
+          <button class="link-btn" onclick="reenviar2FA()" style="font-size:0.8rem;color:var(--on-bg-muted)">¿No te llegó? Reenviar código</button>
+          <button class="link-btn" onclick="switchTab('login')" style="font-size:0.8rem">← Volver al inicio de sesión</button>
+        </div>
+      </div>
+
       <!-- RECUPERAR CONTRASEÑA -->
       <div id="recoveryView" style="display:none">
         <div class="form-title">Recuperar contraseña</div>
@@ -224,8 +241,8 @@
       <!-- SUCCESS -->
       <div class="success-screen" id="successView">
         <div class="success-icon">🌱</div>
-        <h2>¡Bienvenidx a Cuida Tu Techo!</h2>
-        <p>Tu cuenta ha sido creada. Pronto recibirás una confirmación en tu correo y podrás acceder al sistema.</p>
+        <h2 id="successTitulo">¡Bienvenidx a Cuida Tu Techo!</h2>
+        <p id="successIntro">Tu cuenta ha sido creada.</p>
         <button class="btn-primary" style="max-width:220px" onclick="goToLogin()">Ir a ingresar</button>
       </div>
 

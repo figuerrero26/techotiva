@@ -4,7 +4,7 @@ Router de dispositivos: CRUD y estadísticas.
 
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_, func
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -17,7 +17,10 @@ from app.schemas.schemas import (
     DispositivoOut, DispositivoUpdate, DispositivoEstadisticas,
     BeneficiarioResumen, PrescriptorResumen, AsignadoOut,
 )
-from app.routers._deps import get_current_user, require_role
+from app.services.email_service import notificar_aprobacion
+from app.services.usuarios_service import borrar_usuario_completo
+from app.routers.prescriptores import calcular_estado
+from app.routers._deps import get_current_user
 from app.services.estado_service import EstadoService
 
 router = APIRouter(prefix="/dispositivos", tags=["Dispositivos"])
@@ -90,6 +93,17 @@ def editar_dispositivo(
     return r
 
 
+def _exigir_acceso_dispositivo(db: Session, user: Usuario, disp: Dispositivo) -> None:
+    """Datos de beneficiarios de un dispositivo: admin, la cuenta del dispositivo o sus prescriptores."""
+    if user.rol == "admin" or disp.usuario_id == user.id:
+        return
+    if user.rol == "prescriptor":
+        presc = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+        if presc and presc.dispositivo_id == disp.id:
+            return
+    raise HTTPException(status_code=403, detail="No tienes acceso a este dispositivo")
+
+
 # ────────────────────────── BENEFICIARIOS DEL DISPOSITIVO ──────────────────────────
 @router.get("/{dispositivo_id}/beneficiarios", response_model=list[BeneficiarioResumen])
 def beneficiarios_dispositivo(
@@ -100,6 +114,7 @@ def beneficiarios_dispositivo(
     disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
     if not disp:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    _exigir_acceso_dispositivo(db, current_user, disp)
 
     benef_ids = set()
 
@@ -171,6 +186,7 @@ def beneficiarios_dispositivo_detalle(
     disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
     if not disp:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    _exigir_acceso_dispositivo(db, current_user, disp)
 
     benef_ids = set()
 
@@ -227,17 +243,14 @@ def beneficiarios_dispositivo_detalle(
                 ultima = ultima.replace(tzinfo=timezone.utc)
             dias_sin = (now - ultima).days
 
-        def _estado(dias):
-            if dias is None:
-                return "urgente"
-            if dias < 3:
-                return "al_dia"
-            if dias <= 7:
-                return "revisar"
-            return "urgente"
-
         usuario = db.query(Usuario).filter(Usuario.id == benef.usuario_id).first()
-        estado = "desvinculado" if benef.prescriptor_id is None else _estado(dias_sin)
+        # Mismo criterio que la vista del prescriptor: un proceso cerrado no entra al semáforo
+        if benef.estado == Estados.FINALIZADO:
+            estado = "finalizado"
+        elif benef.prescriptor_id is None:
+            estado = "desvinculado"
+        else:
+            estado = calcular_estado(dias_sin)
         result.append(AsignadoOut(
             id=benef.id,
             nombre_apodo=benef.nombre_apodo,
@@ -392,6 +405,7 @@ def listar_prescriptores_pendientes(
 def aprobar_prescriptor(
     dispositivo_id: int,
     prescriptor_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -411,6 +425,7 @@ def aprobar_prescriptor(
         raise HTTPException(status_code=400, detail="El prescriptor no está asignado a este dispositivo")
 
     service = EstadoService(db)
+    estado_anterior = presc.usuario.estado if presc.usuario else None
 
     # Activar usuario y perfil del prescriptor
     if presc.usuario:
@@ -418,6 +433,8 @@ def aprobar_prescriptor(
 
     service.cambiar_estado(entidad_obj=presc, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Aprobado por dispositivo")
 
+    if presc.usuario:
+        notificar_aprobacion(background_tasks, db, presc.usuario, estado_anterior)
     return {"msg": "Prescriptor aprobado"}
 
 
@@ -443,106 +460,9 @@ def rechazar_prescriptor(
     if presc.dispositivo_id != dispositivo_id:
         raise HTTPException(status_code=403, detail="El prescriptor no pertenece a este dispositivo")
 
-    service = EstadoService(db)
+    # Rechazar elimina la cuenta para que el correo quede libre. Solo solicitudes pendientes.
+    if not presc.usuario or presc.usuario.estado != Estados.PENDIENTE:
+        raise HTTPException(status_code=400, detail="Solo se pueden rechazar solicitudes pendientes")
+    borrar_usuario_completo(db, presc.usuario)
 
-    service.cambiar_estado(
-        entidad_obj=presc,
-        nuevo_estado=Estados.RECHAZADO,
-        admin_id=current_user.id,
-        motivo="Rechazado por el dispositivo"
-    )
-
-    if presc.usuario:
-        service.cambiar_estado(
-            entidad_obj=presc.usuario,
-            nuevo_estado=Estados.RECHAZADO,
-            admin_id=current_user.id,
-            motivo="Rechazado por el dispositivo"
-        )
-
-    return {"mensaje": "Prescriptxr rechazado"}
-
-
-# ────────────────────────── SOLICITUDES DE UNIÓN ──────────────────────────
-@router.get("/{dispositivo_id}/solicitudes")
-def listar_solicitudes(
-    dispositivo_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if not disp:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Sin permiso")
-
-    prescs = (
-        db.query(Prescriptor)
-        .filter(Prescriptor.solicitud_dispositivo_id == dispositivo_id)
-        .all()
-    )
-    return [
-        {
-            "id": p.id,
-            "nombre_completo": p.nombre_completo,
-            "perfil_disciplina": p.perfil_disciplina,
-            "telefono": p.telefono,
-            "email": p.usuario.email if p.usuario else "",
-            "dispositivo_actual": p.dispositivo.nombre if (p.dispositivo_id and p.dispositivo) else None,
-        }
-        for p in prescs
-    ]
-
-
-@router.post("/{dispositivo_id}/solicitudes/{prescriptor_id}/aprobar")
-def aprobar_solicitud(
-    dispositivo_id: int,
-    prescriptor_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if not disp:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Sin permiso")
-
-    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
-    if not presc:
-        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
-    if presc.solicitud_dispositivo_id != dispositivo_id:
-        raise HTTPException(status_code=400, detail="Este prescriptor no tiene solicitud pendiente para este dispositivo")
-
-    presc.dispositivo_id = dispositivo_id
-    presc.solicitud_dispositivo_id = None
-
-    service = EstadoService(db)
-    if presc.usuario:
-        service.cambiar_estado(entidad_obj=presc.usuario, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Solicitud de unión aprobada")
-    service.cambiar_estado(entidad_obj=presc, nuevo_estado=Estados.ACTIVO, admin_id=current_user.id, motivo="Solicitud de unión aprobada")
-
-    return {"msg": "Solicitud aprobada. Prescriptor vinculado al dispositivo."}
-
-
-@router.post("/{dispositivo_id}/solicitudes/{prescriptor_id}/rechazar")
-def rechazar_solicitud(
-    dispositivo_id: int,
-    prescriptor_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
-    if not disp:
-        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
-    if current_user.rol != "admin" and disp.usuario_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Sin permiso")
-
-    presc = db.query(Prescriptor).filter(Prescriptor.id == prescriptor_id).first()
-    if not presc:
-        raise HTTPException(status_code=404, detail="Prescriptor no encontrado")
-    if presc.solicitud_dispositivo_id != dispositivo_id:
-        raise HTTPException(status_code=400, detail="Este prescriptor no tiene solicitud pendiente para este dispositivo")
-
-    presc.solicitud_dispositivo_id = None
-    db.commit()
-    return {"msg": "Solicitud rechazada"}
+    return {"mensaje": "Solicitud rechazada"}

@@ -255,23 +255,102 @@
     </div>
     <div class="content">
       <div class="page-header"><h1>Panel de Administración</h1><p>Control total del sistema Cuida Tu Techo · Seguimiento Piloto 1</p></div>
+
+      <!-- ── Indicadores de la población ── -->
+      <div id="admin-indicadores">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem">
+          <h2 style="font-size:1.05rem;margin:0">📊 Indicadores de la población</h2>
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--on-bg-muted)">
+            DBC
+            <select id="ind-dbc" style="padding:0.35rem 0.6rem;border-radius:6px;border:1px solid var(--outline-variant);background:var(--surface-low,transparent);color:var(--on-bg)">
+              <option value="">Todos los DBC</option>
+            </select>
+          </label>
+        </div>
+        <div class="stats-row cols-3 ind-row">
+          <div class="stat-card"><div class="stat-icon blue">🌱</div><div class="stat-val" id="ind-benef">—</div><div class="stat-label">Beneficiarios</div></div>
+          <div class="stat-card" id="ind-spa-card" onclick="verUsuariosSpa()" title="Personas en proceso activo con consumo de SPA. Clic para ver quiénes son." style="cursor:pointer"><div class="stat-icon rust">💊</div><div class="stat-val" id="ind-spa">—</div><div class="stat-label" id="ind-spa-lbl">Usuarios de SPA</div></div>
+          <div class="stat-card"><div class="stat-icon green">🎭</div><div class="stat-val" id="ind-balance" style="font-size:1.2rem">—</div><div class="stat-label" id="ind-balance-lbl">Balance emocional</div></div>
+        </div>
+        <div class="ind-grid">
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">🎭 Bienestar emocional</span><span class="tag mustard" id="ind-emo-n">0 personas</span></div>
+            <div id="ind-emociones"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">👥 Caracterización de la población</span></div>
+            <div id="ind-caract"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">🏘️ Cobertura por DBC</span></div>
+            <div id="ind-cobertura"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">📋 Situaciones por categoría</span></div>
+            <div id="ind-categorias"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Ventana: personas con consumo de SPA -->
+      <div id="modal-spa" onclick="if(event.target===this)cerrarModalSpa()"
+           style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:2rem 1rem">
+        <div class="panel" style="width:100%;max-width:720px;position:relative">
+          <button onclick="cerrarModalSpa()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+          <div class="panel-head"><span class="panel-title" id="modal-spa-titulo">💊 Usuarios de SPA</span><span class="tag rust" id="modal-spa-count">0</span></div>
+          <p style="font-size:0.8rem;color:var(--on-bg-muted);margin:0 0 0.75rem" id="modal-spa-sub"></p>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Persona</th><th>DBC</th><th>Consumo</th><th>Primer contacto</th></tr></thead>
+              <tbody id="modal-spa-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <style>
+        .ind-spa-bar { cursor:pointer; border-radius:4px; }
+        .ind-spa-bar:hover { background:var(--primary-dim); }
+        #ind-spa-card:hover { box-shadow:0 0 0 2px var(--primary-dim); }
+        .ind-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+        @media (max-width:900px) { .ind-grid { grid-template-columns:1fr; } }
+        .ind-bar { display:grid; grid-template-columns:minmax(90px,38%) 1fr 2.5rem; align-items:center; gap:0.6rem; font-size:0.82rem; padding:0.3rem 0; }
+        .ind-bar .seed-track { margin:0; }
+        .ind-bar b { text-align:right; color:var(--primary); }
+        .ind-sub { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:var(--on-bg-muted); margin:0.8rem 0 0.2rem; }
+        .ind-sub:first-child { margin-top:0; }
+        .ind-emo { border-radius:4px; }
+        .ind-emo[onclick]:hover { background:var(--primary-dim); }
+        .ind-caret { display:inline-block; font-size:0.7rem; color:var(--on-bg-muted); transition:transform .15s; }
+        .ind-emo.open .ind-caret { transform:rotate(90deg); }
+        .ind-empty { color:var(--on-bg-muted); font-size:0.82rem; padding:0.4rem 0; }
+      </style>
+
+      <h2 style="font-size:1.05rem;margin:0.5rem 0 0.75rem">⚙️ Administración del sistema</h2>
       <div class="stats-row cols-4">
         <div class="stat-card"><div class="stat-icon green">🏘️</div><div class="stat-val">—</div><div class="stat-label">Dispositivos totales</div></div>
         <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-val">—</div><div class="stat-label">Usuarixs registradxs</div></div>
-        <div class="stat-card"><div class="stat-icon mustard">🎯</div><div class="stat-val">12</div><div class="stat-label">Prescriptxrs activos</div></div>
-        <div class="stat-card"><div class="stat-icon rust">⚠️</div><div class="stat-val">5</div><div class="stat-label">Alertas pendientes</div></div>
+        <div class="stat-card"><div class="stat-icon mustard">🎯</div><div class="stat-val">—</div><div class="stat-label">Prescriptxrs activos</div></div>
+        <div class="stat-card"><div class="stat-icon rust">⚠️</div><div class="stat-val">—</div><div class="stat-label">Alertas pendientes</div></div>
       </div>
       <div class="grid-2">
         <div class="panel">
-          <div class="panel-head"><span class="panel-title">Usuarixs por rol</span><button class="panel-action">Gestionar →</button></div>
-          <div class="list-row"><div class="list-avatar" style="font-size:1rem">🏘️</div><div class="list-info"><div class="list-name">Dispositivos CBC</div><div class="seed-track"><div class="seed-fill" style="width:80%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">8</div><span class="tag green">Activos</span></div></div>
-          <div class="list-row"><div class="list-avatar mustard" style="font-size:1rem">🎯</div><div class="list-info"><div class="list-name">Prescriptxrs</div><div class="seed-track"><div class="seed-fill" style="width:60%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">12</div><span class="tag mustard">Activos</span></div></div>
-          <div class="list-row"><div class="list-avatar rust" style="font-size:1rem">🌱</div><div class="list-info"><div class="list-name">Beneficiarixs</div><div class="seed-track"><div class="seed-fill" style="width:95%"></div></div></div><div style="display:flex;align-items:center;gap:0.5rem"><div style="font-weight:700;font-size:0.9rem;color:var(--primary)">214</div><span class="tag green">Activos</span></div></div>
+          <div class="panel-head"><span class="panel-title">Distribución por rol</span><button class="panel-action">Gestionar →</button></div>
+          <div class="donut-wrap" id="rol-donut">
+            <svg width="110" height="110" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>
+              <circle id="donut-benef" cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="0 176" transform="rotate(-90 40 40)"/>
+              <circle id="donut-presc" cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="0 176" transform="rotate(-90 40 40)"/>
+              <circle id="donut-disp"  cx="40" cy="40" r="28" fill="none" stroke="#d2bbff" stroke-width="14" stroke-dasharray="0 176" transform="rotate(-90 40 40)"/>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#95d4b3"></div><span id="lg-benef">Beneficiarixs</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f6be39"></div><span id="lg-presc">Prescriptxres</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#d2bbff"></div><span id="lg-disp">Dispositivos</span></div>
+            </div>
+          </div>
         </div>
         <div class="panel">
           <div class="panel-head"><span class="panel-title">Alertas del sistema</span><button class="panel-action">Ver todas →</button></div>
-          <div class="list-row"><div class="list-avatar rust" style="border-radius:8px;font-size:1rem">⚠️</div><div class="list-info"><div class="list-name">Dispositivo sin reporte</div><div class="list-sub">Casa Cultural Norte · 14 días sin actividad</div></div><span class="tag rust">Urgente</span></div>
-          <div class="list-row"><div class="list-avatar mustard" style="border-radius:8px;font-size:1rem">🔔</div><div class="list-info"><div class="list-name">Nuevo registro pendiente</div><div class="list-sub">3 formularios esperan aprobación</div></div><span class="tag mustard">Revisar</span></div>
+          <div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div>
         </div>
       </div>
       <div class="panel">
@@ -285,9 +364,6 @@
             <thead><tr><th>Dispositivo</th><th>Tipo</th><th>Benef.</th><th>Prescriptxr</th><th>Estado</th><th></th></tr></thead>
             <tbody>
               <tr><td colspan="6" style="color:var(--on-bg-muted);text-align:center">Cargando...</td></tr>
-              <tr><td>Red Deportiva Sur</td><td><span class="tag mustard">Deportivo</span></td><td style="color:var(--primary);font-weight:700">28</td><td>Carlos R.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
-              <tr><td>Casa Cultural Norte</td><td><span class="tag purple">Educativo</span></td><td style="color:var(--primary);font-weight:700">22</td><td>Ana L.</td><td><span class="tag mustard">En pausa</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
-              <tr><td>EcoTechotiva</td><td><span class="tag green">Ambiental</span></td><td style="color:var(--primary);font-weight:700">18</td><td>Pedro G.</td><td><span class="tag green">Activo</span></td><td><button class="btn btn-sm btn-outline">Editar</button></td></tr>
             </tbody>
           </table>
         </div>
@@ -295,6 +371,6 @@
     </div>
   </div>
 </div>
-<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/dashboard.js?v=20261118e"></script>
 </body>
 </html>

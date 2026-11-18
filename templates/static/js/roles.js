@@ -17,10 +17,9 @@ async function cargarUsuarios() {
     const benefs = todosLosUsuarios.filter(u => u.rol === 'beneficiario').length;
     const prescs = todosLosUsuarios.filter(u => u.rol === 'prescriptor').length;
     const disps  = todosLosUsuarios.filter(u => u.rol === 'dispositivo').length;
-    const admins = todosLosUsuarios.filter(u => u.rol === 'admin').length;
 
     set('stat-benef', benefs); set('stat-presc', prescs);
-    set('stat-disp',  disps);  set('stat-admin', admins);
+    set('stat-disp',  disps);
 
     renderPendientes(todosLosUsuarios.filter(u => u.status === 'pendiente'));
     renderTabla(todosLosUsuarios);
@@ -92,7 +91,7 @@ function initFiltros() {
     const q = (search?.value??'').toLowerCase();
     const r = rolSel?.value ?? 'todos';
     renderTabla(todosLosUsuarios.filter(u => {
-      const txt = (u.nombre||u.email||'').toLowerCase();
+      const txt = `${u.nombre||''} ${u.email||''}`.toLowerCase();   // nombre y correo
       return txt.includes(q) && (r==='todos'||u.rol===r);
     }));
   }
@@ -119,10 +118,10 @@ async function aprobar(id) {
 }
 
 async function rechazar(id) {
-  if (!confirm('¿Desactivar este usuario?')) return;
-  const res = await fetch(API + '/admin/usuarios/' + id + '/estado',
-    { method: 'PUT', headers: MASCATE.authHeaders(), body: JSON.stringify({ status: 'inactivo' }) });
-  if (res.ok) { mostrarToast('Usuario desactivado'); await cargarUsuarios(); }
+  if (!confirm('¿Rechazar esta solicitud? La cuenta se eliminará y la persona podrá volver a registrarse con ese correo.')) return;
+  const res = await fetch(API + '/admin/usuarios/' + id + '/rechazar',
+    { method: 'POST', headers: MASCATE.authHeaders() });
+  if (res.ok) { mostrarToast('Solicitud rechazada'); await cargarUsuarios(); }
   else { const d = await res.json(); alert('Error: ' + (d.detail||'No se pudo rechazar.')); }
 }
 

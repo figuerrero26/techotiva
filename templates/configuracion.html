@@ -59,22 +59,22 @@
             </div>
             <button class="btn btn-sm btn-green" id="btn-pw">Cambiar</button>
           </div>
-          <div class="list-row" style="flex-wrap:wrap;gap:0.5rem">
+          <div class="list-row" id="row-2fa" style="flex-wrap:wrap;gap:0.5rem;display:none">
             <div class="list-info">
-              <div class="list-name">Autenticación adicional</div>
-              <div class="list-sub">Protege la cuenta con validación extra.</div>
+              <div class="list-name">Verificación en dos pasos</div>
+              <div class="list-sub" id="sub-2fa">Al iniciar sesión se pide un código enviado a tu correo.</div>
             </div>
             <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.83rem">
-              <input type="checkbox" id="chk-2fa" checked
-                     style="width:1rem;height:1rem;accent-color:var(--primary)"> Activada
+              <input type="checkbox" id="chk-2fa" style="width:1rem;height:1rem;accent-color:var(--primary)">
+              <span id="lbl-2fa">—</span>
             </label>
           </div>
-          <div class="list-row" style="flex-wrap:wrap;gap:0.5rem">
+          <div class="list-row" id="row-sesiones" style="flex-wrap:wrap;gap:0.5rem;display:none">
             <div class="list-info">
-              <div class="list-name">Sesiones activas</div>
-              <div class="list-sub">Gestiona los dispositivos conectados.</div>
+              <div class="list-name">Sesiones activas <span class="tag green" id="sesiones-count" style="margin-left:0.3rem">—</span></div>
+              <div class="list-sub">Usuarios conectados en este momento.</div>
             </div>
-            <button class="btn btn-sm btn-outline">Ver</button>
+            <button class="btn btn-sm btn-outline" id="btn-sesiones">Ver</button>
           </div>
         </div>
 
@@ -126,8 +126,12 @@
             </div>
             <div class="contact-card">
               <div class="contact-icon" style="background:var(--primary-dim)">💾</div>
-              <div><div class="contact-val">Backups</div>
-              <div class="contact-lbl"><span class="tag mustard" id="status-bkp">Pendiente</span></div></div>
+              <div style="flex:1;min-width:0">
+                <div class="contact-val">Exportar información</div>
+                <div class="contact-lbl" style="margin-top:0.3rem">
+                  <button class="btn btn-sm btn-green" id="btn-exportar-todo">⬇ Descargar</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -173,7 +177,47 @@
   </div>
 </div>
 
-<script src="/static/js/mascate-utils.js"></script>
-<script src="/static/js/configuracion.js"></script>
+<!-- ══ MODAL CONFIRMAR DESACTIVAR 2FA ══ -->
+<div id="modal-2fa-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+            z-index:1000;align-items:center;justify-content:center">
+  <div class="panel" style="width:100%;max-width:400px;margin:1rem">
+    <div class="panel-head"><span class="panel-title">🔓 Desactivar verificación en dos pasos</span></div>
+    <p style="font-size:0.83rem;color:var(--on-bg-muted);margin:0 0 1rem">
+      Tu cuenta quedará protegida solo con la contraseña. Confírmala para continuar.
+    </p>
+    <div class="field" style="margin-bottom:0.75rem">
+      <label>Contraseña actual</label>
+      <input type="password" id="pw-2fa" placeholder="••••••••" style="width:100%">
+    </div>
+    <div id="error-2fa"
+         style="display:none;color:var(--error);font-size:0.82rem;margin-bottom:0.75rem;
+                background:var(--error-dim);padding:0.5rem 0.75rem;border-radius:var(--radius-sm)"></div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+      <button class="btn btn-sm btn-outline" onclick="cerrarModal2FA()">Cancelar</button>
+      <button class="btn btn-sm" id="btn-2fa-off" onclick="confirmarDesactivar2FA()"
+              style="background:var(--error);color:#fff;border-color:var(--error)">Desactivar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SESIONES ACTIVAS ══ -->
+<div id="modal-sesiones-overlay"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+            z-index:1000;align-items:center;justify-content:center">
+  <div class="panel" style="width:100%;max-width:520px;margin:1rem;position:relative;max-height:85vh;overflow-y:auto">
+    <button onclick="cerrarModalSesiones()"
+            style="position:absolute;top:1rem;right:1rem;background:none;border:none;
+                   font-size:1.2rem;cursor:pointer;color:var(--on-bg-muted)">✕</button>
+    <div class="panel-head"><span class="panel-title">🟢 Conectados ahora</span></div>
+    <p style="font-size:0.8rem;color:var(--on-bg-muted);margin:0 0 0.75rem">
+      Personas con actividad en los últimos 5 minutos.
+    </p>
+    <div id="sesiones-list"><div style="color:var(--on-bg-muted);font-size:0.85rem">Cargando...</div></div>
+  </div>
+</div>
+
+<script src="/static/js/mascate-utils.js?v=20261118"></script>
+<script src="/static/js/configuracion.js?v=20261118b"></script>
 </body>
 </html>

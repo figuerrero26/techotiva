@@ -12,7 +12,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   initFiltros();
 
   document.getElementById('btn-nuevo')?.addEventListener('click', () => abrirModal());
-  document.getElementById('btn-exportar')?.addEventListener('click', () => exportarDispositivos('csv'));
   document.getElementById('modal-disp-overlay')?.addEventListener('click', e => {
     if (e.target === document.getElementById('modal-disp-overlay')) cerrarModal();
   });

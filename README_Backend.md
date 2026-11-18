@@ -1,184 +1,203 @@
-# 🌿 MASCATE — Backend
+# 🌿 Cuida Tu Techo — MASCATE
 
 **Mesa Autónoma de SPA y Cannábica Techotiva**
 
-Backend desarrollado en **Python** con **FastAPI**, base de datos local **SQLite** (`mascate.db`) gestionada con **SQLAlchemy**. Incluye datos de prueba (seeds) y autenticación configurada.
+Plataforma de registro y seguimiento comunitario. Backend en **Python + FastAPI**, base de datos **SQLite** con **SQLAlchemy**, e interfaz en HTML/CSS/JavaScript que sirve el mismo servidor.
 
 ---
 
-## ✅ Requisitos Previos
+## ✅ Requisitos
 
-El computador donde se vaya a ejecutar debe tener instalado **Python 3.8 o superior**.
-
-- Descárgalo desde: [https://python.org](https://python.org)
-- ⚠️ **En Windows:** durante la instalación, marca la casilla **"Add Python to PATH"**.
+- **Python 3.10 o superior** (el código usa sintaxis que no funciona en versiones anteriores).
+  - Descárgalo en [python.org](https://python.org).
+  - ⚠️ En Windows, durante la instalación marca **"Add Python to PATH"**.
+- **Git**, para clonar el repositorio.
 
 ---
 
-## 🚀 Pasos para Ejecutar el Proyecto
+## 🚀 Ejecutar en local
 
-Abre una terminal (Símbolo del sistema o PowerShell en Windows, Terminal en Mac/Linux) y sigue este orden:
-
-### Paso 1 — Navegar a la carpeta del proyecto
+### 1. Clonar el repositorio
 
 ```bash
-cd "ruta/hacia/Backend informatica social/mascate"
+git clone https://github.com/figuerrero26/techotiva.git
+cd techotiva
 ```
 
-### Paso 2 — Crear un entorno virtual
-
-Crea una burbuja aislada para instalar las dependencias sin afectar el resto del sistema:
+### 2. Crear y activar un entorno virtual
 
 ```bash
 python -m venv venv
 ```
 
-### Paso 3 — Activar el entorno virtual
-
-**En Windows:**
+**Windows:**
 ```cmd
 venv\Scripts\activate
 ```
 
-**En Mac / Linux:**
+**Mac / Linux:**
 ```bash
 source venv/bin/activate
 ```
 
-> ✅ Sabrás que funcionó porque aparecerá `(venv)` al inicio de la línea en tu terminal.
+> ✅ Funcionó si aparece `(venv)` al inicio de la línea de la terminal.
 
-### Paso 4 — Instalar las dependencias
+### 3. Instalar las dependencias
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-> ⚠️ Usa siempre `python -m pip` en vez de solo `pip` para garantizar que las dependencias se instalan dentro del entorno virtual activo.
-
-### Paso 5 — Arrancar el servidor
+### 4. Arrancar el servidor
 
 ```bash
 python -m uvicorn main:app --reload --port 8080
 ```
 
-> ⚠️ **Importante:** usa `python -m uvicorn` y **no** simplemente `uvicorn`. En sistemas donde hay múltiples versiones de Python instaladas, escribir solo `uvicorn` puede ejecutar una versión del sistema que no tiene acceso a las dependencias del entorno virtual, causando errores como `ModuleNotFoundError: No module named 'fastapi'`.
+> ⚠️ Usa `python -m uvicorn` y no solo `uvicorn`. Si hay varias versiones de Python instaladas, `uvicorn` a secas puede usar una que no tiene las dependencias y fallar con `ModuleNotFoundError: No module named 'fastapi'`.
 
----
+### 5. Abrir la plataforma
 
-## 🌐 Verificar que está funcionando
-
-Una vez que el servidor esté corriendo, abre cualquier navegador y visita:
-
-| Recurso | URL |
+| Qué | Dirección |
 |---|---|
-| Documentación interactiva (Swagger) | [http://localhost:8080/docs](http://localhost:8080/docs) |
-| Documentación alternativa (ReDoc) | [http://localhost:8080/redoc](http://localhost:8080/redoc) |
+| **Plataforma** (inicio de sesión) | [http://127.0.0.1:8080/login](http://127.0.0.1:8080/login) |
+| Documentación de la API (Swagger) | [http://127.0.0.1:8080/docs](http://127.0.0.1:8080/docs) |
+| Estado del servidor | [http://127.0.0.1:8080/health](http://127.0.0.1:8080/health) |
+
+La interfaz la sirve el propio servidor: **no abras los archivos HTML con doble clic**, entra siempre por la dirección de arriba.
 
 ---
 
-## 🖥️ Usar la Interfaz
+## 👥 Usuarios de prueba
 
-Para usar la interfaz gráfica, simplemente abre cualquiera de estos archivos HTML con **doble clic**. Se conectarán automáticamente al backend que acabas de encender:
+Al arrancar, el servidor crea automáticamente la base de datos y estos usuarios. **Todos usan la clave `Test1234!`.**
 
-- `mascate-auth-final.html` — Pantalla de autenticación
-- `mascate-dashboards-final.html` — Panel principal / Dashboards
+| Rol | Email | Nombre |
+|---|---|---|
+| Administrador | techotivasite@gmail.com | — |
+| Dispositivo | artevivo.fontibon@ctt.org | Arte Vivo Fontibón |
+| Dispositivo | clubdeportivo.engativa@ctt.org | Club Deportivo Engativá |
+| Prescriptor | frankin.guerrero@ctt.org | Frankin Ivan Guerrero |
+| Prescriptor | ana.martinez@ctt.org | Ana Sofia Martinez |
+| Beneficiario | laura.omana@correo.com | Laura Isabela Omaña |
+| Beneficiario | karol.cotame@correo.com | Karol Marcela Cotame |
+| Beneficiario | yeimy.poveda@correo.com | Yeimy Poveda |
 
-> ⚠️ El servidor debe estar corriendo para que la interfaz funcione correctamente.
+> La clave del administrador sale de `ADMIN_PASSWORD` en el `.env` y se vuelve a aplicar **cada vez que arranca el servidor**. Si se cambia desde la plataforma, al reiniciar vuelve a la del `.env`.
+
+### Datos ficticios (opcional)
+
+Para ver el panel central con información, puedes cargar 40 beneficiarios ficticios con su primer contacto (SPA, emociones, situaciones, etc.):
+
+```bash
+python scripts/seed_demo.py           # crear
+python scripts/seed_demo.py --borrar  # eliminar
+```
+
+Todos usan correos `@demo.ctt`, así que se borran sin tocar datos reales. **No los cargues en el servidor de producción.**
 
 ---
 
-## 📁 Estructura del Proyecto
+## ⚙️ Archivo `.env`
+
+El repositorio **ya incluye** un `.env` listo para usar en local. Estas son sus variables:
+
+| Variable | Para qué sirve |
+|---|---|
+| `DATABASE_URL` | Base de datos. Por defecto `sqlite:///./mascate.db` |
+| `SECRET_KEY` | Clave para firmar las sesiones (JWT) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta de administrador que se crea y sincroniza al arrancar |
+| `APP_ENV` | `development` o `production` |
+| `APP_BASE_URL` | Dirección pública de la plataforma. Se usa en los enlaces de los correos (activar cuenta, recuperar contraseña) |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM` | Cuenta de Gmail que envía los correos |
+
+> - `MAIL_PASSWORD` **no** es la clave normal de Gmail: es una **contraseña de aplicación** (Cuenta Google → Seguridad → Verificación en dos pasos → Contraseñas de aplicaciones).
+> - En el servidor, `APP_BASE_URL` debe ser el **dominio publicado**, o los correos llevarán enlaces a `127.0.0.1`.
+> - Después de editar el `.env` hay que **reiniciar el servidor**; los cambios no se leen en caliente.
+
+---
+
+## 🖥️ Despliegue en Ubuntu
+
+Primera vez:
+
+```bash
+git clone https://github.com/figuerrero26/techotiva.git
+cd techotiva
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --host 0.0.0.0 --port 8080
+```
+
+Para actualizar cuando hay cambios nuevos (con la plataforma corriendo como servicio de systemd):
+
+```bash
+cd techotiva
+git pull
+source venv/bin/activate
+python -m pip install -r requirements.txt   # por si hay dependencias nuevas
+sudo systemctl restart <nombre-del-servicio>
+```
+
+> Los cambios en la base de datos (columnas nuevas) se aplican solos al reiniciar; no hace falta borrar `mascate.db`.
+
+---
+
+## 📁 Estructura del proyecto
 
 ```
-Backend informatica social/
-└── mascate/
-    ├── main.py                       # Punto de entrada de la aplicación
-    ├── database.py                   # Configuración de la base de datos
-    ├── mascate.db                    # Base de datos SQLite local
-    ├── requirements.txt              # Dependencias del proyecto
-    ├── mascate-auth-final.html       # Interfaz de autenticación
-    ├── mascate-dashboards-final.html # Interfaz de dashboards
-    ├── app/                          # Módulos de la aplicación
-    └── venv/                         # Entorno virtual (no incluir al comprimir)
+techotiva/
+├── main.py                 # Punto de entrada: arranque, datos iniciales y rutas de las páginas
+├── database.py             # Conexión a la base de datos y migraciones automáticas
+├── requirements.txt        # Dependencias
+├── .env                    # Configuración
+├── app/
+│   ├── core/               # Configuración (.env) y seguridad (JWT, contraseñas)
+│   ├── models/             # Tablas de la base de datos
+│   ├── schemas/            # Formato de los datos que entran y salen de la API
+│   ├── routers/            # Endpoints: auth, admin, dispositivos, prescriptores,
+│   │                       #   beneficiarios, actividades, primer_contacto
+│   ├── services/           # Envío de correos y cambios de estado
+│   └── repositories/       # Acceso al historial de estados
+├── templates/
+│   ├── *.html              # Páginas de la plataforma
+│   └── static/             # CSS, JavaScript, logo y favicon
+├── scripts/
+│   └── seed_demo.py        # Datos ficticios (opcional)
+└── mascate.db              # Base de datos (se crea sola; no está en el repositorio)
 ```
-
-> 💡 Al comprimir el proyecto para enviarlo, puedes omitir las carpetas `venv/` y `__pycache__/`.
 
 ---
 
-## 🛠️ Tecnologías Usadas
+## 🧩 Qué hace cada rol
+
+| Rol | Puede |
+|---|---|
+| **Administrador** | Ver el panel central con indicadores (beneficiarios, usuarios de SPA, balance emocional, cobertura por DBC); gestionar dispositivos, usuarios y roles; ver quién está conectado y exportar toda la información a Excel desde Configuración |
+| **Dispositivo** | Gestionar sus actividades, beneficiarios y prescriptores; diligenciar la Hoja de Primer Contacto |
+| **Prescriptor** | Registrar seguimientos y primeros contactos de los beneficiarios de su dispositivo |
+| **Beneficiario** | Buscar actividades e inscribirse, ver el mapa de dispositivos y su perfil |
+
+---
+
+## 🛠️ Tecnologías
 
 | Tecnología | Uso |
 |---|---|
-| Python 3.8+ | Lenguaje base |
-| FastAPI | Framework web / API REST |
-| Uvicorn | Servidor ASGI |
-| SQLAlchemy | ORM para base de datos |
-| SQLite | Base de datos local |
-| python-jose | Autenticación JWT |
-| passlib / bcrypt | Encriptación de contraseñas |
-
----
-
-## ⚙️ Configuración del archivo `.env`
-
-Crea un archivo `.env` en la raíz del proyecto con la siguiente estructura:
-
-```env
-DATABASE_URL=sqlite:///./mascate.db
-SECRET_KEY=clave_secreta_larga_y_aleatoria
-
-# Cuenta administrador (se crea automáticamente al arrancar si no existe)
-ADMIN_EMAIL=correo_admin@dominio.com
-ADMIN_PASSWORD=clave_admin
-
-# Configuración SMTP para envío de correos
-MAIL_USERNAME=correo_remitente@gmail.com
-MAIL_PASSWORD=contraseña_de_aplicacion_gmail
-MAIL_FROM=correo_remitente@gmail.com
-
-APP_ENV=development
-APP_BASE_URL=http://127.0.0.1:8080
-```
-
-> **`MAIL_PASSWORD`** no es la contraseña normal de Gmail. Debes generar una **contraseña de aplicación** desde: Cuenta Google → Seguridad → Verificación en dos pasos → Contraseñas de aplicaciones.
-
-
-
----
-
-## 👥 Usuarios por defecto
-
-Al arrancar por primera vez, el servidor crea automáticamente la base de datos y los siguientes usuarios de prueba:
-
-### Administrador
-| Email | Clave |
-|---|---|
-| techotivasite@gmail.com | *(clave configurada en el .env)* |
-
-### Dispositivos
-| Email | Dispositivo | Clave |
-|---|---|---|
-| artevivo.fontibon@ctt.org | Arte Vivo Fontibón | Test1234! |
-| clubdeportivo.engativa@ctt.org | Club Deportivo Engativá | Test1234! |
-
-### Prescriptores
-| Email | Nombre | Clave |
-|---|---|---|
-| frankin.guerrero@ctt.org | Frankin Ivan Guerrero | Test1234! |
-| ana.martinez@ctt.org | Ana Sofia Martinez | Test1234! |
-
-### Beneficiarios
-| Email | Nombre | Clave |
-|---|---|---|
-| laura.omana@correo.com | Laura Isabela Omaña | Test1234! |
-| karol.cotame@correo.com | Karol Marcela Cotame | Test1234! |
-| yeimy.poveda@correo.com | Yeimy Poveda | Test1234! |
+| Python 3.10+ | Lenguaje |
+| FastAPI + Uvicorn | API y servidor web |
+| SQLAlchemy + SQLite | Base de datos (también compatible con PostgreSQL) |
+| pydantic / pydantic-settings | Validación de datos y lectura del `.env` |
+| python-jose | Sesiones con JWT |
+| passlib + bcrypt | Encriptación de contraseñas |
+| fastapi-mail | Envío de correos |
+| openpyxl | Exportación a Excel |
 
 ---
 
 ## 📝 Notas
 
-- La base de datos `mascate.db` **no** se incluye en el repositorio — se genera automáticamente al primer arranque.
-- El archivo `.env` **no** se incluye en el repositorio — cada quien debe crear el suyo antes de arrancar.
-- Si necesitas empezar desde cero, borra `mascate.db` y reinicia el servidor.
+- `mascate.db` **no** está en el repositorio: se crea al primer arranque.
+- Para empezar desde cero en local, detén el servidor, borra `mascate.db` y vuelve a arrancar.
+- Si después de actualizar ves una versión vieja de una página, recarga con **Ctrl + F5**.

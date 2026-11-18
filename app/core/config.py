@@ -15,11 +15,16 @@ class Settings(BaseSettings):
     admin_email: str = "admin@mascate.com"
     admin_password: str = "Test1234!"
 
+    # Verificación en dos pasos para el administrador (código por correo).
+    # Solo poner en false si el correo no funciona y hay que entrar de emergencia.
+    admin_2fa: bool = True
+
     # App
     app_env: str = "development"
 
     class Config:
-        env_file = ".env"
+        # .env.local (no se sube a GitHub) sobrescribe a .env: ahí van los secretos reales
+        env_file = (".env", ".env.local")
         env_file_encoding = "utf-8"
         
     # Email

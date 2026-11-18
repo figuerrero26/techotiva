@@ -14,8 +14,10 @@ bcrypt==4.0.1                # versión compatible con passlib
 # Validación
 pydantic==2.13.4
 pydantic-settings==2.9.1     # para leer .env en Settings
-python-multipart==0.0.20
 fastapi-mail==1.4.2
+
+# Exportación a Excel
+openpyxl==3.1.5
 
 # Variables de entorno
 python-dotenv==1.2.2
