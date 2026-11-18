@@ -370,7 +370,8 @@ def admin_stats(
         db.query(Prescriptor)
         .join(Usuario, Usuario.id == Prescriptor.usuario_id)
         .join(Usuario.estado_actual)
-        .filter(EstadoRegistro.estado == Estados.ACTIVO)
+        # El admin tiene un perfil interno de prescriptor para firmar sus seguimientos: no cuenta
+        .filter(EstadoRegistro.estado == Estados.ACTIVO, Usuario.rol == "prescriptor")
         .count()
     )
     total_benef = (
@@ -926,7 +927,11 @@ def exportar_todo(
 
     encabezado = PatternFill("solid", fgColor="E8A800")
     for titulo, modelo in hojas:
-        filas = db.query(modelo).order_by(modelo.id).all()
+        consulta = db.query(modelo)
+        if modelo is Prescriptor:
+            # Sin el perfil interno del admin
+            consulta = consulta.join(Usuario, Usuario.id == Prescriptor.usuario_id).filter(Usuario.rol == "prescriptor")
+        filas = consulta.order_by(modelo.id).all()
         ws = wb.create_sheet(titulo)
 
         if modelo is PrimerContacto:
