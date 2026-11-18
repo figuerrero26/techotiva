@@ -431,7 +431,7 @@ async function loadAdmin() {
 
   try {
     const alertas    = await fetch(API + '/admin/alertas', authGet()).then(r => r.json());
-    const alertPanel = document.querySelectorAll('#screen-admin .grid-2 .panel')[1];
+    const alertPanel = document.getElementById('admin-alertas-panel');
     if (alertPanel) {
       let html = '<div class="panel-head"><span class="panel-title">Alertas del sistema</span><button class="panel-action" onclick="window.location.href=\'/notificaciones\'">Ver todas →</button></div>';
       if (alertas.length) {
@@ -461,7 +461,7 @@ async function loadAdmin() {
 
   try {
     const disps = await fetch(API + '/admin/dispositivos', authGet()).then(r => r.json());
-    const tbody = document.querySelector('#screen-admin table tbody');
+    const tbody = document.getElementById('admin-disp-tbody');
     if (tbody) {
       tbody.innerHTML = disps.length
         ? disps.map(d => `<tr>
