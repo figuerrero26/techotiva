@@ -468,7 +468,7 @@ async function loadAdmin() {
             <td>${d.nombre}</td>
             <td>${d.tipo_servicio ? `<span class="tag green">${d.tipo_servicio}</span>` : '—'}</td>
             <td style="color:var(--primary);font-weight:700">${d.num_beneficiarios}</td>
-            <td>${d.prescriptor||'—'}</td>
+            <td style="font-weight:700" title="${_escHtml((d.prescriptores_activos || []).join(', ') || 'Sin prescriptores activos')}">${d.num_prescriptores ?? 0}</td>
             <td>${d.activo?'<span class="tag green">Activo</span>':'<span class="tag rust">Inactivo</span>'}</td>
             <td><button class="btn btn-sm btn-outline" onclick="window.location.href='/dispositivos-admin'">Editar</button></td>
           </tr>`).join('')

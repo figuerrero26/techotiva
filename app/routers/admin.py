@@ -715,6 +715,10 @@ def admin_listar_dispositivos(
 
         num_actividades = db.query(Actividad).filter(Actividad.dispositivo_id == d.id).count()
         presc_names = [p.nombre_completo for p in d.prescriptores] if d.prescriptores else []
+        presc_activos = [
+            p.nombre_completo for p in d.prescriptores
+            if p.usuario and p.usuario.rol == "prescriptor" and p.usuario.estado == Estados.ACTIVO
+        ]
         email_disp = d.usuario.email if d.usuario else None
         fecha_registro = d.usuario.fecha_registro if d.usuario else None
 
@@ -724,6 +728,8 @@ def admin_listar_dispositivos(
             tipo_servicio=d.tipo_servicio,
             num_beneficiarios=len(benef_ids),
             prescriptores=presc_names,
+            num_prescriptores=len(presc_activos),
+            prescriptores_activos=presc_activos,
             activo=d.usuario.estado == Estados.ACTIVO if d.usuario else False,
             email=email_disp,
             fecha_registro=fecha_registro,

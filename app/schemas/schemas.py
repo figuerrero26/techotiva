@@ -295,6 +295,8 @@ class AdminDispositivoOut(BaseModel):
     tipo_servicio: Optional[str] = None
     num_beneficiarios: int
     prescriptores: List[str] = []
+    num_prescriptores: int = 0           # prescriptores activos
+    prescriptores_activos: List[str] = []
     activo: bool
     email: Optional[str] = None
     fecha_registro: Optional[datetime] = None
