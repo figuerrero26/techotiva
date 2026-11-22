@@ -120,6 +120,45 @@ def test_rol_admin_no_se_asigna_ni_se_quita(client, login, db):
     assert r.status_code == 400
 
 
+def test_grafica_registros_cuenta_datos_reales(client, login, db):
+    """La gráfica cuenta por mes, dentro del año elegido, los beneficiarios reales de la base."""
+    from datetime import datetime, timedelta, timezone
+    from app.models.models import Usuario, Beneficiario
+    h = login(ADMIN)
+    hoy = datetime.now(timezone(timedelta(hours=-5))).date()
+    antes = client.get("/admin/indicadores/registros", headers=h).json()
+    assert antes["anio"] == hoy.year and len(antes["serie"]) == hoy.month   # año en curso: hasta el mes actual
+    assert antes["anios"][0] == hoy.year
+    # Un beneficiario nuevo hoy suma 1 en el año, en el total y en el mes actual
+    e = f"graf_{uuid.uuid4().hex[:6]}@test.com"
+    client.post("/auth/register", json={"rol": "beneficiario", "email": e, "password": "Abcdefg1",
+                                        "nombre_apodo": "QA Grafica", "politica_privacidad": True})
+    d = client.get("/admin/indicadores/registros", headers=h).json()
+    assert d["total_anio"] == antes["total_anio"] + 1 and d["total"] == antes["total"] + 1
+    assert d["serie"][-1]["cantidad"] == antes["serie"][-1]["cantidad"] + 1
+    assert d["total_anio"] == sum(s["cantidad"] for s in d["serie"])
+    # Coincide con la tarjeta "Beneficiarios" del panel
+    assert d["total"] == client.get("/admin/indicadores", headers=h).json()["total_beneficiarios"]
+    # Si se registró en junio de hace 2 años: sale en ese año (12 meses completos) y no en el actual
+    u = db.query(Usuario).filter(Usuario.email == e).first()
+    u.fecha_registro = datetime(hoy.year - 2, 6, 15, 17, 0, tzinfo=timezone.utc); db.commit()
+    viejo = client.get(f"/admin/indicadores/registros?anio={hoy.year - 2}", headers=h).json()
+    assert len(viejo["serie"]) == 12 and viejo["serie"][5]["cantidad"] >= 1
+    assert hoy.year - 2 in client.get("/admin/indicadores/registros", headers=h).json()["anios"]
+    assert client.get("/admin/indicadores/registros", headers=h).json()["total_anio"] == antes["total_anio"]
+    # Filtro por DBC: sin dispositivo asignado no aparece en el DBC 1
+    b = db.query(Beneficiario).filter(Beneficiario.usuario_id == u.id).first()
+    q = f"/admin/indicadores/registros?anio={hoy.year - 2}&dispositivo_id=1"
+    antes_d1 = client.get(q, headers=h).json()["total_anio"]
+    b.dispositivo_id = 1; db.commit()
+    assert client.get(q, headers=h).json()["total_anio"] == antes_d1 + 1
+
+
+def test_grafica_registros_anio_invalido(client, login):
+    assert client.get("/admin/indicadores/registros?anio=abc", headers=login(ADMIN)).status_code == 422
+    assert client.get("/admin/indicadores/registros?anio=1500", headers=login(ADMIN)).status_code == 422
+
+
 def test_usuario_inexistente(client, login):
     assert client.put("/admin/usuarios/999999/estado", headers=login(ADMIN), json={"status": "activo"}).status_code == 404
 

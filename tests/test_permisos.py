@@ -5,7 +5,7 @@ from conftest import ADMIN, PRESC_ANA, PRESC_FRANKIN, BENEF_LAURA, DISP_FONTIBON
 
 ENDPOINTS_ADMIN = [
     ("get", "/admin/stats"), ("get", "/admin/usuarios"), ("get", "/admin/alertas"),
-    ("get", "/admin/dispositivos"), ("get", "/admin/indicadores"), ("get", "/admin/indicadores/spa"),
+    ("get", "/admin/dispositivos"), ("get", "/admin/indicadores"), ("get", "/admin/indicadores/spa"), ("get", "/admin/indicadores/registros"),
     ("get", "/admin/exportar-todo"), ("get", "/admin/sesiones-activas"), ("get", "/admin/beneficiarios"),
 ]
 

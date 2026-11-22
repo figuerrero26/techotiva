@@ -247,6 +247,20 @@
           <div class="stat-card" id="ind-spa-card" onclick="verUsuariosSpa()" title="Personas en proceso activo con consumo de SPA. Clic para ver quiénes son." style="cursor:pointer"><div class="stat-icon rust">💊</div><div class="stat-val" id="ind-spa">—</div><div class="stat-label" id="ind-spa-lbl">Usuarios de SPA</div></div>
           <div class="stat-card"><div class="stat-icon green">🎭</div><div class="stat-val" id="ind-balance" style="font-size:1.2rem">—</div><div class="stat-label" id="ind-balance-lbl">Balance emocional</div></div>
         </div>
+        <div class="panel reg-panel">
+          <div class="panel-head reg-head">
+            <span class="panel-title">📈 Beneficiarios registrados</span>
+            <label class="reg-anio">Año
+              <select id="reg-anio"></select>
+            </label>
+          </div>
+          <p class="reg-resumen" id="reg-resumen">Cargando...</p>
+          <div class="reg-chart" id="reg-chart"></div>
+          <details class="reg-tabla">
+            <summary>Ver como tabla</summary>
+            <table><thead><tr><th>Mes</th><th>Registrados</th></tr></thead><tbody id="reg-tbody"></tbody><tfoot><tr><th id="reg-tfoot-lbl">Total</th><th id="reg-tfoot-n">0</th></tr></tfoot></table>
+          </details>
+        </div>
         <div class="ind-grid">
           <div class="panel">
             <div class="panel-head"><span class="panel-title">🎭 Bienestar emocional</span><span class="tag mustard" id="ind-emo-n">0 personas</span></div>
@@ -297,6 +311,32 @@
         .ind-caret { display:inline-block; font-size:0.7rem; color:var(--on-bg-muted); transition:transform .15s; }
         .ind-emo.open .ind-caret { transform:rotate(90deg); }
         .ind-empty { color:var(--on-bg-muted); font-size:0.82rem; padding:0.4rem 0; }
+        /* Gráfica: beneficiarios registrados */
+        .reg-panel { margin-bottom:1rem; --reg-bar:#1d9e75; }
+        .reg-head { flex-wrap:wrap; gap:0.5rem; }
+        .reg-anio { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:var(--on-bg-muted); }
+        .reg-anio select { padding:0.35rem 0.6rem; border-radius:6px; border:1px solid var(--outline-variant); background:var(--surface-low,transparent); color:var(--on-bg); }
+        .reg-tabla tfoot th { border-top:1px solid var(--outline-variant); }
+        .reg-resumen { font-size:0.82rem; color:var(--on-bg-muted); margin:0 0 0.5rem; }
+        .reg-resumen b { color:var(--on-bg); font-size:1.1rem; }
+        .reg-chart { position:relative; width:100%; min-height:220px; }
+        .reg-chart svg { display:block; width:100%; height:220px; overflow:visible; }
+        .reg-chart .eje { font-size:11px; fill:var(--on-bg-muted); }
+        .reg-chart .rejilla { stroke:var(--outline-variant); stroke-width:1; }
+        .reg-chart .base { stroke:var(--on-bg-muted); stroke-opacity:0.4; stroke-width:1; }
+        .reg-chart .linea { fill:none; stroke:var(--reg-bar); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+        .reg-chart .area { fill:var(--reg-bar); fill-opacity:0.10; }
+        .reg-chart .punto { fill:var(--reg-bar); stroke:var(--surface-low); stroke-width:2; }
+        .reg-chart .punto.activo { r:6; }
+        .reg-chart .guia { stroke:var(--on-bg-muted); stroke-opacity:0.5; stroke-width:1; stroke-dasharray:3 3; display:none; }
+        .reg-chart .valor { font-size:11px; font-weight:600; fill:var(--on-bg); }
+        .reg-chart .zona { fill:transparent; cursor:default; }
+        .reg-tip { position:absolute; pointer-events:none; background:var(--black-toast); color:#fff; font-size:0.78rem; padding:0.35rem 0.55rem; border-radius:6px; white-space:nowrap; transform:translate(-50%,-100%); margin-top:-6px; display:none; z-index:2; }
+        .reg-tip b { font-size:0.9rem; }
+        .reg-vacio { display:flex; align-items:center; justify-content:center; height:220px; color:var(--on-bg-muted); font-size:0.85rem; text-align:center; padding:0 1rem; }
+        .reg-tabla { margin-top:0.5rem; font-size:0.8rem; }
+        .reg-tabla summary { cursor:pointer; color:var(--on-bg-muted); }
+        .reg-tabla table { margin-top:0.5rem; max-width:360px; }
       </style>
 
       <h2 style="font-size:1.05rem;margin:0.5rem 0 0.75rem">⚙️ Administración del sistema</h2>
@@ -346,6 +386,6 @@
     </div>
   </div>
 </div>
-<script src="/static/js/dashboard.js?v=20261122b"></script>
+<script src="/static/js/dashboard.js?v=20261122e"></script>
 </body>
 </html>

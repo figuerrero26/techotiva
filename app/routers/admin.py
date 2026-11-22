@@ -209,6 +209,56 @@ def admin_indicadores_spa(
     return resultado
 
 
+# ── Beneficiarios registrados en el tiempo ─────────────────────────────────────
+_ZONA_CO = timezone(timedelta(hours=-5))      # Colombia no tiene horario de verano
+_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+
+@router.get("/indicadores/registros")
+def admin_indicadores_registros(
+    dispositivo_id: Optional[int] = Query(None),
+    anio: Optional[int] = Query(None, ge=2000, le=2100),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(admin_only),
+):
+    """Beneficiarios registrados por mes en un año (hora de Colombia), con el mismo
+    criterio de la tarjeta "Beneficiarios": todos los perfiles, filtrados por DBC asignado."""
+    q = db.query(Usuario.fecha_registro).join(Beneficiario, Beneficiario.usuario_id == Usuario.id)
+    if dispositivo_id:
+        q = q.filter(Beneficiario.dispositivo_id == dispositivo_id)
+    fechas = []
+    for (f,) in q.all():
+        if f is None:
+            continue
+        if f.tzinfo is None:                    # SQLite guarda la hora UTC sin zona
+            f = f.replace(tzinfo=timezone.utc)
+        fechas.append(f.astimezone(_ZONA_CO).date())
+
+    hoy = datetime.now(_ZONA_CO).date()
+    anio = anio or hoy.year
+    # Años que se pueden consultar: desde el primer registro (de todos los DBC) hasta el actual
+    primero = db.query(func.min(Usuario.fecha_registro)).join(
+        Beneficiario, Beneficiario.usuario_id == Usuario.id).scalar()
+    anio_inicial = min(primero.year, hoy.year) if primero else hoy.year
+    anios = list(range(hoy.year, anio_inicial - 1, -1))
+
+    conteo = [0] * 12
+    for f in fechas:
+        if f.year == anio:
+            conteo[f.month - 1] += 1
+    # En el año en curso, solo hasta el mes actual (los meses futuros no son "cero registros")
+    ultimo_mes = hoy.month if anio == hoy.year else (0 if anio > hoy.year else 12)
+    serie = [{"mes": i + 1, "etiqueta": _MESES[i], "cantidad": conteo[i]} for i in range(ultimo_mes)]
+
+    return {
+        "anio": anio,
+        "anios": anios,
+        "serie": serie,
+        "total_anio": sum(conteo),
+        "total": len(fechas),
+    }
+
+
 @router.get("/indicadores")
 def admin_indicadores(
     dispositivo_id: Optional[int] = Query(None),

@@ -455,9 +455,11 @@ async function loadAdmin() {
   const dbcSel = document.getElementById('ind-dbc');
   if (dbcSel && !dbcSel.dataset.bound) {
     dbcSel.dataset.bound = '1';
-    dbcSel.addEventListener('change', () => loadIndicadores(dbcSel.value));
+    dbcSel.addEventListener('change', () => { loadIndicadores(dbcSel.value); loadRegistros(); });
+    initRegistros();
   }
   loadIndicadores(dbcSel?.value || '');
+  loadRegistros();
 
   try {
     const stats = await fetch(API + '/admin/stats', authGet()).then(r => r.json());
@@ -647,6 +649,139 @@ async function loadIndicadores(dispositivoId) {
   setHTML(document.getElementById('ind-categorias'),
     _indBars(d.categorias, base) +
     `<div class="ind-empty" style="font-size:0.75rem">Personas con al menos una situación de cada categoría (según su último primer contacto).</div>`);
+}
+
+// ── Gráfica: beneficiarios registrados por mes (datos reales de /admin/indicadores/registros) ──
+let _regDatos = null;
+
+async function loadRegistros() {
+  const dbc = document.getElementById('ind-dbc')?.value || '';
+  const anio = document.getElementById('reg-anio')?.value || '';
+  const params = new URLSearchParams();
+  if (anio) params.set('anio', anio);
+  if (dbc) params.set('dispositivo_id', dbc);
+  const resumen = document.getElementById('reg-resumen');
+  try {
+    const res = await fetch(API + '/admin/indicadores/registros?' + params, authGet());
+    if (!res.ok) throw new Error(res.status);
+    _regDatos = await res.json();
+  } catch (e) {
+    console.error(e);
+    if (resumen) resumen.textContent = 'No se pudo cargar la información.';
+    return;
+  }
+  pintarRegistros();
+}
+
+function pintarRegistros() {
+  const d = _regDatos;
+  const cont = document.getElementById('reg-chart');
+  if (!d || !cont) return;
+  // Selector de años según lo que hay en la base (se conserva el elegido)
+  const selAnio = document.getElementById('reg-anio');
+  if (selAnio) {
+    const actual = String(d.anio);
+    selAnio.innerHTML = d.anios.map(a => `<option value="${a}">${a}</option>`).join('');
+    selAnio.value = actual;
+  }
+  const dbcSel = document.getElementById('ind-dbc');
+  const nombreDbc = dbcSel?.value ? dbcSel.options[dbcSel.selectedIndex].text : 'todos los DBC';
+  const n = d.total_anio;
+  document.getElementById('reg-resumen').innerHTML =
+    `<b>${n}</b> beneficiario${n === 1 ? '' : 's'} registrado${n === 1 ? '' : 's'} en ${d.anio} · ` +
+    `${_escHtml(nombreDbc)} · ${d.total} en total`;
+
+  // Tabla del año elegido: un renglón por mes y el total
+  document.getElementById('reg-tbody').innerHTML = d.serie.map(s =>
+    `<tr><td>${_escHtml(s.etiqueta)}</td><td>${s.cantidad}</td></tr>`).join('');
+  document.getElementById('reg-tfoot-lbl').textContent = 'Total ' + d.anio;
+  document.getElementById('reg-tfoot-n').textContent = n;
+
+  if (!n) {
+    cont.innerHTML = `<div class="reg-vacio">No hubo registros de beneficiarios en ${d.anio}.</div>`;
+    return;
+  }
+
+  // Geometría
+  const W = Math.max(cont.clientWidth, 280), H = 220;
+  const m = { top: 20, right: 14, bottom: 24, left: 30 };
+  const iw = W - m.left - m.right, ih = H - m.top - m.bottom;
+  const serie = d.serie;
+  const max = Math.max(...serie.map(s => s.cantidad));
+  const paso = Math.max(1, Math.ceil(max / 4));
+  const tope = paso * Math.ceil(max / paso);
+  const y = v => m.top + ih - (v / tope) * ih;
+  const x = i => serie.length === 1 ? m.left + iw / 2 : m.left + (iw * i) / (serie.length - 1);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beneficiarios registrados por mes">`;
+  for (let v = 0; v <= tope; v += paso) {
+    const yy = y(v);
+    svg += `<line class="${v === 0 ? 'base' : 'rejilla'}" x1="${m.left}" x2="${W - m.right}" y1="${yy}" y2="${yy}"/>`;
+    svg += `<text class="eje" x="${m.left - 6}" y="${yy + 4}" text-anchor="end">${v}</text>`;
+  }
+  const puntos = serie.map((s, i) => [x(i), y(s.cantidad)]);
+  const trazo = puntos.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  if (serie.length > 1) {
+    svg += `<path class="area" d="${trazo} L${puntos[puntos.length - 1][0].toFixed(1)},${y(0)} L${puntos[0][0].toFixed(1)},${y(0)} Z"/>`;
+    svg += `<path class="linea" d="${trazo}"/>`;
+  }
+  svg += `<line class="guia" id="reg-guia" x1="0" x2="0" y1="${m.top}" y2="${y(0)}"/>`;
+
+  // Rótulos directos solo en el máximo y en el mes actual (nunca en todos los puntos)
+  const iMax = serie.findIndex(s => s.cantidad === max);
+  const iUlt = serie.length - 1;
+  // Etiquetas del eje X contadas desde el final: el mes actual siempre lleva etiqueta
+  const cada = Math.max(1, Math.ceil(serie.length / Math.max(1, Math.floor(iw / 70))));
+  serie.forEach((s, i) => {
+    const [px, py] = puntos[i];
+    svg += `<circle class="punto" data-i="${i}" cx="${px}" cy="${py}" r="4"/>`;
+    if (i === iMax || i === iUlt) {
+      svg += `<text class="valor" x="${px}" y="${py - 9}" text-anchor="middle">${s.cantidad}</text>`;
+    }
+    if ((iUlt - i) % cada === 0) {
+      svg += `<text class="eje" x="${px}" y="${H - 6}" text-anchor="middle">${_escHtml(s.etiqueta)}</text>`;
+    }
+  });
+  // Zonas de hover: cada mes ocupa la mitad del espacio hacia sus vecinos
+  serie.forEach((s, i) => {
+    const izq = i === 0 ? m.left : (x(i - 1) + x(i)) / 2;
+    const der = i === iUlt ? W - m.right : (x(i) + x(i + 1)) / 2;
+    svg += `<rect class="zona" data-i="${i}" x="${izq}" y="${m.top}" width="${Math.max(1, der - izq)}" height="${ih}"/>`;
+  });
+  svg += '</svg><div class="reg-tip" id="reg-tip"></div>';
+  cont.innerHTML = svg;
+
+  // Guía vertical + tooltip al pasar el mouse (o tocar) sobre un mes
+  const tip = document.getElementById('reg-tip');
+  const guia = document.getElementById('reg-guia');
+  const ocultar = () => {
+    tip.style.display = 'none';
+    guia.style.display = 'none';
+    cont.querySelectorAll('.punto.activo').forEach(o => o.classList.remove('activo'));
+  };
+  cont.querySelectorAll('.zona').forEach(z => {
+    const mostrar = () => {
+      const i = +z.dataset.i, s = serie[i];
+      const [px, py] = puntos[i];
+      cont.querySelectorAll('.punto.activo').forEach(o => o.classList.remove('activo'));
+      cont.querySelector(`.punto[data-i="${i}"]`)?.classList.add('activo');
+      guia.setAttribute('x1', px); guia.setAttribute('x2', px); guia.style.display = 'block';
+      const escala = cont.clientWidth / W;
+      tip.innerHTML = `${_escHtml(s.etiqueta)} ${d.anio}<br><b>${s.cantidad}</b> registrado${s.cantidad === 1 ? '' : 's'}`;
+      tip.style.left = Math.min(Math.max(px * escala, 60), cont.clientWidth - 60) + 'px';
+      tip.style.top = (py * escala) + 'px';
+      tip.style.display = 'block';
+    };
+    z.addEventListener('mouseenter', mostrar);
+    z.addEventListener('touchstart', mostrar, { passive: true });
+  });
+  cont.querySelector('svg').addEventListener('mouseleave', ocultar);
+}
+
+function initRegistros() {
+  document.getElementById('reg-anio')?.addEventListener('change', loadRegistros);
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(pintarRegistros, 150); });
 }
 
 // ── Lista de personas con consumo de SPA (clic en la tarjeta o en una barra) ──
