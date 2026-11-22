@@ -22,7 +22,7 @@ from database import get_db
 from app.core.security import hash_password
 from app.models.models import (
     Usuario, Estados, EstadoRegistro, Dispositivo, Prescriptor, Beneficiario, Actividad,
-    Seguimiento, PrimerContacto,
+    Seguimiento, PrimerContacto, Inscripcion,
 )
 from app.schemas.schemas import (
     AdminStats, UsuarioAdmin, CambiarEstado, AlertaOut,
@@ -474,6 +474,100 @@ def cambiar_estado_usuario(
 
 
 # ────────────────────────── CAMBIAR ROL ──────────────────────────
+_MODELO_POR_ROL = {"beneficiario": Beneficiario, "prescriptor": Prescriptor, "dispositivo": Dispositivo}
+
+
+def _exigir_sin_avances(db: Session, user: Usuario) -> None:
+    """Bloquea el cambio de rol si la cuenta ya tiene trabajo registrado en su rol actual."""
+    motivos = []
+    if user.rol == "beneficiario":
+        b = db.query(Beneficiario).filter(Beneficiario.usuario_id == user.id).first()
+        if b:
+            if db.query(PrimerContacto).filter(PrimerContacto.beneficiario_id == b.id).first():
+                motivos.append("hoja de primer contacto")
+            if db.query(Seguimiento).filter(Seguimiento.beneficiario_id == b.id).first():
+                motivos.append("seguimientos")
+        quien = "este beneficiario"
+    elif user.rol == "prescriptor":
+        p = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+        if p:
+            if db.query(Seguimiento).filter(Seguimiento.prescriptor_id == p.id).first():
+                motivos.append("seguimientos")
+            if db.query(PrimerContacto).filter(PrimerContacto.prescriptor_id == p.id).first():
+                motivos.append("hojas de primer contacto")
+            if db.query(Beneficiario).filter(Beneficiario.prescriptor_id == p.id).first():
+                motivos.append("beneficiarios asignados")
+        quien = "este prescriptor"
+    elif user.rol == "dispositivo":
+        d = db.query(Dispositivo).filter(Dispositivo.usuario_id == user.id).first()
+        if d:
+            if db.query(Prescriptor).filter(Prescriptor.dispositivo_id == d.id).first():
+                motivos.append("prescriptores")
+            if db.query(Beneficiario).filter(Beneficiario.dispositivo_id == d.id).first():
+                motivos.append("beneficiarios")
+            if db.query(Actividad).filter(Actividad.dispositivo_id == d.id).first():
+                motivos.append("actividades")
+            if db.query(PrimerContacto).filter(PrimerContacto.dispositivo_id == d.id).first():
+                motivos.append("hojas de primer contacto")
+        quien = "este dispositivo"
+    else:
+        return
+    if motivos:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se puede cambiar el rol: {quien} ya tiene " + ", ".join(motivos) + " registrados.",
+        )
+
+
+def _retirar_perfil(db: Session, user: Usuario, rol: str) -> None:
+    """Borra el perfil (sin avances) del rol que la cuenta deja."""
+    modelo = _MODELO_POR_ROL.get(rol)
+    if modelo is None:
+        return
+    perfil = db.query(modelo).filter(modelo.usuario_id == user.id).first()
+    if not perfil:
+        return
+    if rol == "beneficiario":
+        db.query(Inscripcion).filter(Inscripcion.beneficiario_id == perfil.id).delete(synchronize_session="fetch")
+    perfil.estado_actual_id = None
+    db.flush()
+    db.query(EstadoRegistro).filter(
+        EstadoRegistro.entidad_tipo.in_([modelo.__tablename__, rol]),
+        EstadoRegistro.entidad_id == perfil.id,
+    ).delete(synchronize_session="fetch")
+    db.delete(perfil)
+    db.flush()
+
+
+def _asegurar_perfil(db: Session, user: Usuario, rol: str, admin_id: int) -> None:
+    """Crea el perfil del rol nuevo si no existe, copiando nombre, teléfono y dispositivo."""
+    modelo = _MODELO_POR_ROL.get(rol)
+    if modelo is None or db.query(modelo).filter(modelo.usuario_id == user.id).first():
+        return
+    benef = db.query(Beneficiario).filter(Beneficiario.usuario_id == user.id).first()
+    presc = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+    disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == user.id).first()
+    nombre = ((benef and benef.nombre_apodo) or (presc and presc.nombre_completo)
+              or (disp and disp.nombre) or user.email.split("@")[0])
+    telefono = (benef and benef.telefono) or (presc and presc.telefono) or (disp and disp.telefono)
+
+    if rol == "prescriptor":
+        perfil = Prescriptor(usuario_id=user.id, nombre_completo=nombre, telefono=telefono,
+                             dispositivo_id=benef.dispositivo_id if benef else None)
+    elif rol == "dispositivo":
+        perfil = Dispositivo(usuario_id=user.id, nombre=nombre, telefono=telefono)
+    else:
+        perfil = Beneficiario(usuario_id=user.id, nombre_apodo=nombre, telefono=telefono,
+                              dispositivo_id=presc.dispositivo_id if presc else None)
+    db.add(perfil)
+    db.flush()
+    est = EstadoRegistro(entidad_tipo=modelo.__tablename__, entidad_id=perfil.id, estado=Estados.ACTIVO,
+                         cambiado_por=admin_id, motivo=f"Perfil creado al cambiar el rol a {rol}")
+    db.add(est)
+    db.flush()
+    perfil.estado_actual_id = est.id
+
+
 @router.put("/usuarios/{usuario_id}/rol", response_model=UsuarioAdmin)
 def cambiar_rol_usuario(
     usuario_id: int,
@@ -487,16 +581,20 @@ def cambiar_rol_usuario(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol")
 
-    # El rol debe corresponder a un perfil existente; si no, la cuenta quedaría inservible
-    perfiles = {
-        "beneficiario": Beneficiario, "prescriptor": Prescriptor, "dispositivo": Dispositivo,
-    }
-    modelo = perfiles.get(data.rol)
-    if modelo is not None and not db.query(modelo).filter(modelo.usuario_id == user.id).first():
+    # El administrador no se asigna ni se quita desde aquí (da acceso total a la plataforma)
+    if data.rol != user.rol and (data.rol == "admin" or user.rol == "admin"):
         raise HTTPException(
             status_code=400,
-            detail=f"Esta cuenta no tiene perfil de {data.rol}; no se le puede asignar ese rol",
+            detail="El rol de administrador no se puede asignar ni quitar desde la plataforma.",
         )
+
+    if data.rol != user.rol:
+        # Solo cambia de rol una cuenta sin avances registrados en su rol actual
+        _exigir_sin_avances(db, user)
+        # Crea el perfil del rol nuevo con los datos que ya tiene (nombre, teléfono, dispositivo)
+        _asegurar_perfil(db, user, data.rol, current_user.id)
+        # Retira el perfil anterior (vacío) para que no siga contando en su rol viejo
+        _retirar_perfil(db, user, user.rol)
 
     rol_anterior = user.rol
     user.rol = data.rol

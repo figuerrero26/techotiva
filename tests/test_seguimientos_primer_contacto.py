@@ -148,3 +148,10 @@ def test_eliminar_prescriptor_sin_historial_si_se_permite(client, login, db):
 
 def test_admin_eliminar_dispositivo_con_beneficiarios_rechazado(client, login, db):
     assert client.delete(f"/admin/dispositivos/{_disp_id(db, DISP_ENGATIVA)}", headers=login(ADMIN)).status_code == 409
+
+
+def test_hoja_de_primer_contacto_no_se_puede_borrar(client, login, db):
+    """La opción de borrar hojas se retiró de todos los perfiles; tampoco existe por API."""
+    h = login(PRESC_FRANKIN); pc = _crear_benef_pc(client, h, _disp_id(db, DISP_FONTIBON))
+    assert client.delete(f"/primer-contacto/{pc['id']}", headers=h).status_code == 405
+    assert client.get(f"/primer-contacto/{pc['id']}", headers=h).status_code == 200

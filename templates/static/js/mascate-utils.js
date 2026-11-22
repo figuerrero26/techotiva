@@ -193,33 +193,6 @@ function renderActCards(containerId, acts, max = 3) {
 }
 
 /**
- * Renderiza filas de tabla de actividades.
- * @param {string} tbodyId
- * @param {Array}  acts
- */
-function renderActTabla(tbodyId, acts) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  if (!acts?.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--on-bg-muted)">Sin actividades.</td></tr>';
-    return;
-  }
-  const mostrarDisp = MASCATE.rol === 'prescriptor' || MASCATE.rol === 'admin';
-  tbody.innerHTML = acts.map(a => {
-    const color = TAG_COLOR[a.tipo] ?? 'mustard';
-    return `<tr>
-      <td>${a.emoji || '📅'} ${campo(a.nombre)}</td>
-      <td><span class="tag ${color}">${campo(a.tipo)}</span></td>
-      ${mostrarDisp ? `<td style="font-size:0.82rem;color:var(--on-bg-muted)">${campo(a.dispositivo_nombre)}</td>` : ''}
-      <td>${campo(a.lugar)}</td>
-      <td>${a.fecha_inicio ? new Date(a.fecha_inicio+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : campo(a.dia_semana)}</td>
-      <td>${campo(a.hora)}</td>
-      ${a.cupo_maximo != null ? `<td>${a.cupo_maximo}</td>` : ''}
-    </tr>`;
-  }).join('');
-}
-
-/**
  * Renderiza panel de información personal con infoRow condicional.
  * Muestra solo los campos que el back efectivamente manda.
  * Cuando el back agregue campos nuevos, aparecen solos.
@@ -234,7 +207,6 @@ function renderInfoGrid(gridId, data, userRol, viewerRol) {
   if (!grid) return;
 
   // Campos visibles según quién mira a quién
-  const esUnoMismo  = viewerRol === userRol || viewerRol === 'admin';
   const puedeVerEmail = viewerRol === 'admin' || viewerRol === userRol;
 
   let html = '';

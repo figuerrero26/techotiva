@@ -483,26 +483,3 @@ def actualizar_primer_contacto(
     db.commit()
     db.refresh(pc)
     return _to_out(pc, benef)
-
-
-# ── DELETE ────────────────────────────────────────────────────────────────────
-@router.delete("/{pc_id}", status_code=204)
-def eliminar_primer_contacto(
-    pc_id: int,
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user),
-):
-    if current_user.rol not in ("prescriptor", "dispositivo", "admin"):
-        raise HTTPException(status_code=403, detail="Sin permiso")
-
-    pc = db.query(PrimerContacto).filter(PrimerContacto.id == pc_id).first()
-    if not pc:
-        raise HTTPException(status_code=404, detail="Registro no encontrado")
-
-    if current_user.rol != "admin":
-        presc = _get_prescriptor_opt(db, current_user)
-        if not presc or pc.prescriptor_id != presc.id:
-            raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este registro")
-
-    db.delete(pc)
-    db.commit()

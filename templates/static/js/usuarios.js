@@ -386,7 +386,7 @@ async function abrirModal(id) {
 
   // Ocultar campo rol si el usuario logueado es dispositivo O si el usuario editado es dispositivo
   const rolWrap = document.getElementById('modal-rol-wrap');
-  if (rolWrap) rolWrap.style.display = (MASCATE.rol === 'dispositivo' || u.rol === 'dispositivo') ? 'none' : '';
+  if (rolWrap) rolWrap.style.display = (MASCATE.rol === 'dispositivo' || u.rol === 'dispositivo' || u.rol === 'admin') ? 'none' : '';
   const btnEliminar = document.getElementById('modal-btn-eliminar');
   if (btnEliminar) btnEliminar.style.display = MASCATE.rol === 'dispositivo' ? 'none' : '';
 

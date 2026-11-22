@@ -40,14 +40,83 @@ def test_admin_no_se_elimina_a_si_mismo(client, login, db):
     assert client.delete(f"/admin/usuarios/{adm.id}", headers=login(ADMIN)).status_code == 400
 
 
-def test_cambio_de_rol_sin_perfil_rechazado(client, login, db):
-    """Cambiar un beneficiario a 'dispositivo' lo dejaría sin perfil de dispositivo: no debe permitirse."""
-    from app.models.models import Usuario
+def test_cambio_de_rol_crea_el_perfil(client, login, db):
+    """Al pasar un beneficiario a prescriptor se crea su perfil con su nombre y su dispositivo."""
+    from app.models.models import Usuario, Prescriptor, Beneficiario
     e = f"rol_{uuid.uuid4().hex[:6]}@test.com"
     client.post("/auth/register", json={"rol": "beneficiario", "email": e, "password": "Abcdefg1",
                                         "nombre_apodo": "QA Rol", "politica_privacidad": True})
     u = db.query(Usuario).filter(Usuario.email == e).first()
-    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "dispositivo"})
+    b = db.query(Beneficiario).filter(Beneficiario.usuario_id == u.id).first(); b.dispositivo_id = 1; db.commit()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "prescriptor"})
+    assert r.status_code == 200 and r.json()["rol"] == "prescriptor"
+    db.expire_all()
+    p = db.query(Prescriptor).filter(Prescriptor.usuario_id == u.id).first()
+    assert p and p.nombre_completo == "QA Rol" and p.dispositivo_id == 1 and p.estado == "activo"
+    # sin proceso, su perfil de beneficiario se retira (ya no cuenta como beneficiario)
+    assert db.query(Beneficiario).filter(Beneficiario.usuario_id == u.id).first() is None
+
+
+def test_beneficiario_con_proceso_no_cambia_de_rol(client, login, db):
+    """Si ya tiene hoja de primer contacto o seguimientos, no puede pasar a otro rol."""
+    from app.models.models import Usuario, Beneficiario
+    e = f"rol_{uuid.uuid4().hex[:6]}@test.com"
+    r = client.post("/primer-contacto/sin-cuenta", headers=login(ADMIN),
+                    json={"dispositivo_id": 1, "nombre_apodo": "QA Proceso", "politica_privacidad": "Sí", "email": e})
+    assert r.status_code == 201, r.text
+    u = db.query(Usuario).filter(Usuario.email == e).first()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "prescriptor"})
+    assert r.status_code == 400 and "primer contacto" in r.json()["detail"]
+    db.expire_all()
+    assert db.query(Usuario).get(u.id).rol == "beneficiario"
+    assert db.query(Beneficiario).filter(Beneficiario.usuario_id == u.id).first() is not None
+
+
+def test_prescriptor_con_avances_no_cambia_de_rol(client, login, db):
+    from app.models.models import Usuario
+    from conftest import PRESC_FRANKIN
+    h = login(PRESC_FRANKIN)
+    r = client.post("/primer-contacto/sin-cuenta", headers=h,
+                    json={"dispositivo_id": 1, "nombre_apodo": "QA Avance", "politica_privacidad": "Sí"})
+    assert r.status_code == 201, r.text
+    u = db.query(Usuario).filter(Usuario.email == PRESC_FRANKIN).first()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "beneficiario"})
+    assert r.status_code == 400 and "prescriptor" in r.json()["detail"]
+
+
+def test_dispositivo_con_datos_no_cambia_de_rol(client, login, db):
+    from app.models.models import Usuario
+    from conftest import DISP_ENGATIVA
+    u = db.query(Usuario).filter(Usuario.email == DISP_ENGATIVA).first()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "prescriptor"})
+    assert r.status_code == 400 and "dispositivo" in r.json()["detail"]
+
+
+def test_prescriptor_sin_avances_si_cambia_de_rol(client, login, db):
+    from app.models.models import Usuario, Prescriptor, Beneficiario
+    e = f"presc_{uuid.uuid4().hex[:6]}@test.com"
+    client.post("/auth/register", json={"rol": "prescriptor", "email": e, "password": "Abcdefg1",
+                                        "nombre_completo": "Presc Nuevo", "dispositivo_id": 1})
+    u = db.query(Usuario).filter(Usuario.email == e).first()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "beneficiario"})
+    assert r.status_code == 200
+    db.expire_all()
+    assert db.query(Prescriptor).filter(Prescriptor.usuario_id == u.id).first() is None
+    b = db.query(Beneficiario).filter(Beneficiario.usuario_id == u.id).first()
+    assert b and b.nombre_apodo == "Presc Nuevo" and b.dispositivo_id == 1
+
+
+def test_rol_admin_no_se_asigna_ni_se_quita(client, login, db):
+    from app.models.models import Usuario
+    e = f"rol_{uuid.uuid4().hex[:6]}@test.com"
+    client.post("/auth/register", json={"rol": "beneficiario", "email": e, "password": "Abcdefg1",
+                                        "nombre_apodo": "QA Admin", "politica_privacidad": True})
+    u = db.query(Usuario).filter(Usuario.email == e).first()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "admin"})
+    assert r.status_code == 400 and "administrador" in r.json()["detail"]
+    # un segundo admin (creado a mano) tampoco pierde el rol desde la plataforma
+    u.rol = "admin"; db.commit()
+    r = client.put(f"/admin/usuarios/{u.id}/rol", headers=login(ADMIN), json={"rol": "beneficiario"})
     assert r.status_code == 400
 
 

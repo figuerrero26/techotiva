@@ -72,13 +72,12 @@ function renderTabla(lista) {
       <td><span class="tag ${stColor}">${u.status}</span></td>
       <td style="font-size:0.82rem">${fecha}</td>
       <td>
-        <select onchange="cambiarRolDirecto(${u.id}, this.value, this)"
+        ${u.rol === 'admin' ? '<span style="font-size:0.78rem;color:var(--on-bg-muted)">No editable</span>' : `<select onchange="cambiarRolDirecto(${u.id}, this.value, this)"
                 style="font-size:0.78rem;padding:0.2rem 0.4rem">
           <option value="beneficiario" ${u.rol==='beneficiario'?'selected':''}>Beneficiarix</option>
           <option value="prescriptor"  ${u.rol==='prescriptor' ?'selected':''}>Prescriptxr</option>
           <option value="dispositivo"  ${u.rol==='dispositivo' ?'selected':''}>Dispositivo</option>
-          <option value="admin"        ${u.rol==='admin'       ?'selected':''}>Admin</option>
-        </select>
+        </select>`}
       </td>
     </tr>`;
   }).join('');
