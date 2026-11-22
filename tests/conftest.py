@@ -120,3 +120,14 @@ def login(client):
         cache[email] = h
         return h
     return _login
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Al terminar, borra la base temporal de las pruebas (no deja basura)."""
+    import shutil
+    try:
+        from database import engine
+        engine.dispose()
+    except Exception:
+        pass
+    shutil.rmtree(_TMP, ignore_errors=True)
