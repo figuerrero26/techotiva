@@ -463,3 +463,90 @@ tr:hover td { background: var(--surface-mid); }
   height: 40px;
   background: var(--black-bar);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE — solo aplica en pantallas pequeñas; el escritorio no cambia
+   ══════════════════════════════════════════════════════════════════════ */
+.menu-movil-btn, .menu-movil-fondo { display: none; }
+
+/* Tableta: tarjetas de 4 columnas pasan a 2 */
+@media (max-width: 900px) {
+  .cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Celular y tableta vertical */
+@media (max-width: 768px) {
+  /* La página se desplaza completa (no por paneles internos) */
+  .screen.active { display: block; height: auto; min-height: 100vh; overflow: visible; }
+  .main { overflow: visible; min-width: 0; }
+  .content { overflow: visible; padding: 1rem 0.85rem 1.5rem; gap: 1rem; }
+
+  /* Menú lateral plegable */
+  .sidebar {
+    position: fixed; top: 40px; left: 0; bottom: 0; z-index: 300;
+    width: 264px; max-width: 84vw; height: auto;
+    transform: translateX(-105%); transition: transform 0.22s ease;
+    box-shadow: 4px 0 24px var(--shadow-surface-lg);
+  }
+  .screen.menu-abierto .sidebar { transform: none; }
+  .menu-movil-fondo {
+    position: fixed; inset: 40px 0 0 0; z-index: 290;
+    background: rgba(20, 12, 40, 0.45);
+  }
+  .screen.menu-abierto .menu-movil-fondo { display: block; }
+  .menu-movil-btn {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--outline-variant); background: var(--surface-mid);
+    color: var(--on-bg); font-size: 1.15rem; cursor: pointer;
+  }
+
+  /* Barra superior fija al desplazar */
+  .topbar {
+    position: sticky; top: 40px; z-index: 150;
+    height: auto; min-height: 56px; padding: 0.5rem 0.75rem;
+    justify-content: flex-start; gap: 0.6rem; flex-wrap: wrap;
+  }
+  .topbar-title { font-size: 0.95rem; flex: 1 1 0; min-width: 0; }
+  .topbar-right { margin-left: auto; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* Encabezados y tarjetas */
+  .page-header h1 { font-size: 1.3rem; }
+  .cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols-3 > :last-child:nth-child(odd) { grid-column: span 2; }
+  .stat-card { padding: 0.9rem 1rem; }
+  .stat-val { font-size: 1.6rem; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .panel.span-2 { grid-column: auto; }
+  .panel { padding: 1rem; min-width: 0; }
+  .panel-head { flex-wrap: wrap; gap: 0.5rem; }
+  .donut-wrap { flex-wrap: wrap; justify-content: center; }
+  .act-card { flex: 1 1 100%; }
+  .frow { flex-wrap: wrap; }
+  /* Listas en dos columnas definidas en la propia página */
+  #presc-asignados-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .list-row { min-width: 0; }
+  .list-row .tag { flex-shrink: 0; }
+
+  /* Formularios y medios nunca más anchos que la pantalla */
+  .content input, .content select, .content textarea { max-width: 100%; }
+  .content img, .content video, .content iframe { max-width: 100%; }
+
+}
+
+/* Tablas en tabletas y celulares: se desplazan de lado dentro de su tarjeta */
+@media (max-width: 1024px) {
+  .tabla-movil { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabla-movil > table { min-width: 100%; }
+  table.tabla-ancha { min-width: 600px; }
+  .tabla-movil th, table.tabla-ancha th { white-space: nowrap; }
+  /* Celdas de acciones: los botones en una sola línea */
+  table.tabla-ancha td:has(> .btn, > button, > div > .btn) { white-space: nowrap; flex-wrap: nowrap !important; }
+}
+
+/* Celular angosto */
+@media (max-width: 420px) {
+  .stat-card { padding: 0.8rem 0.85rem; }
+  .stat-val { font-size: 1.45rem; }
+  .stats-row { gap: 0.65rem; }
+}
