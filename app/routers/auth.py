@@ -11,6 +11,7 @@ import secrets
 
 from app.services.email_service import (
     generar_token, enviar_correo_verificacion, enviar_correo_recuperacion, enviar_codigo_2fa,
+    notificar_nuevo_registro,
 )
 from app.core.config import settings
 from database import get_db
@@ -25,16 +26,34 @@ from app.schemas.schemas import CambiarPasswordRequest
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 
+def _token_para(usuario: Usuario) -> str:
+    """Token de sesión; lleva la versión de sesión vigente del usuario."""
+    return create_access_token({"sub": str(usuario.id), "rol": usuario.rol, "sv": usuario.sesion_version or 0})
+
+
+def _cerrar_sesiones(usuario: Usuario) -> None:
+    """Invalida todos los tokens emitidos hasta ahora para este usuario."""
+    usuario.sesion_version = (usuario.sesion_version or 0) + 1
+
+
 # ─── Schemas locales ──────────────────────────────────────────────────────────
+def _minusculas(v):
+    return v.strip().lower() if isinstance(v, str) else v
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    _email_min = field_validator("email", mode="before")(_minusculas)
 
 
 class RegisterRequest(BaseModel):
     rol: str
     email: EmailStr
     password: str
+
+    _email_min = field_validator("email", mode="before")(_minusculas)
 
     # Dispositivo CBC
     nombre: Optional[str] = None
@@ -129,7 +148,7 @@ def _limpiar_2fa(usuario: Usuario) -> None:
 
 def _respuesta_sesion(db: Session, usuario: Usuario) -> dict:
     return {
-        "access_token": create_access_token({"sub": str(usuario.id), "rol": usuario.rol}),
+        "access_token": _token_para(usuario),
         "token_type": "bearer",
         "rol": usuario.rol,
         "nombre": _get_nombre(db, usuario),
@@ -418,6 +437,14 @@ def register(data: RegisterRequest, background_tasks: BackgroundTasks, db: Sessi
     else:
         db.commit()
 
+    # Aviso a quien debe revisar el registro (dispositivo y/o admin)
+    nombre_registro = data.nombre_completo if data.rol == "prescriptor" else (
+        data.nombre if data.rol == "dispositivo" else data.nombre_apodo)
+    notificar_nuevo_registro(
+        background_tasks, db, usuario, nombre_registro,
+        dispositivo=disp if data.rol == "prescriptor" else None,
+    )
+
     return {
         "message": mensaje,
         "user_id": usuario.id,
@@ -442,6 +469,8 @@ def verificar_email(token: str, db: Session = Depends(get_db)):
 # ─── Recuperar contraseña ────────────────────────────────────────────────────
 class RecuperarPasswordRequest(BaseModel):
     email: EmailStr
+
+    _email_min = field_validator("email", mode="before")(_minusculas)
 
 
 @router.post("/recuperar-password", summary="Solicitar recuperación de contraseña")
@@ -505,6 +534,7 @@ def resetear_password(
         if expiry < datetime.now(timezone.utc):
             raise HTTPException(400, detail="El enlace ha expirado. Solicita uno nuevo desde el formulario de inicio de sesión.")
     usuario.password_hash = hash_password(nueva)
+    _cerrar_sesiones(usuario)   # cierra las sesiones abiertas
     usuario.password_reset_token = None
     usuario.password_reset_token_expiry = None
     usuario.email_verificado = True
@@ -531,9 +561,11 @@ def cambiar_password(
         )
 
     current_user.password_hash = hash_password(data.password_nueva)
+    _cerrar_sesiones(current_user)   # cierra las demás sesiones
     db.commit()
 
-    return {"mensaje": "Contraseña actualizada correctamente"}
+    nuevo = _token_para(current_user)
+    return {"mensaje": "Contraseña actualizada correctamente", "access_token": nuevo}
 
 
 # ── Sesiones activas ──────────────────────────────────────────────────────────
@@ -550,5 +582,6 @@ def logout(
 ):
     """Marca al usuario como desconectado (el token lo borra el navegador)."""
     current_user.ultima_actividad = None
+    _cerrar_sesiones(current_user)
     db.commit()
     return {"ok": True}

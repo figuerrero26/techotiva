@@ -3,8 +3,8 @@ Schemas Pydantic para request / response de la API MASCATE.
 """
 
 from datetime import datetime, date
-from typing import Optional, List, Literal
-from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Literal, Annotated
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 
 # ════════════════════ AUTH ════════════════════
@@ -141,7 +141,7 @@ class ActividadCreate(BaseModel):
     emoji: Optional[str] = "📋"
     dispositivo_id: Optional[int] = None
     descripcion: Optional[str] = None
-    cupo_maximo: Optional[int] = None
+    cupo_maximo: Optional[int] = Field(default=None, ge=1)
     fecha_inicio: Optional[date] = None
 
 
@@ -154,7 +154,7 @@ class ActividadUpdate(BaseModel):
     emoji: Optional[str] = None
     activa: Optional[bool] = None
     descripcion: Optional[str] = None
-    cupo_maximo: Optional[int] = None
+    cupo_maximo: Optional[int] = Field(default=None, ge=1)
     fecha_inicio: Optional[date] = None
 
 
@@ -192,7 +192,7 @@ class AsignadoOut(BaseModel):
 
 class SeguimientoCreate(BaseModel):
     beneficiario_id: int
-    tipo_registro: str
+    tipo_registro: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     observaciones: Optional[str] = None
 
 

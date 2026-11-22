@@ -126,6 +126,7 @@ def run_migrations():
         ("usuarios",        "dosfa_enviado",            "DATETIME"),
         ("usuarios",        "dosfa_intentos",           "INTEGER DEFAULT 0"),
         ("usuarios",        "dosfa_activo",             "BOOLEAN DEFAULT 1"),
+        ("usuarios",        "sesion_version",           "INTEGER DEFAULT 0"),
         # PrimerContacto — campos alineados con formulario malspa
         ("primer_contacto", "tipo_contacto",            "VARCHAR(60)"),
         ("primer_contacto", "lugar_contacto",           "VARCHAR(100)"),
@@ -161,4 +162,11 @@ def run_migrations():
                     """))
             except Exception:
                 pass
+        try:
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_inscripcion_benef_actividad "
+                "ON inscripciones (beneficiario_id, actividad_id)"
+            ))
+        except Exception as e:   # p. ej. si ya hubiera duplicados en una base antigua
+            print(f"[migraciones] No se creó el índice único de inscripciones: {e}")
         conn.commit()

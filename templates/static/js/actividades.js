@@ -41,10 +41,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     const tipos   = new Set(acts.map(a => a.tipo)).size;
-    const lugares = new Set(acts.map(a => a.lugar)).size;
-    set('stat-total',   acts.length);
-    set('stat-tipos',   tipos);
-    set('stat-lugares', lugares);
+    // Vigente: activa y con fecha de inicio de hoy en adelante (el servidor marca las pasadas como no activas)
+    const vigentes = acts.filter(a => a.activa !== false).length;
+    set('stat-total',    acts.length);
+    set('stat-tipos',    tipos);
+    set('stat-vigentes', vigentes);
 
     if (rol === 'admin') {
       try {
@@ -236,6 +237,9 @@ async function inscribirse(actividadId) {
     if (res.ok) {
       document.getElementById('modal-det-overlay').style.display = 'none';
       window._inscritosIds?.add(actividadId);
+      // Sumar la inscripción al contador sin recargar la página
+      const act = (window._actsCache || []).find(a => a.id === actividadId);
+      if (act) act.total_inscritos = (act.total_inscritos ?? 0) + 1;
       renderActTabla('acts-tbody', window._actsCache || []);
       const t = document.createElement('div');
       t.textContent = '✓ Inscripción exitosa';

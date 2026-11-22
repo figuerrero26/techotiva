@@ -11,14 +11,15 @@ from sqlalchemy import func
 
 from database import get_db
 from app.models.models import (
-    Usuario, Prescriptor, Beneficiario, Seguimiento, Dispositivo,
-    Actividad, Inscripcion, PrimerContacto, Estados, EstadoRegistro,
+    Usuario, Prescriptor, Beneficiario, Seguimiento, Dispositivo, Estados,
+    EstadoRegistro,
 )
 from app.schemas.schemas import (
     AsignadoOut, SeguimientoCreate, SeguimientoOut,
     PrescriptorMe, PrescriptorUpdate,
 )
 from app.routers._deps import get_current_user
+from app.services.pertenencia import ids_beneficiarios_de_dispositivo
 
 
 def _nombre_autor_seguimiento(db: Session, prescriptor_id: int) -> str | None:
@@ -59,14 +60,19 @@ def _get_prescriptor(db: Session, user: Usuario) -> Prescriptor:
 
 
 def _benef_accesible(db: Session, presc: Prescriptor, benef: Beneficiario) -> bool:
-    """Mismo criterio que "mis asignados": de mi dispositivo, asignado a mí o ya atendido por mí."""
-    if presc.dispositivo_id and benef.dispositivo_id == presc.dispositivo_id:
-        return True
+    """
+    Mismo criterio que "mis asignados": asignado a mí, de mi dispositivo, o ya atendido
+    por mí si aún no tiene dispositivo. Si se trasladó a otro dispositivo, pierdo el acceso.
+    """
     if benef.prescriptor_id == presc.id:
         return True
-    return db.query(Seguimiento.id).filter(
-        Seguimiento.prescriptor_id == presc.id, Seguimiento.beneficiario_id == benef.id
-    ).first() is not None
+    if presc.dispositivo_id and benef.id in ids_beneficiarios_de_dispositivo(db, presc.dispositivo_id):
+        return True
+    if benef.dispositivo_id is None:
+        return db.query(Seguimiento.id).filter(
+            Seguimiento.prescriptor_id == presc.id, Seguimiento.beneficiario_id == benef.id
+        ).first() is not None
+    return False
 
 
 # Semáforo de seguimiento (días desde el último seguimiento)
@@ -96,48 +102,21 @@ def mis_asignados(
 
     presc = _get_prescriptor(db, current_user)
 
-    benef_ids = set()
-
-    # 1. Asignación directa (FK prescriptor_id en beneficiarios)
-    directos = (
-        db.query(Beneficiario.id)
-        .filter(Beneficiario.prescriptor_id == presc.id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in directos)
-
-    # 2. Beneficiarios con seguimiento previo de este prescriptor
-    seg_ids = (
-        db.query(Seguimiento.beneficiario_id)
-        .filter(Seguimiento.prescriptor_id == presc.id)
-        .distinct()
-        .all()
-    )
-    benef_ids.update(b[0] for b in seg_ids)
-
-    # 3. Siempre incluir todos los beneficiarios del dispositivo
-    if presc.dispositivo_id:
-        directo = (
-            db.query(Beneficiario.id)
-            .filter(Beneficiario.dispositivo_id == presc.dispositivo_id)
-            .all()
-        )
-        benef_ids.update(b[0] for b in directo)
-        insc = (
-            db.query(Inscripcion.beneficiario_id)
-            .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-            .filter(Actividad.dispositivo_id == presc.dispositivo_id)
-            .distinct()
-            .all()
-        )
-        benef_ids.update(b[0] for b in insc)
-        pc = (
-            db.query(PrimerContacto.beneficiario_id)
-            .filter(PrimerContacto.dispositivo_id == presc.dispositivo_id)
-            .distinct()
-            .all()
-        )
-        benef_ids.update(b[0] for b in pc)
+    # 1. Asignados directamente a este prescriptor
+    benef_ids = {
+        b[0] for b in db.query(Beneficiario.id).filter(Beneficiario.prescriptor_id == presc.id).all()
+    }
+    # 2. Los que hoy pertenecen a su dispositivo
+    benef_ids |= ids_beneficiarios_de_dispositivo(db, presc.dispositivo_id)
+    # 3. Los que ya atendió y aún no tienen dispositivo asignado
+    #    (si se trasladaron a otro dispositivo, dejan de aparecerle)
+    atendidos = [b[0] for b in db.query(Seguimiento.beneficiario_id)
+                 .filter(Seguimiento.prescriptor_id == presc.id).distinct().all()]
+    if atendidos:
+        benef_ids |= {
+            b[0] for b in db.query(Beneficiario.id)
+            .filter(Beneficiario.id.in_(atendidos), Beneficiario.dispositivo_id.is_(None)).all()
+        }
 
     benef_ids = list(benef_ids)
 
@@ -282,9 +261,14 @@ def listar_seguimientos(
             q = db.query(Seguimiento).filter(Seguimiento.prescriptor_id == presc.id)
 
     segs = q.order_by(Seguimiento.fecha.desc()).all()
+    # Nombres en lote (evita varias consultas por cada seguimiento)
+    ids_b = {s.beneficiario_id for s in segs}
+    nombres_b = dict(
+        db.query(Beneficiario.id, Beneficiario.nombre_apodo).filter(Beneficiario.id.in_(ids_b)).all()
+    ) if ids_b else {}
+    autores = {pid: _nombre_autor_seguimiento(db, pid) for pid in {s.prescriptor_id for s in segs}}
     result = []
     for s in segs:
-        benef = db.query(Beneficiario).filter(Beneficiario.id == s.beneficiario_id).first()
         result.append(SeguimientoOut(
             id=s.id,
             prescriptor_id=s.prescriptor_id,
@@ -292,8 +276,8 @@ def listar_seguimientos(
             tipo_registro=s.tipo_registro,
             observaciones=s.observaciones,
             fecha=s.fecha,
-            nombre_beneficiario=benef.nombre_apodo if benef else None,
-            nombre_prescriptor=_nombre_autor_seguimiento(db, s.prescriptor_id),
+            nombre_beneficiario=nombres_b.get(s.beneficiario_id),
+            nombre_prescriptor=autores.get(s.prescriptor_id),
         ))
     return result
 

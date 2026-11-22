@@ -9,9 +9,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from app.models.models import (
-    Usuario, Dispositivo, Beneficiario, Actividad,
-    Seguimiento, Prescriptor, PrimerContacto, Inscripcion,
-    Estados, EstadoRegistro,
+    Usuario, Dispositivo, Beneficiario, Actividad, Seguimiento, Prescriptor, Estados,
+    EstadoRegistro,
 )
 from app.schemas.schemas import (
     DispositivoOut, DispositivoUpdate, DispositivoEstadisticas,
@@ -19,6 +18,7 @@ from app.schemas.schemas import (
 )
 from app.services.email_service import notificar_aprobacion
 from app.services.usuarios_service import borrar_usuario_completo
+from app.services.pertenencia import ids_beneficiarios_de_dispositivo
 from app.routers.prescriptores import calcular_estado
 from app.routers._deps import get_current_user
 from app.services.estado_service import EstadoService
@@ -116,42 +116,8 @@ def beneficiarios_dispositivo(
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
     _exigir_acceso_dispositivo(db, current_user, disp)
 
-    benef_ids = set()
-
-    # Por inscripciones en actividades del dispositivo
-    insc = (
-        db.query(Inscripcion.beneficiario_id)
-        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-        .filter(Actividad.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in insc)
-
-    # Por primer contacto
-    pc = (
-        db.query(PrimerContacto.beneficiario_id)
-        .filter(PrimerContacto.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in pc)
-
-    # Por seguimientos de prescriptores del dispositivo
-    presc_ids = [p.id for p in disp.prescriptores]
-    if presc_ids:
-        seg = (
-            db.query(Seguimiento.beneficiario_id)
-            .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-            .all()
-        )
-        benef_ids.update(b[0] for b in seg)
-
-    # Por dispositivo_id directo en el perfil del beneficiario
-    directo = (
-        db.query(Beneficiario.id)
-        .filter(Beneficiario.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in directo)
+    # Beneficiarios que hoy pertenecen al dispositivo (ver app/services/pertenencia.py)
+    benef_ids = ids_beneficiarios_de_dispositivo(db, dispositivo_id)
 
     if not benef_ids:
         return []
@@ -188,38 +154,8 @@ def beneficiarios_dispositivo_detalle(
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
     _exigir_acceso_dispositivo(db, current_user, disp)
 
-    benef_ids = set()
-
-    insc = (
-        db.query(Inscripcion.beneficiario_id)
-        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-        .filter(Actividad.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in insc)
-
-    pc = (
-        db.query(PrimerContacto.beneficiario_id)
-        .filter(PrimerContacto.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in pc)
-
-    presc_ids = [p.id for p in disp.prescriptores]
-    if presc_ids:
-        seg = (
-            db.query(Seguimiento.beneficiario_id)
-            .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-            .all()
-        )
-        benef_ids.update(b[0] for b in seg)
-
-    directo = (
-        db.query(Beneficiario.id)
-        .filter(Beneficiario.dispositivo_id == dispositivo_id)
-        .all()
-    )
-    benef_ids.update(b[0] for b in directo)
+    # Beneficiarios que hoy pertenecen al dispositivo (ver app/services/pertenencia.py)
+    benef_ids = ids_beneficiarios_de_dispositivo(db, dispositivo_id)
 
     if not benef_ids:
         return []
@@ -274,35 +210,12 @@ def estadisticas_dispositivo(
     disp = db.query(Dispositivo).filter(Dispositivo.id == dispositivo_id).first()
     if not disp:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    _exigir_acceso_dispositivo(db, current_user, disp)
 
     # Beneficiarios activos (inscritos + primer contacto)
-    benef_ids = set()
-    insc = (
-        db.query(Inscripcion.beneficiario_id)
-        .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-        .filter(Actividad.dispositivo_id == dispositivo_id)
-        .distinct()
-        .all()
-    )
-    benef_ids.update(b[0] for b in insc)
-    pc = (
-        db.query(PrimerContacto.beneficiario_id)
-        .filter(PrimerContacto.dispositivo_id == dispositivo_id)
-        .distinct()
-        .all()
-    )
-    benef_ids.update(b[0] for b in pc)
+    benef_ids = ids_beneficiarios_de_dispositivo(db, dispositivo_id)
 
-    # Prescriptores del dispositivo → sus beneficiarios
     presc_ids = [p.id for p in disp.prescriptores]
-    if presc_ids:
-        seg = (
-            db.query(Seguimiento.beneficiario_id)
-            .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-            .distinct()
-            .all()
-        )
-        benef_ids.update(b[0] for b in seg)
 
     # Actividades registradas
     num_actividades = db.query(Actividad).filter(

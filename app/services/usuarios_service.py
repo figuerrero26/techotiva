@@ -7,11 +7,40 @@ from sqlalchemy.orm import Session
 
 from app.models.models import (
     Usuario, Beneficiario, Prescriptor, Dispositivo,
-    Seguimiento, PrimerContacto, Inscripcion, EstadoRegistro,
+    Seguimiento, PrimerContacto, Inscripcion, EstadoRegistro, Actividad,
 )
 
 
+def _exigir_sin_historial(db: Session, user: Usuario) -> None:
+    """Una cuenta de prescriptor o dispositivo con registros no se borra: se desactiva.
+    Borrarla eliminaría el historial de los beneficiarios o dejaría datos huérfanos."""
+    motivos = []
+    presc = db.query(Prescriptor).filter(Prescriptor.usuario_id == user.id).first()
+    if presc:
+        if db.query(Seguimiento).filter(Seguimiento.prescriptor_id == presc.id).first():
+            motivos.append("seguimientos")
+        if db.query(PrimerContacto).filter(PrimerContacto.prescriptor_id == presc.id).first():
+            motivos.append("hojas de primer contacto")
+    disp = db.query(Dispositivo).filter(Dispositivo.usuario_id == user.id).first()
+    if disp:
+        if db.query(Prescriptor).filter(Prescriptor.dispositivo_id == disp.id).first():
+            motivos.append("prescriptores")
+        if db.query(Beneficiario).filter(Beneficiario.dispositivo_id == disp.id).first():
+            motivos.append("beneficiarios")
+        if db.query(Actividad).filter(Actividad.dispositivo_id == disp.id).first():
+            motivos.append("actividades")
+        if db.query(PrimerContacto).filter(PrimerContacto.dispositivo_id == disp.id).first():
+            motivos.append("hojas de primer contacto")
+    if motivos:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede eliminar porque tiene " + ", ".join(dict.fromkeys(motivos))
+                   + " registrados. Desactiva la cuenta para conservar el historial.",
+        )
+
+
 def borrar_usuario_completo(db: Session, user: Usuario) -> None:
+    _exigir_sin_historial(db, user)
     try:
         # Limpiar FK estado_actual del usuario
         user.estado_actual_id = None

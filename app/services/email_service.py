@@ -22,7 +22,7 @@ def generar_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-async def enviar_correo_recuperacion(email: str, token: str, base_url: str):
+async def enviar_correo_recuperacion(email: str, token: str, base_url: str, vigencia: str = "10 minutos"):
     link = f"{base_url}/login?reset_token={token}"
     html = f"""
     <div style="font-family:sans-serif;max-width:480px;margin:auto">
@@ -33,7 +33,7 @@ async def enviar_correo_recuperacion(email: str, token: str, base_url: str):
       </a>
       <p style="color:#888;font-size:0.85rem;margin-top:1rem">
         Si no solicitaste esto, ignora este mensaje. Tu contraseña no cambiará.<br>
-        El enlace expira en 10 minutos.
+        El enlace expira en {vigencia}.
       </p>
     </div>
     """
@@ -110,6 +110,66 @@ def notificar_aprobacion(background_tasks, db, usuario, estado_anterior: str) ->
         email=usuario.email, rol=usuario.rol, nombre=nombre, dispositivo=disp,
         token_verificacion=token, base_url=settings.app_base_url,
     )
+
+
+async def enviar_aviso_registro(email_destino: str, rol: str, nombre: str, email_solicitante: str,
+                                dispositivo: str, base_url: str):
+    """Avisa a quien debe revisar (dispositivo o admin) que alguien se registró."""
+    nombre = html_lib.escape(nombre or "")
+    email_solicitante = html_lib.escape(email_solicitante or "")
+    dispositivo = html_lib.escape(dispositivo or "")
+    if rol == "prescriptor":
+        asunto = f"Nueva solicitud de prescriptxr: {nombre}"
+        cuerpo = (f"<strong>{nombre}</strong> ({email_solicitante}) solicitó unirse como prescriptxr"
+                  + (f" al dispositivo <strong>{dispositivo}</strong>." if dispositivo else "."))
+        accion = "Entra a la plataforma para <strong>aprobar o rechazar</strong> la solicitud (en el panel, sección de prescriptores pendientes)."
+        boton = "Revisar solicitud"
+    elif rol == "dispositivo":
+        asunto = f"Nuevo dispositivo por aprobar: {nombre}"
+        cuerpo = f"El dispositivo <strong>{nombre}</strong> ({email_solicitante}) solicitó registrarse en la plataforma."
+        accion = "Entra a la plataforma para <strong>aprobar o rechazar</strong> la solicitud (Panel central o Usuarios)."
+        boton = "Revisar solicitud"
+    else:
+        asunto = f"Nuevo beneficiarix registradx: {nombre}"
+        cuerpo = f"<strong>{nombre}</strong> ({email_solicitante}) se registró como beneficiarix."
+        accion = "No requiere aprobación: su cuenta ya está activa. Puedes asignarle un dispositivo desde Usuarios."
+        boton = "Ir a la plataforma"
+    html = f"""
+    <div style="font-family:sans-serif;max-width:480px;margin:auto">
+      <h2 style="color:#1D9E75">🔔 Nuevo registro en Cuida Tu Techo</h2>
+      <p>{cuerpo}</p>
+      <p>{accion}</p>
+      <a href="{base_url}/login" style="display:inline-block;padding:12px 24px;background:#1D9E75;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+        {boton}
+      </a>
+    </div>
+    """
+    message = MessageSchema(subject=asunto, recipients=[email_destino], body=html, subtype=MessageType.html)
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+
+def notificar_nuevo_registro(background_tasks, db, usuario, nombre: str, dispositivo=None) -> None:
+    """
+    Programa los avisos de un registro nuevo:
+    prescriptor → su dispositivo y el admin · dispositivo → admin · beneficiario → admin.
+    Se envía un correo por destinatario para no mostrar las direcciones entre sí.
+    """
+    from app.models.models import Usuario, Estados   # import local: evita ciclos al cargar
+    destinos = [
+        a.email for a in db.query(Usuario).filter(Usuario.rol == "admin").all()
+        if a.estado == Estados.ACTIVO
+    ]
+    if usuario.rol == "prescriptor" and dispositivo is not None and dispositivo.usuario:
+        destinos.insert(0, dispositivo.usuario.email)
+    for email in dict.fromkeys(destinos):          # sin repetidos, conservando el orden
+        background_tasks.add_task(
+            enviar_aviso_registro,
+            email_destino=email, rol=usuario.rol, nombre=nombre,
+            email_solicitante=usuario.email,
+            dispositivo=dispositivo.nombre if dispositivo is not None else "",
+            base_url=settings.app_base_url,
+        )
 
 
 async def enviar_codigo_2fa(email: str, codigo: str, minutos: int):

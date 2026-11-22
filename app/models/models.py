@@ -61,6 +61,7 @@ class Usuario(Base):
     dosfa_expira                = Column(DateTime, nullable=True)  # UTC naive
     dosfa_enviado               = Column(DateTime, nullable=True)  # UTC naive; para limitar reenvíos
     dosfa_intentos              = Column(Integer, default=0, nullable=True)
+    sesion_version      = Column(Integer, default=0, nullable=True)  # sube al cerrar sesión: invalida tokens previos
     dosfa_activo                = Column(Boolean, default=True, nullable=True)  # el admin puede apagarla
 
     estado_actual = relationship(

@@ -36,7 +36,13 @@ const MASCATE = {
       headers: this.authHeaders(),
       body: JSON.stringify({ password_actual: passwordActual, password_nueva: passwordNueva })
     });
-    return { ok: res.ok, data: await res.json() };
+    const data = await res.json();
+    // El servidor cierra las sesiones anteriores y entrega un token nuevo para esta
+    if (res.ok && data.access_token) {
+      localStorage.setItem('mascate_token', data.access_token);
+      this.token = data.access_token;
+    }
+    return { ok: res.ok, data };
   },
 
   async cambiarRol(usuarioId, nuevoRol) {
@@ -404,7 +410,8 @@ async function initNotifBtn() {
         fetch(window.location.origin + '/admin/alertas', MASCATE.authGet()).then(r => r.json()),
         fetch(window.location.origin + '/admin/usuarios', MASCATE.authGet()).then(r => r.json()),
       ]);
-      hayPendientes = alertas.length > 0 || users.some(u => u.status === 'pendiente');
+      hayPendientes = alertas.length > 0 ||
+        users.some(u => u.status === 'pendiente' || (u.rol === 'beneficiario' && u.status === 'activo' && !u.dispositivo_nombre));
     } else if (MASCATE.rol === 'prescriptor') {
       const asignados = await fetch(window.location.origin + '/prescriptores/mis-asignados', MASCATE.authGet()).then(r => r.json());
       hayPendientes = asignados.some(a => a.estado === 'urgente' || a.estado === 'revisar');

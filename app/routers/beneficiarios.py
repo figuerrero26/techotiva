@@ -2,6 +2,7 @@
 Router de beneficiarios: perfil propio, edición y actividades.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from datetime import date as date_type
 from database import get_db
@@ -92,7 +93,10 @@ def editar_perfil(
         raise HTTPException(status_code=403, detail="Requiere rol beneficiario")
     benef = _get_beneficiario(db, current_user)
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    # El dispositivo lo asigna el admin (o el registro del primer contacto); no se cambia desde el perfil.
+    cambios = data.model_dump(exclude_unset=True)
+    cambios.pop("dispositivo_id", None)
+    for field, value in cambios.items():
         setattr(benef, field, value)
 
     db.commit()
@@ -172,6 +176,10 @@ def inscribirse(
     actividad = db.query(Actividad).filter(Actividad.id == data.actividad_id).first()
     if not actividad:
         raise HTTPException(status_code=404, detail="Actividad no encontrada")
+    if not actividad.activa:
+        raise HTTPException(status_code=400, detail="Esta actividad ya no está disponible")
+    if actividad.fecha_inicio and actividad.fecha_inicio < date_type.today():
+        raise HTTPException(status_code=400, detail="Esta actividad ya pasó")
 
     ya_inscrito = db.query(Inscripcion).filter(
         Inscripcion.beneficiario_id == benef.id,
@@ -189,7 +197,12 @@ def inscribirse(
 
     nueva = Inscripcion(beneficiario_id=benef.id, actividad_id=data.actividad_id)
     db.add(nueva)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Doble clic: otra solicitud igual ya creó la inscripción (índice único)
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Ya estás inscrito en esta actividad")
 
     return InscripcionResponse(mensaje="Inscripción exitosa", actividad_id=data.actividad_id)
 

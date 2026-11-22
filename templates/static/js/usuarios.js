@@ -173,7 +173,52 @@ async function rechazarUsuario(id) {
 }
 
 // ── Render tabla ─────────────────────────────────────────────────────────
-function renderTabla(lista) {
+// ── Paginación de la tabla de usuarios (30 por página) ──────────────────
+const POR_PAGINA = 30;
+let _paginaActual = 1;
+
+function renderTabla(lista)          { _paginar(lista, _filasTabla); }
+function renderTablaAsignados(lista) { _paginar(lista, _filasAsignados); }
+
+function _paginar(lista, dibujarFilas) {
+  const total   = lista.length;
+  const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  _paginaActual = Math.min(Math.max(1, _paginaActual), paginas);   // ajusta si la lista se achicó
+  const desde = (_paginaActual - 1) * POR_PAGINA;
+  dibujarFilas(lista.slice(desde, desde + POR_PAGINA));
+
+  const cont = document.getElementById('users-paginacion');
+  if (!cont) return;
+  if (total <= POR_PAGINA) { cont.innerHTML = total ? `<span style="font-size:0.8rem;color:var(--on-bg-muted)">${total} en total</span>` : ''; return; }
+
+  // Botones: primera, última y las cercanas a la actual
+  const nums = [];
+  for (let n = 1; n <= paginas; n++) {
+    if (n === 1 || n === paginas || Math.abs(n - _paginaActual) <= 1) nums.push(n);
+    else if (nums[nums.length - 1] !== '…') nums.push('…');
+  }
+  const btn = (txt, n, activo, deshabilitado) =>
+    `<button class="btn btn-sm ${activo ? 'btn-green' : 'btn-outline'}" style="min-width:2.2rem"
+      ${deshabilitado ? 'disabled' : ''} onclick="_irPagina(${n})">${txt}</button>`;
+  cont.innerHTML = `
+    <span style="font-size:0.8rem;color:var(--on-bg-muted)">Mostrando ${desde + 1}–${Math.min(desde + POR_PAGINA, total)} de ${total}</span>
+    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;align-items:center">
+      ${btn('‹ Anterior', _paginaActual - 1, false, _paginaActual === 1)}
+      ${nums.map(n => n === '…' ? '<span style="padding:0 0.2rem;color:var(--on-bg-muted)">…</span>' : btn(n, n, n === _paginaActual, false)).join('')}
+      ${btn('Siguiente ›', _paginaActual + 1, false, _paginaActual === paginas)}
+    </div>`;
+  cont._lista = lista; cont._dibujar = dibujarFilas;
+}
+
+function _irPagina(n) {
+  const cont = document.getElementById('users-paginacion');
+  if (!cont?._lista) return;
+  _paginaActual = n;
+  _paginar(cont._lista, cont._dibujar);
+  document.getElementById('users-tbody')?.closest('.panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function _filasTabla(lista) {
   const tbody = document.getElementById('users-tbody');
   if (!tbody) return;
 
@@ -263,6 +308,7 @@ function initFiltros() {
       return matchQ && matchR && matchS;
     });
 
+    _paginaActual = 1;   // un filtro nuevo empieza en la primera página
     if (vistaAsignados) {
       renderTablaAsignados(filtrados);
     } else {
@@ -577,7 +623,7 @@ const ESTADO_PRESC = {
   finalizado:   { label: 'Proceso finalizado', cls: 'blue' },
 };
 
-function renderTablaAsignados(lista) {
+function _filasAsignados(lista) {
   const tbody = document.getElementById('users-tbody');
   if (!tbody) return;
   if (!lista.length) {

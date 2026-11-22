@@ -71,6 +71,9 @@ def crear_actividad(
         dia_semana=data.dia_semana,
         hora=data.hora,
         emoji=data.emoji or "📋",
+        fecha_inicio=data.fecha_inicio,
+        descripcion=data.descripcion,
+        cupo_maximo=data.cupo_maximo,
     )
     db.add(act)
     db.commit()

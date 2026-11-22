@@ -32,6 +32,10 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
+    # Tokens emitidos antes de cerrar sesión o cambiar la contraseña ya no sirven
+    if int(payload.get("sv") or 0) != (user.sesion_version or 0):
+        raise HTTPException(status_code=401, detail="La sesión fue cerrada. Inicia sesión de nuevo.")
+
     # NUEVA LÓGICA DE ESTADOS:
     # Verificamos si tiene un estado y si ese estado es diferente de ACTIVO
     if not user.estado_actual or user.estado_actual.estado != Estados.ACTIVO:

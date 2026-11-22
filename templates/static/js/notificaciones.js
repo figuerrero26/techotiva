@@ -2,6 +2,20 @@
 const API = window.location.origin;
 MASCATE.guardAuth();
 
+// Actividades vigentes con fecha de hoy en adelante, de la más cercana a la más lejana
+function proximas(acts) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  return (Array.isArray(acts) ? acts : [])
+    .filter(a => a.activa !== false && a.fecha_inicio && a.fecha_inicio >= hoy)
+    .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio) || (a.hora || '').localeCompare(b.hora || ''));
+}
+
+// "2026-11-29" → "sáb 29 nov"
+function fechaCorta(iso) {
+  if (!iso) return 'Sin fecha';
+  return new Date(iso + 'T00:00:00').toLocaleDateString('es-CO', { weekday:'short', day:'numeric', month:'short' });
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   const { rol, nombre, email } = MASCATE;
   renderSidebar(nombre, email);
@@ -30,6 +44,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         tiempo:'Pendiente', unread:true, bg:'var(--primary-dim)',
         accion: { label:'Ver usuarios', href:'/usuarios' },
       });
+      // Beneficiarios que se registraron solos y aún no tienen dispositivo
+      const sinDisp = users.filter(u => u.rol === 'beneficiario' && u.status === 'activo' && !u.dispositivo_nombre);
+      if (sinDisp.length) notifs.push({
+        icon:'🌱', titulo: `${sinDisp.length} beneficiarix${sinDisp.length>1?'s':''} nuevx${sinDisp.length>1?'s':''} sin dispositivo asignado`,
+        desc: sinDisp.map(u => campo(u.nombre, u.email)).join(', ') + ' · asígnales un dispositivo desde Usuarios.',
+        tiempo:'Pendiente', unread:true, bg:'var(--secondary-dim, var(--primary-dim))',
+        accion: { label:'Asignar dispositivo', href:'/usuarios' },
+      });
     } catch(e) {}
   }
 
@@ -55,12 +77,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ── Beneficiario: actividades inscritas ──
   if (rol === 'beneficiario') {
     try {
-      const acts = await (await fetch(API + '/beneficiarios/mis-actividades', MASCATE.authGet())).json();
+      const acts = proximas(await (await fetch(API + '/beneficiarios/mis-actividades', MASCATE.authGet())).json());
       if (acts.length) notifs.push({
-        icon:'📅', titulo: `Tienes ${acts.length} actividad${acts.length>1?'es':''} inscrita${acts.length>1?'s':''}`,
-        desc: acts.slice(0,3).map(a => `${a.emoji||'📅'} ${a.nombre}`).join(' · '),
-        tiempo:'Activas', unread:false, bg:'var(--secondary-dim)',
-        accion: { label:'Ver actividades', href:'/actividades' },
+        icon:'📅', titulo: `Tienes ${acts.length} actividad${acts.length>1?'es':''} próxima${acts.length>1?'s':''}`,
+        desc: acts.slice(0,3).map(a => `${a.emoji||'📅'} ${a.nombre} (${fechaCorta(a.fecha_inicio)}${a.dispositivo_nombre ? ' · ' + a.dispositivo_nombre : ''})`).join(' · '),
+        tiempo:'Vigentes', unread:false, bg:'var(--secondary-dim)',
+        accion: { label:'Ver mis actividades', href:'/mis-actividades' },
       });
     } catch(e) {}
   }
@@ -80,17 +102,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch(e) {}
   }
 
-  // Actividades recientes como contexto para todos
+  // Próximas actividades (vigentes, de la más cercana a la más lejana)
   try {
-    const endpoint = rol === 'beneficiario'
-      ? '/beneficiarios/mis-actividades'
-      : '/actividades/';
-    const acts = await (await fetch(API + endpoint, rol === 'beneficiario' ? MASCATE.authGet() : {})).json();
+    let endpoint = '/actividades/', opciones = {};
+    if (rol === 'beneficiario') {
+      endpoint = '/beneficiarios/mis-actividades'; opciones = MASCATE.authGet();
+    } else if (rol === 'dispositivo') {
+      const disp = await (await fetch(API + '/dispositivos/me', MASCATE.authGet())).json();
+      if (disp?.id) endpoint = '/actividades/?dispositivo_id=' + disp.id;
+    }
+    const acts = proximas(await (await fetch(API + endpoint, opciones)).json());
     acts.slice(0, 2).forEach((a, i) => notifs.push({
       icon:   a.emoji || '📅',
       titulo: a.nombre,
-      desc:   `${campo(a.dia_semana)} a las ${campo(a.hora)} · ${campo(a.lugar)}`,
-      tiempo: i === 0 ? 'Próxima' : 'Próximamente',
+      desc:   `${fechaCorta(a.fecha_inicio)}${a.hora ? ' a las ' + a.hora : ''} · ${campo(a.lugar)}`
+              + (rol !== 'dispositivo' && a.dispositivo_nombre ? ` · 🏘️ ${a.dispositivo_nombre}` : ''),
+      tiempo: i === 0 ? 'Próxima' : 'Después',
       unread: false, bg:'var(--surface-2,rgba(255,255,255,0.04))', accion:null,
     }));
   } catch(e) {}

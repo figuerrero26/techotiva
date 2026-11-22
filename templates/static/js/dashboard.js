@@ -64,7 +64,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         fetch(API + '/admin/alertas',  authGet()).then(r => r.json()),
         fetch(API + '/admin/usuarios', authGet()).then(r => r.json()),
       ]);
-      hay = alertas.length > 0 || users.some(u => u.status === 'pendiente');
+      hay = alertas.length > 0 || users.some(u => u.status === 'pendiente' || (u.rol === 'beneficiario' && u.status === 'activo' && !u.dispositivo_nombre));
     } else if (rol === 'prescriptor') {
       const asignados = await fetch(API + '/prescriptores/mis-asignados', authGet()).then(r => r.json());
       hay = asignados.some(a => a.estado === 'urgente' || a.estado === 'revisar');
@@ -146,15 +146,53 @@ async function loadDispositivo() {
     // Actividades
     const acts = await fetch(API + '/actividades/?dispositivo_id=' + d.id).then(r => r.json());
     const actPanel = document.getElementById('disp-panel-actividades');
-    if (actPanel && acts.length > 0) {
+    if (actPanel) {
       let html = '<div class="panel-head"><span class="panel-title">Actividades</span><button class="panel-action" onclick="window.location.href=\'/actividades\'">+ Nueva</button></div>';
+      if (!acts.length) {
+        html += '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Aún no hay actividades creadas.</div>';
+      }
       acts.forEach(a => {
         html += `<div class="list-row"><div class="list-avatar" style="background:var(--primary-dim);font-size:1.1rem">${a.emoji||'📅'}</div><div class="list-info"><div class="list-name">${a.nombre}</div><div class="list-sub">${a.dia_semana} - ${a.hora} - ${a.lugar}</div></div><span class="tag green">${a.tipo}</span></div>`;
       });
       setHTML(actPanel, html);
     }
+    pintarTiposActividad(acts);
 
   } catch(e) { console.error('Error cargando dispositivo:', e); }
+}
+
+// ── Dispositivo: distribución de sus actividades por tipo (dona) ──
+const COLOR_TIPO_ACT = {
+  'Artístico': '#f6be39', 'Cultural': '#d2bbff', 'Deportivo': '#95d4b3',
+  'Ambiental': '#4caf7d', 'Educativo': '#64a0ff', 'Escucha': '#e85d3a',
+};
+function pintarTiposActividad(acts) {
+  const cont = document.getElementById('disp-tipos');
+  if (!cont) return;
+  setText('disp-tipos-total', `${acts.length} actividad${acts.length === 1 ? '' : 'es'}`);
+  if (!acts.length) {
+    cont.innerHTML = '<div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cuando crees actividades verás aquí cómo se reparten por tipo.</div>';
+    return;
+  }
+  const conteo = {};
+  acts.forEach(a => { const t = a.tipo || 'Sin tipo'; conteo[t] = (conteo[t] || 0) + 1; });
+  const filas = Object.entries(conteo).sort((x, y) => y[1] - x[1]);
+  const CIRC = 176;   // 2π × 28
+  let offset = 0;
+  const arcos = filas.map(([t, n]) => {
+    const largo = n / acts.length * CIRC;
+    const arco = `<circle cx="40" cy="40" r="28" fill="none" stroke="${COLOR_TIPO_ACT[t] || '#b0b0b0'}" stroke-width="14"
+      stroke-dasharray="${largo} ${CIRC - largo}" stroke-dashoffset="${-offset}" transform="rotate(-90 40 40)"/>`;
+    offset += largo;
+    return arco;
+  }).join('');
+  const leyenda = filas.map(([t, n]) => `<div class="legend-item"><div class="legend-dot" style="background:${COLOR_TIPO_ACT[t] || '#b0b0b0'}"></div>${_escHtml(t)} · ${n} (${Math.round(n / acts.length * 100)}%)</div>`).join('');
+  cont.innerHTML = `<div class="donut-wrap">
+      <svg width="110" height="110" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>${arcos}
+      </svg>
+      <div class="donut-legend">${leyenda}</div>
+    </div>`;
 }
 
 // ═══ PRESCRIPTOR ═══
@@ -450,6 +488,15 @@ async function loadAdmin() {
           html += `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)"><div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">Dispositivos pendientes de aprobación</div>`;
           pendDisps.forEach(u => {
             html += `<div class="list-row"><div class="list-avatar mustard" style="font-size:1rem">🏘️</div><div class="list-info"><div class="list-name">${u.nombre||u.email}</div><div class="list-sub">${u.email}</div></div><button class="btn btn-sm btn-green" onclick="aprobarDisp(${u.id})">✓ Aprobar</button></div>`;
+          });
+          html += '</div>';
+        }
+        // Beneficiarios que se registraron solos y aún no tienen dispositivo
+        const sinDisp = users.filter(u => u.rol === 'beneficiario' && u.status === 'activo' && !u.dispositivo_nombre);
+        if (sinDisp.length) {
+          html += `<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)"><div style="font-size:0.78rem;color:var(--on-bg-muted);margin-bottom:0.5rem">Beneficiarixs sin dispositivo asignado</div>`;
+          sinDisp.forEach(u => {
+            html += `<div class="list-row"><div class="list-avatar" style="font-size:1rem">🌱</div><div class="list-info"><div class="list-name">${_escHtml(u.nombre || u.email)}</div><div class="list-sub">${_escHtml(u.email)} · se registró y necesita un dispositivo</div></div><button class="btn btn-sm btn-mustard" onclick="window.location.href='/usuarios'">Asignar</button></div>`;
           });
           html += '</div>';
         }

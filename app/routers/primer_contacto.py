@@ -18,6 +18,7 @@ from app.models.models import (
 )
 from app.schemas.schemas import PrimerContactoCreate, PrimerContactoOut, _PCBase
 from app.routers._deps import get_current_user
+from app.services.pertenencia import ids_beneficiarios_de_dispositivo, pertenece_a
 from app.services.estado_service import EstadoService
 from app.services.email_service import generar_token, enviar_correo_bienvenida_beneficiario
 
@@ -95,7 +96,8 @@ def _exigir_acceso(db: Session, user: Usuario, pc: Optional[PrimerContacto] = No
     if user.rol == "admin":
         return
     mi_disp = _dispositivo_de(db, user)
-    if mi_disp and ((pc and pc.dispositivo_id == mi_disp) or (benef and benef.dispositivo_id == mi_disp)):
+    # El beneficiario debe ser hoy de mi dispositivo (si se trasladó, el anterior pierde el acceso)
+    if mi_disp and pertenece_a(benef, mi_disp, pc.dispositivo_id if pc else None):
         return
     raise HTTPException(status_code=403, detail="No tienes acceso a este registro")
 
@@ -305,6 +307,7 @@ def crear_primer_contacto_sin_cuenta(
         raise HTTPException(status_code=403, detail="Solo puedes registrar contactos de tu propio dispositivo")
 
     if data.email:
+        data.email = data.email.strip().lower()
         if db.query(Usuario).filter(Usuario.email == data.email).first():
             raise HTTPException(status_code=409, detail="Ya existe una cuenta con ese correo electrónico")
 
@@ -402,17 +405,10 @@ def listar_primer_contacto(
     q = db.query(PrimerContacto)
 
     if current_user.rol != "admin":
+        # Solo contactos de beneficiarios que hoy son de mi dispositivo (aunque los
+        # haya hecho otro dispositivo antes del traslado)
         mi_disp = _dispositivo_de(db, current_user)
-        if beneficiario_id:
-            # Ficha de un beneficiario: todos sus contactos (aunque los haya hecho
-            # otro dispositivo), siempre que el beneficiario sea de mi dispositivo
-            benef = db.query(Beneficiario).filter(Beneficiario.id == beneficiario_id).first()
-            if benef and benef.dispositivo_id == mi_disp:
-                pass
-            else:
-                q = q.filter(PrimerContacto.dispositivo_id == mi_disp)
-        else:
-            q = q.filter(PrimerContacto.dispositivo_id == mi_disp)
+        q = q.filter(PrimerContacto.beneficiario_id.in_(ids_beneficiarios_de_dispositivo(db, mi_disp)))
 
     if beneficiario_id:
         q = q.filter(PrimerContacto.beneficiario_id == beneficiario_id)

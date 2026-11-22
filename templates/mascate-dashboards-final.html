@@ -52,34 +52,9 @@
         <div class="stat-card"><div class="stat-icon mustard">📋</div><div class="stat-val">—</div><div class="stat-label">Actividades realizadas</div></div>
         <div class="stat-card"><div class="stat-icon blue">📍</div><div class="stat-val">—</div><div class="stat-label">Seguimientos esta semana</div></div>
       </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Asistencia semanal</span><button class="panel-action">Ver todo</button></div>
-          <div class="chart-bars">
-            <div class="bar" style="height:40%"></div><div class="bar" style="height:60%"></div>
-            <div class="bar active" style="height:85%"></div><div class="bar" style="height:55%"></div>
-            <div class="bar" style="height:70%"></div><div class="bar" style="height:90%"></div>
-            <div class="bar" style="height:65%"></div>
-          </div>
-          <div class="chart-labels"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><span class="panel-title">Tipo de actividad</span></div>
-          <div class="donut-wrap">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(149,212,179,0.1)" stroke-width="14"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#f6be39" stroke-width="14" stroke-dasharray="88 88" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 40 40)"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#95d4b3" stroke-width="14" stroke-dasharray="44 132" stroke-dashoffset="-88" stroke-linecap="round" transform="rotate(-90 40 40)"/>
-              <circle cx="40" cy="40" r="28" fill="none" stroke="#e85d3a" stroke-width="14" stroke-dasharray="22 154" stroke-dashoffset="-132" stroke-linecap="round" transform="rotate(-90 40 40)"/>
-            </svg>
-            <div class="donut-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:#f6be39"></div>Artístico (50%)</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#95d4b3"></div>Deportivo (25%)</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#e85d3a"></div>Cultural (13%)</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#d2bbff"></div>Otro (12%)</div>
-            </div>
-          </div>
-        </div>
+      <div class="panel" id="disp-panel-tipos">
+        <div class="panel-head"><span class="panel-title">Tipo de actividad</span><span class="tag mustard" id="disp-tipos-total">—</span></div>
+        <div id="disp-tipos"><div style="color:var(--on-bg-muted);font-size:0.85rem;padding:0.5rem">Cargando...</div></div>
       </div>
       <div class="panel" id="disp-panel-pendientes" style="display:none;border:1.5px solid var(--error);background:var(--error-dim)">
         <div class="panel-head"><span class="panel-title">⚠️ Prescriptxres pendientes de aprobación</span></div>
@@ -371,6 +346,6 @@
     </div>
   </div>
 </div>
-<script src="/static/js/dashboard.js?v=20261119a"></script>
+<script src="/static/js/dashboard.js?v=20261122b"></script>
 </body>
 </html>

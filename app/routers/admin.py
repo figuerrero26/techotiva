@@ -21,8 +21,8 @@ from app.core.config import settings
 from database import get_db
 from app.core.security import hash_password
 from app.models.models import (
-    Usuario, Estados, EstadoRegistro, Dispositivo, Prescriptor, Beneficiario,
-    Actividad, Seguimiento, PrimerContacto, Inscripcion,
+    Usuario, Estados, EstadoRegistro, Dispositivo, Prescriptor, Beneficiario, Actividad,
+    Seguimiento, PrimerContacto,
 )
 from app.schemas.schemas import (
     AdminStats, UsuarioAdmin, CambiarEstado, AlertaOut,
@@ -32,6 +32,7 @@ from app.schemas.schemas import (
 from app.routers._deps import require_role
 from app.services.estado_service import EstadoService
 from app.services.usuarios_service import borrar_usuario_completo
+from app.services.pertenencia import ids_beneficiarios_de_dispositivo
 
 router = APIRouter(prefix="/admin", tags=["Administración"])
 admin_only = require_role("admin")
@@ -486,6 +487,17 @@ def cambiar_rol_usuario(
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol")
 
+    # El rol debe corresponder a un perfil existente; si no, la cuenta quedaría inservible
+    perfiles = {
+        "beneficiario": Beneficiario, "prescriptor": Prescriptor, "dispositivo": Dispositivo,
+    }
+    modelo = perfiles.get(data.rol)
+    if modelo is not None and not db.query(modelo).filter(modelo.usuario_id == user.id).first():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Esta cuenta no tiene perfil de {data.rol}; no se le puede asignar ese rol",
+        )
+
     rol_anterior = user.rol
     user.rol = data.rol
 
@@ -556,6 +568,7 @@ def admin_restablecer_password(
 
     background_tasks.add_task(
         enviar_correo_recuperacion,
+        vigencia="24 horas",
         email=user.email,
         token=token,
         base_url=settings.app_base_url,
@@ -621,6 +634,7 @@ def admin_crear_dispositivo(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(admin_only),
 ):
+    data.email = data.email.strip().lower()
     if db.query(Usuario).filter(Usuario.email == data.email).first():
         raise HTTPException(status_code=409, detail="Ya existe una cuenta con ese correo")
 
@@ -689,29 +703,7 @@ def admin_listar_dispositivos(
     dispositivos = db.query(Dispositivo).all()
     result = []
     for d in dispositivos:
-        benef_ids = set()
-        insc = (
-            db.query(Inscripcion.beneficiario_id)
-            .join(Actividad, Actividad.id == Inscripcion.actividad_id)
-            .filter(Actividad.dispositivo_id == d.id)
-            .distinct().all()
-        )
-        benef_ids.update(b[0] for b in insc)
-        pc = (
-            db.query(PrimerContacto.beneficiario_id)
-            .filter(PrimerContacto.dispositivo_id == d.id)
-            .distinct().all()
-        )
-        benef_ids.update(b[0] for b in pc)
-
-        presc_ids = [p.id for p in d.prescriptores]
-        if presc_ids:
-            seg = (
-                db.query(Seguimiento.beneficiario_id)
-                .filter(Seguimiento.prescriptor_id.in_(presc_ids))
-                .distinct().all()
-            )
-            benef_ids.update(b[0] for b in seg)
+        benef_ids = ids_beneficiarios_de_dispositivo(db, d.id)
 
         num_actividades = db.query(Actividad).filter(Actividad.dispositivo_id == d.id).count()
         presc_names = [p.nombre_completo for p in d.prescriptores] if d.prescriptores else []
@@ -760,17 +752,24 @@ def admin_eliminar_dispositivo(
     tiene_actividades = db.query(Actividad).filter(Actividad.dispositivo_id == dispositivo_id).count() > 0
     tiene_prescriptores = len(disp.prescriptores) > 0
     tiene_pc = db.query(PrimerContacto).filter(PrimerContacto.dispositivo_id == dispositivo_id).count() > 0
+    tiene_benef = db.query(Beneficiario).filter(Beneficiario.dispositivo_id == dispositivo_id).count() > 0
 
-    if tiene_actividades or tiene_prescriptores or tiene_pc:
+    if tiene_actividades or tiene_prescriptores or tiene_pc or tiene_benef:
         raise HTTPException(status_code=409, detail="No se puede eliminar: el dispositivo tiene datos asociados")
 
     usuario = db.query(Usuario).filter(Usuario.id == disp.usuario_id).first()
     db.delete(disp)
     db.flush()
     if usuario:
+        usuario.estado_actual_id = None
+        db.flush()
         db.query(EstadoRegistro).filter(
-            EstadoRegistro.entidad_tipo == "usuario",
+            EstadoRegistro.entidad_tipo.in_(["usuario", "usuarios"]),
             EstadoRegistro.entidad_id == usuario.id,
+        ).delete(synchronize_session="fetch")
+        db.query(EstadoRegistro).filter(
+            EstadoRegistro.entidad_tipo.in_(["dispositivo", "dispositivos"]),
+            EstadoRegistro.entidad_id == dispositivo_id,
         ).delete(synchronize_session="fetch")
         db.flush()
         db.delete(usuario)
@@ -1117,9 +1116,13 @@ def admin_asignar_dispositivo_beneficiario(
         if not disp:
             raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
 
+    if benef.dispositivo_id != data.dispositivo_id:
+        # Traslado: el prescriptor anterior deja de estar asignado, salvo que sea del dispositivo nuevo.
+        # Los seguimientos y el primer contacto se conservan en su historial.
+        presc = benef.prescriptor
+        if data.dispositivo_id is None or not presc or presc.dispositivo_id != data.dispositivo_id:
+            benef.prescriptor_id = None
     benef.dispositivo_id = data.dispositivo_id
-    if data.dispositivo_id is None:
-        benef.prescriptor_id = None
     db.commit()
 
     return {"msg": "Dispositivo actualizado", "dispositivo_nombre": disp.nombre if data.dispositivo_id else None}
